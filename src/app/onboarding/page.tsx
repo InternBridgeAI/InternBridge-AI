@@ -356,11 +356,16 @@ export default function OnboardingPage() {
                     toast.error('Please select your college.');
                     return;
                 }
-                if (availableCourses.length > 0 && !formData.course_id) {
-                    toast.error('Please select your course.');
-                    return;
-                }
-                if (availableCourses.length === 0 && !formData.course_name.trim()) {
+                if (availableCourses.length > 0) {
+                    if (!formData.course_id) {
+                        toast.error('Please select your course.');
+                        return;
+                    }
+                    if (formData.course_id === 'other' && !formData.course_name.trim()) {
+                        toast.error('Please enter your course name.');
+                        return;
+                    }
+                } else if (!formData.course_name.trim()) {
                     toast.error('Please enter your course name.');
                     return;
                 }
@@ -408,14 +413,17 @@ export default function OnboardingPage() {
                 const selectedCollege = colleges.find(c => c.id === formData.college_id);
                 const resolvedCollegeName = selectedCollege?.college_name || selectedCollege?.full_name || formData.university || '';
                 const isOtherCollege = formData.college_id === 'other';
+                const isOtherCourse = !isOtherCollege && formData.course_id === 'other';
                 const selectedCourse = availableCourses.find((c) => c.id === formData.course_id);
 
                 updatePayload.university = isOtherCollege ? formData.university : resolvedCollegeName;
                 updatePayload.college_id = isOtherCollege ? null : (formData.college_id || null);
                 updatePayload.college_name = isOtherCollege ? formData.university : resolvedCollegeName;
                 updatePayload.student_verification_status = isOtherCollege ? 'verified' : 'pending';
-                updatePayload.course_id = isOtherCollege ? null : (formData.course_id || null);
-                updatePayload.course_name = isOtherCollege
+                updatePayload.course_id = (isOtherCollege || isOtherCourse)
+                    ? null
+                    : (formData.course_id || null);
+                updatePayload.course_name = (isOtherCollege || isOtherCourse)
                     ? (formData.course_name || null)
                     : (selectedCourse?.name || formData.course_name || null);
                 updatePayload.year_of_study = formData.year_of_study ? parseInt(formData.year_of_study) : null;
@@ -624,10 +632,34 @@ export default function OnboardingPage() {
                                                     className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none disabled:opacity-60"
                                                     value={formData.course_id}
                                                     onChange={(e) => {
-                                                        const selected = availableCourses.find((c) => c.id === e.target.value);
+                                                        const value = e.target.value;
+
+                                                        if (!value) {
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                course_id: '',
+                                                                course_name: '',
+                                                                year_of_study: '',
+                                                            }));
+                                                            setSelectedCourseDuration(null);
+                                                            return;
+                                                        }
+
+                                                        if (value === 'other') {
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                course_id: 'other',
+                                                                course_name: '',
+                                                                year_of_study: '',
+                                                            }));
+                                                            setSelectedCourseDuration(4);
+                                                            return;
+                                                        }
+
+                                                        const selected = availableCourses.find((c) => c.id === value);
                                                         setFormData(prev => ({
                                                             ...prev,
-                                                            course_id: e.target.value,
+                                                            course_id: value,
                                                             course_name: selected?.name || '',
                                                             year_of_study: '',
                                                         }));
@@ -642,9 +674,12 @@ export default function OnboardingPage() {
                                                     {availableCourses.map((c) => (
                                                         <option key={c.id} value={c.id}>{c.name} ({c.duration_years} yrs)</option>
                                                     ))}
+                                                    {availableCourses.length > 0 && (
+                                                        <option value="other">Other / Not Listed</option>
+                                                    )}
                                                 </select>
 
-                                                {availableCourses.length === 0 && !isCoursesLoading && (
+                                                {(formData.course_id === 'other' || (availableCourses.length === 0 && !isCoursesLoading)) && (
                                                     <Input
                                                         className="mt-2"
                                                         placeholder="Enter Course Name (e.g. B.Tech CSE)"
@@ -663,7 +698,7 @@ export default function OnboardingPage() {
                                             />
                                         )}
 
-                                        {(formData.college_id === 'other' || (formData.college_id !== 'other' && availableCourses.length === 0 && !isCoursesLoading)) && (
+                                        {(formData.college_id === 'other' || formData.course_id === 'other' || (formData.college_id !== 'other' && availableCourses.length === 0 && !isCoursesLoading)) && (
                                             <div className="mt-2 space-y-1">
                                                 <span className="text-[10px] uppercase font-bold opacity-50">Course Duration (Years)</span>
                                                 <select
@@ -705,7 +740,7 @@ export default function OnboardingPage() {
                                                 })}
                                         </select>
                                         <p className="text-[10px] text-muted-foreground">
-                                            {(formData.college_id === 'other' || (formData.college_id !== 'other' && availableCourses.length === 0 && !isCoursesLoading))
+                                            {(formData.college_id === 'other' || formData.course_id === 'other' || (formData.college_id !== 'other' && availableCourses.length === 0 && !isCoursesLoading))
                                                 ? `Course duration set to: ${selectedCourseDuration || 4} years.`
                                                 : (selectedCourseDuration
                                                     ? `Based on course duration: ${selectedCourseDuration} years.`
