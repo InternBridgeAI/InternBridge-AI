@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Zap, Lock, Mail, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function ResetPasswordPage() {
+// This page depends on query params + localStorage, so it should not be statically prerendered.
+export const dynamic = 'force-dynamic';
+
+function ResetPasswordContent() {
     const searchParams = useSearchParams();
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -147,5 +150,13 @@ export default function ResetPasswordPage() {
                 </form>
             </div>
         </div>
+    );
+}
+
+export default function ResetPasswordPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>}>
+            <ResetPasswordContent />
+        </Suspense>
     );
 }
