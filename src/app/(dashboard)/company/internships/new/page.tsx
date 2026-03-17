@@ -321,7 +321,7 @@ export default function NewInternshipPage() {
                                     type="button"
                                     variant="outline"
                                     onClick={requestCollegeApproval}
-                                    disabled={isRequesting || partnershipStatus === 'loading'}
+                                    disabled={isRequesting}
                                     className="w-full"
                                 >
                                     {isRequesting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Request College Approval'}
