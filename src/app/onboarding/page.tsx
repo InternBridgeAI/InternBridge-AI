@@ -613,42 +613,76 @@ export default function OnboardingPage() {
                                     )}
                                 </div>
 
-                                {/* Course + Year */}
-                                {formData.college_id && formData.college_id !== 'other' && (
+                                {/* Course */}
+                                {formData.college_id && (
                                     <div className="space-y-2">
-                                        <Label>Select Your Course</Label>
-                                        <select
-                                            className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none disabled:opacity-60"
-                                            value={formData.course_id}
-                                            onChange={(e) => {
-                                                const selected = availableCourses.find((c) => c.id === e.target.value);
-                                                setFormData(prev => ({
-                                                    ...prev,
-                                                    course_id: e.target.value,
-                                                    course_name: selected?.name || '',
-                                                    year_of_study: '',
-                                                }));
-                                                setSelectedCourseDuration(typeof selected?.duration_years === 'number' ? selected.duration_years : null);
-                                            }}
-                                            disabled={isCoursesLoading || !formData.college_id}
-                                            required={availableCourses.length > 0}
-                                        >
-                                            <option value="">
-                                                {isCoursesLoading ? 'Loading courses...' : (availableCourses.length > 0 ? 'Choose your course...' : 'No courses found (enter manually below)')}
-                                            </option>
-                                            {availableCourses.map((c) => (
-                                                <option key={c.id} value={c.id}>{c.name} ({c.duration_years} yrs)</option>
-                                            ))}
-                                        </select>
+                                        <Label>{formData.college_id === 'other' ? 'Your Course' : 'Select Your Course'}</Label>
 
-                                        {availableCourses.length === 0 && !isCoursesLoading && (
+                                        {formData.college_id !== 'other' ? (
+                                            <>
+                                                <select
+                                                    className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none disabled:opacity-60"
+                                                    value={formData.course_id}
+                                                    onChange={(e) => {
+                                                        const selected = availableCourses.find((c) => c.id === e.target.value);
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            course_id: e.target.value,
+                                                            course_name: selected?.name || '',
+                                                            year_of_study: '',
+                                                        }));
+                                                        setSelectedCourseDuration(typeof selected?.duration_years === 'number' ? selected.duration_years : null);
+                                                    }}
+                                                    disabled={isCoursesLoading || !formData.college_id}
+                                                    required={availableCourses.length > 0}
+                                                >
+                                                    <option value="">
+                                                        {isCoursesLoading ? 'Loading courses...' : (availableCourses.length > 0 ? 'Choose your course...' : 'No courses found (enter manually below)')}
+                                                    </option>
+                                                    {availableCourses.map((c) => (
+                                                        <option key={c.id} value={c.id}>{c.name} ({c.duration_years} yrs)</option>
+                                                    ))}
+                                                </select>
+
+                                                {availableCourses.length === 0 && !isCoursesLoading && (
+                                                    <Input
+                                                        className="mt-2"
+                                                        placeholder="Enter Course Name (e.g. B.Tech CSE)"
+                                                        value={formData.course_name}
+                                                        onChange={(e) => setFormData({ ...formData, course_name: e.target.value })}
+                                                        required
+                                                    />
+                                                )}
+                                            </>
+                                        ) : (
                                             <Input
-                                                className="mt-2"
                                                 placeholder="Enter Course Name (e.g. B.Tech CSE)"
                                                 value={formData.course_name}
                                                 onChange={(e) => setFormData({ ...formData, course_name: e.target.value })}
                                                 required
                                             />
+                                        )}
+
+                                        {(formData.college_id === 'other' || (formData.college_id !== 'other' && availableCourses.length === 0 && !isCoursesLoading)) && (
+                                            <div className="mt-2 space-y-1">
+                                                <span className="text-[10px] uppercase font-bold opacity-50">Course Duration (Years)</span>
+                                                <select
+                                                    className="w-full h-9 px-3 py-1 rounded-md border border-input bg-background/50 text-xs focus:ring-1 focus:ring-primary outline-none"
+                                                    value={String(selectedCourseDuration || 4)}
+                                                    onChange={(e) => {
+                                                        const duration = parseInt(e.target.value, 10);
+                                                        setSelectedCourseDuration(Number.isFinite(duration) ? Math.max(1, Math.min(8, duration)) : 4);
+                                                    }}
+                                                >
+                                                    {Array.from({ length: 8 }).map((_, idx) => {
+                                                        const years = idx + 1;
+                                                        return <option key={years} value={String(years)}>{years}</option>;
+                                                    })}
+                                                </select>
+                                                <p className="text-[10px] text-muted-foreground">
+                                                    This controls the max Year of Study you can select below.
+                                                </p>
+                                            </div>
                                         )}
                                     </div>
                                 )}
@@ -671,7 +705,11 @@ export default function OnboardingPage() {
                                                 })}
                                         </select>
                                         <p className="text-[10px] text-muted-foreground">
-                                            {selectedCourseDuration ? `Based on course duration: ${selectedCourseDuration} years.` : 'Select a course to auto-limit years.'}
+                                            {(formData.college_id === 'other' || (formData.college_id !== 'other' && availableCourses.length === 0 && !isCoursesLoading))
+                                                ? `Course duration set to: ${selectedCourseDuration || 4} years.`
+                                                : (selectedCourseDuration
+                                                    ? `Based on course duration: ${selectedCourseDuration} years.`
+                                                    : 'Select a course to auto-limit years.')}
                                         </p>
                                     </div>
                                 )}
