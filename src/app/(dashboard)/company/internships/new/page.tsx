@@ -36,6 +36,11 @@ export default function NewInternshipPage() {
         deadline: '',
     });
     const [isSuggesting, setIsSuggesting] = useState(false);
+    const isCheckingPartnership = partnershipStatus === 'loading';
+    // Compute via a boolean so TS doesn't over-narrow partnershipStatus inside JSX branches.
+    const canRequestCollegeApproval =
+        Boolean(formData.college_id) &&
+        (partnershipStatus === 'none' || partnershipStatus === 'rejected');
 
     useEffect(() => {
         const loadColleges = async () => {
@@ -316,12 +321,12 @@ export default function NewInternshipPage() {
                                 </p>
                             )}
 
-                            {formData.college_id && (partnershipStatus === 'none' || partnershipStatus === 'rejected') && (
+                            {canRequestCollegeApproval && (
                                 <Button
                                     type="button"
                                     variant="outline"
                                     onClick={requestCollegeApproval}
-                                    disabled={isRequesting}
+                                    disabled={isRequesting || isCheckingPartnership}
                                     className="w-full"
                                 >
                                     {isRequesting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Request College Approval'}
