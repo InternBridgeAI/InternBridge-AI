@@ -1,0 +1,14 @@
+{
+  "source_directories": [
+    "/Users/piyushlomte/Desktop/InternBridge-AI/backend"
+  ],
+  "search_path": [
+    "/Users/piyushlomte/Desktop/InternBridge-AI/backend",
+    "/Users/piyushlomte/Desktop/InternBridge-AI/backend/venv/lib/python3.9/site-packages"
+  ],
+  "exclude": [
+    ".*/venv/.*",
+    ".*/node_modules/.*",
+    ".*/\\.next/.*"
+  ]
+}

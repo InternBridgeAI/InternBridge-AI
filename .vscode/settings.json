@@ -1,0 +1,13 @@
+{
+    "python.defaultInterpreterPath": "/Users/piyushlomte/Desktop/InternBridge-AI/backend/venv/bin/python",
+    "python.analysis.extraPaths": [
+        "/Users/piyushlomte/Desktop/InternBridge-AI/backend"
+    ],
+    "python.analysis.useLibraryCodeForTypes": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.diagnosticMode": "workspace",
+    "python.linting.enabled": false,
+    "css.validate": false,
+    "pyre.enabled": false,
+    "pyre.enable": false
+}

@@ -1,0 +1,43 @@
+import type { Metadata } from 'next';
+import React from 'react';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import { Toaster } from 'sonner';
+
+const inter = Inter({ subsets: ['latin'] });
+
+export const metadata: Metadata = {
+    title: 'InternBridge AI – Skill Verified Internship Ecosystem',
+    description:
+        'AI-powered internship portal that matches students to internships using resume parsing, vector similarity, skill gap analysis, and GitHub verification.',
+    keywords: ['internship', 'AI', 'skill matching', 'resume parsing', 'career'],
+};
+
+import { ThemeProvider } from '@/components/theme-provider';
+
+import { SmallFooter } from '@/components/layout/small-footer';
+
+export default function RootLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return (
+        <html lang="en" suppressHydrationWarning>
+            <body className={`${inter.className} min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-primary/30`}>
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="system"
+                    enableSystem
+                    disableTransitionOnChange
+                >
+                    <main className="flex-grow">
+                        {children}
+                    </main>
+                    <SmallFooter />
+                    <Toaster position="top-right" richColors closeButton />
+                </ThemeProvider>
+            </body>
+        </html>
+    );
+}
