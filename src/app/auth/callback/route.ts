@@ -6,6 +6,7 @@ export async function GET(request: Request) {
     const code = searchParams.get('code')
     const next = searchParams.get('next') || '/student'
     const roleParam = searchParams.get('role')
+    const flow = searchParams.get('flow')
 
     if (code) {
         const supabase = await createClient()
@@ -17,6 +18,7 @@ export async function GET(request: Request) {
 
             if (session?.user) {
                 const provider = session.user.app_metadata?.provider || session.user.identities?.[0]?.provider || null
+                const passwordReady = Boolean(session.user.user_metadata?.password_ready)
 
                 // --- Auto-save GitHub & LinkedIn data from real OAuth identity links ---
                 const identities = session.user.identities || []
@@ -56,19 +58,43 @@ export async function GET(request: Request) {
                     .eq('id', session.user.id)
                     .single()
 
+                const resolvePostAuthPath = (resolvedProfile?: { role?: string | null; is_onboarded?: boolean | null; role_selected?: boolean | null } | null) => {
+                    if (!resolvedProfile) {
+                        const inferredRole = roleParam || session.user.user_metadata?.role || 'student'
+                        const roleSelected = Boolean(roleParam || session.user.user_metadata?.role)
+
+                        if (!roleSelected) {
+                            return '/select-role'
+                        }
+
+                        return `/onboarding?role=${inferredRole}`
+                    }
+
+                    if (!resolvedProfile.is_onboarded) {
+                        if (!resolvedProfile.role_selected) {
+                            return '/select-role'
+                        }
+
+                        const resolvedRole = roleParam || resolvedProfile.role || 'student'
+                        return `/onboarding?role=${resolvedRole}`
+                    }
+
+                    return `/${resolvedProfile.role || 'student'}`
+                }
+
                 // If explicit 'next' is provided (e.g. for reset-password), prioritize it
                 if (searchParams.get('next')) {
                     return NextResponse.redirect(`${origin}${next}`)
                 }
 
                 if (!profile) {
-                    if (provider === 'google') {
-                        await supabase.auth.signOut()
-                        return NextResponse.redirect(`${origin}/login?error=google-signup-disabled`)
-                    }
-
                     const inferredRole = roleParam || session.user.user_metadata?.role || 'student';
                     const roleSelected = Boolean(roleParam || session.user.user_metadata?.role);
+
+                    if (provider === 'google' && flow !== 'google-signup') {
+                        await supabase.auth.signOut()
+                        return NextResponse.redirect(`${origin}/login?error=no-google-account`)
+                    }
 
                     // Create profile if missing (first time OAuth login)
                     await supabase.from('profiles').upsert({
@@ -80,11 +106,23 @@ export async function GET(request: Request) {
                         is_onboarded: false
                     })
 
+                    if (provider === 'google') {
+                        const setPasswordUrl = new URL('/set-password', origin)
+                        setPasswordUrl.searchParams.set('next', roleSelected ? `/onboarding?role=${inferredRole}` : '/select-role')
+                        return NextResponse.redirect(setPasswordUrl)
+                    }
+
                     if (!roleSelected) {
                         return NextResponse.redirect(`${origin}/select-role`)
                     }
 
                     return NextResponse.redirect(`${origin}/onboarding?role=${inferredRole}`)
+                }
+
+                if (provider === 'google' && !passwordReady) {
+                    const setPasswordUrl = new URL('/set-password', origin)
+                    setPasswordUrl.searchParams.set('next', resolvePostAuthPath(profile))
+                    return NextResponse.redirect(setPasswordUrl)
                 }
 
                 if (profile) {

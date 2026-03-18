@@ -21,8 +21,10 @@ export default function LoginPage() {
         }
 
         const errorCode = new URLSearchParams(window.location.search).get('error');
-        if (errorCode === 'google-signup-disabled') {
-            setError('Create your account with email and password first. Google sign-in is only available for existing linked accounts.');
+        if (errorCode === 'google-password-required') {
+            setError('Your Google account is connected. Set a password once to finish your account setup before signing in.');
+        } else if (errorCode === 'no-google-account') {
+            setError('No existing Google-linked account was found. Please sign up first or use email and password.');
         } else if (errorCode === 'auth-code-error') {
             setError('We could not complete the sign-in request. Please try again.');
         }
@@ -90,38 +92,6 @@ export default function LoginPage() {
         setLoading(false);
     };
 
-    const handleOTPLogin = async () => {
-        if (!email) {
-            setError('Please enter your email for OTP login');
-            return;
-        }
-        setLoading(true);
-        setError('');
-
-        const supabase = createClient();
-        const { error: otpError } = await supabase.auth.signInWithOtp({
-            email,
-            options: {
-                shouldCreateUser: false,
-                emailRedirectTo: typeof window !== 'undefined'
-                    ? `${window.location.origin}/auth/callback`
-                    : undefined,
-            },
-        });
-
-        if (otpError) {
-            if (otpError.message.toLowerCase().includes('signups not allowed for otp')) {
-                setError('No account was found for this email. Please sign up with email and password first.');
-            } else {
-                setError(otpError.message);
-            }
-        } else {
-            setError('');
-            alert('Check your email for the magic link!');
-        }
-        setLoading(false);
-    };
-
     const handleGoogleLogin = async () => {
         setLoading(true);
         setError('');
@@ -129,7 +99,7 @@ export default function LoginPage() {
         const { error: googleError } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
+                redirectTo: `${window.location.origin}/auth/callback?flow=google-login`,
             },
         });
 
@@ -242,15 +212,6 @@ export default function LoginPage() {
                                 />
                             </svg>
                             Continue with Google
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full"
-                            onClick={handleOTPLogin}
-                            disabled={loading}
-                        >
-                            <Mail size={16} className="mr-2" /> Continue with Email Link
                         </Button>
                     </div>
 
