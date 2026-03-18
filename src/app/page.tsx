@@ -125,7 +125,7 @@ export default function LandingPage() {
 
                                     <div className="relative overflow-visible rounded-[1.75rem] border border-border/60 bg-gradient-to-br from-white via-white to-primary/5 px-3 pb-4 pt-5 dark:from-slate-950/80 dark:via-slate-950/70 dark:to-primary/10 sm:px-6 sm:pb-6">
                                         <div className="pointer-events-none absolute inset-x-6 top-0 h-16 rounded-full bg-gradient-to-r from-primary/10 via-cyan-400/10 to-fuchsia-500/10 blur-2xl" />
-                                        <div className="relative mx-auto w-[114%] max-w-none -translate-x-[3%] sm:w-[112%]">
+                                        <div className="relative mx-auto w-full max-w-[720px]">
                                             <img
                                                 src="/illustrations/internship-animate.svg"
                                                 alt="Animated internship workflow illustration"
