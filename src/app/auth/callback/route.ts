@@ -16,6 +16,8 @@ export async function GET(request: Request) {
             const { data: { session } } = await supabase.auth.getSession()
 
             if (session?.user) {
+                const provider = session.user.app_metadata?.provider || session.user.identities?.[0]?.provider || null
+
                 // --- Auto-save GitHub & LinkedIn data from real OAuth identity links ---
                 const identities = session.user.identities || []
 
@@ -60,6 +62,11 @@ export async function GET(request: Request) {
                 }
 
                 if (!profile) {
+                    if (provider === 'google') {
+                        await supabase.auth.signOut()
+                        return NextResponse.redirect(`${origin}/login?error=google-signup-disabled`)
+                    }
+
                     const inferredRole = roleParam || session.user.user_metadata?.role || 'student';
                     const roleSelected = Boolean(roleParam || session.user.user_metadata?.role);
 
