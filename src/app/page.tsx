@@ -29,7 +29,7 @@ export default function LandingPage() {
                     <div className="absolute right-0 top-32 h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl" />
                     <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(15,23,42,0.04))] dark:bg-[linear-gradient(to_bottom,transparent,rgba(255,255,255,0.02))]" />
 
-                    <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.02fr,0.98fr] lg:gap-16">
+                    <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.94fr,1.06fr] lg:gap-16">
                         <div className="max-w-3xl">
                             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-primary shadow-sm">
                                 <Sparkles size={12} /> AI-Powered Internship Matching
@@ -80,7 +80,7 @@ export default function LandingPage() {
                             </div>
                         </div>
 
-                        <div className="relative mx-auto w-full max-w-2xl">
+                        <div className="relative mx-auto w-full max-w-3xl">
                             <div className="absolute -left-3 top-10 hidden rounded-2xl border border-border/70 bg-card/85 px-4 py-3 shadow-xl backdrop-blur lg:block">
                                 <div className="flex items-center gap-3">
                                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-500">
@@ -123,12 +123,15 @@ export default function LandingPage() {
                                         </div>
                                     </div>
 
-                                    <div className="relative overflow-hidden rounded-[1.5rem] border border-border/60 bg-white/70 p-2 dark:bg-slate-950/40">
-                                        <img
-                                            src="/illustrations/internship-animate.svg"
-                                            alt="Animated internship workflow illustration"
-                                            className="h-auto w-full rounded-[1.2rem] object-contain"
-                                        />
+                                    <div className="relative overflow-hidden rounded-[1.75rem] border border-border/60 bg-gradient-to-br from-white via-white to-primary/5 px-2 pb-2 pt-3 dark:from-slate-950/80 dark:via-slate-950/70 dark:to-primary/10 sm:px-4 sm:pb-4">
+                                        <div className="pointer-events-none absolute inset-x-6 top-0 h-16 rounded-full bg-gradient-to-r from-primary/10 via-cyan-400/10 to-fuchsia-500/10 blur-2xl" />
+                                        <div className="relative mx-auto w-full max-w-[680px]">
+                                            <img
+                                                src="/illustrations/internship-animate.svg"
+                                                alt="Animated internship workflow illustration"
+                                                className="block h-auto w-full object-contain sm:scale-[1.04]"
+                                            />
+                                        </div>
                                     </div>
 
                                     <div className="mt-5 grid gap-3 sm:grid-cols-3">
