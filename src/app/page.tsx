@@ -29,7 +29,7 @@ export default function LandingPage() {
                     <div className="absolute right-0 top-32 h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl" />
                     <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(15,23,42,0.04))] dark:bg-[linear-gradient(to_bottom,transparent,rgba(255,255,255,0.02))]" />
 
-                    <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.94fr,1.06fr] lg:gap-16">
+                    <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.9fr,1.1fr] lg:gap-16">
                         <div className="max-w-3xl">
                             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-primary shadow-sm">
                                 <Sparkles size={12} /> AI-Powered Internship Matching
@@ -80,7 +80,7 @@ export default function LandingPage() {
                             </div>
                         </div>
 
-                        <div className="relative mx-auto w-full max-w-3xl">
+                        <div className="relative mx-auto w-full max-w-[56rem]">
                             <div className="absolute -left-3 top-10 hidden rounded-2xl border border-border/70 bg-card/85 px-4 py-3 shadow-xl backdrop-blur lg:block">
                                 <div className="flex items-center gap-3">
                                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-500">
@@ -109,9 +109,9 @@ export default function LandingPage() {
                                 Live Matching Flow
                             </div>
 
-                            <div className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/80 p-4 shadow-[0_32px_90px_-35px_rgba(59,130,246,0.5)] backdrop-blur sm:p-6">
+                            <div className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/80 p-4 shadow-[0_32px_90px_-35px_rgba(59,130,246,0.5)] backdrop-blur sm:p-6 lg:p-7">
                                 <div className="absolute inset-x-12 top-0 h-24 rounded-full bg-gradient-to-r from-primary/20 via-fuchsia-500/10 to-cyan-500/15 blur-3xl" />
-                                <div className="relative rounded-[1.5rem] border border-border/70 bg-gradient-to-br from-background via-background to-muted/30 p-4 sm:p-6">
+                                <div className="relative rounded-[1.5rem] border border-border/70 bg-gradient-to-br from-background via-background to-muted/30 p-4 sm:p-6 lg:p-7">
                                     <div className="mb-5 flex items-center justify-between">
                                         <div>
                                             <p className="text-[11px] font-black uppercase tracking-[0.26em] text-muted-foreground">InternBridge AI</p>
@@ -123,13 +123,13 @@ export default function LandingPage() {
                                         </div>
                                     </div>
 
-                                    <div className="relative overflow-visible rounded-[1.75rem] border border-border/60 bg-gradient-to-br from-white via-white to-primary/5 px-3 pb-4 pt-5 dark:from-slate-950/80 dark:via-slate-950/70 dark:to-primary/10 sm:px-6 sm:pb-6">
+                                    <div className="relative overflow-visible rounded-[1.75rem] border border-border/60 bg-gradient-to-br from-white via-white to-primary/5 px-2 pb-3 pt-4 dark:from-slate-950/80 dark:via-slate-950/70 dark:to-primary/10 sm:px-4 sm:pb-4 sm:pt-5 lg:px-5 lg:pb-5">
                                         <div className="pointer-events-none absolute inset-x-6 top-0 h-16 rounded-full bg-gradient-to-r from-primary/10 via-cyan-400/10 to-fuchsia-500/10 blur-2xl" />
-                                        <div className="relative mx-auto w-full max-w-[720px]">
+                                        <div className="relative mx-auto w-full max-w-[820px]">
                                             <img
                                                 src="/illustrations/internship-animate.svg"
                                                 alt="Animated internship workflow illustration"
-                                                className="block h-auto w-full object-contain"
+                                                className="block h-auto w-full scale-[1.04] object-contain"
                                             />
                                         </div>
                                     </div>
