@@ -117,63 +117,36 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen flex">
             {/* Left panel – branding */}
-            <div className="hidden lg:flex lg:w-1/2 gradient-brand relative overflow-hidden">
+            <div className="hidden lg:flex lg:w-[48%] gradient-brand relative overflow-hidden xl:w-1/2">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-40" />
                 <div className="absolute left-12 top-20 h-40 w-40 rounded-full bg-white/12 blur-3xl" />
                 <div className="absolute right-10 bottom-16 h-56 w-56 rounded-full bg-cyan-300/15 blur-3xl" />
-                <div className="relative z-10 flex flex-col justify-center px-14 py-16 text-white xl:px-16">
+                <div className="relative z-10 flex w-full flex-col justify-center px-10 py-8 text-white xl:px-14">
                     <div className="flex items-center gap-3 mb-8">
                         <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                             <Zap size={28} />
                         </div>
                         <span className="text-2xl font-bold">InternBridge AI</span>
                     </div>
-                    <h2 className="text-4xl font-bold leading-tight mb-4">
+                    <h2 className="max-w-xl text-4xl font-bold leading-tight xl:text-5xl">
                         Skill Verified<br />Internship Ecosystem
                     </h2>
-                    <p className="text-lg text-white/80 max-w-md">
+                    <p className="mt-4 max-w-xl text-lg text-white/80">
                         AI-powered matching, resume parsing, skill verification, and micro-internship opportunities — all in one platform.
                     </p>
-
-                    <div className="mt-10 rounded-[2rem] border border-white/15 bg-white/10 p-5 shadow-[0_28px_80px_-40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-                        <div className="mb-4 flex items-center justify-between">
-                            <div>
-                                <p className="text-[11px] font-black uppercase tracking-[0.28em] text-white/60">InternBridge Flow</p>
-                                <p className="mt-2 text-2xl font-bold leading-tight">Sign in to your verified internship network</p>
-                            </div>
-                            <div className="rounded-2xl bg-white/15 px-3 py-2 text-right">
-                                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/70">Trusted</p>
-                                <p className="text-sm font-semibold">Student + TPO + Company</p>
-                            </div>
-                        </div>
-
-                        <div className="rounded-[1.75rem] border border-white/15 bg-white/95 px-4 py-5">
-                            <img
-                                src="/illustrations/mobile-login-animate.svg"
-                                alt="Animated secure login illustration"
-                                className="mx-auto h-auto w-full max-w-[430px] object-contain"
-                            />
-                        </div>
-
-                        <div className="mt-4 grid grid-cols-3 gap-3 text-slate-950">
-                            {[
-                                { label: 'Profiles', value: 'Verified' },
-                                { label: 'Matching', value: 'AI-led' },
-                                { label: 'Access', value: 'Role-based' },
-                            ].map((item) => (
-                                <div key={item.label} className="rounded-2xl bg-white/90 px-3 py-3">
-                                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">{item.label}</p>
-                                    <p className="mt-2 text-sm font-bold text-slate-950">{item.value}</p>
-                                </div>
-                            ))}
-                        </div>
+                    <div className="mt-6 flex flex-1 items-center">
+                        <img
+                            src="/illustrations/mobile-login-animate.svg"
+                            alt="Animated secure login illustration"
+                            className="pointer-events-none h-auto w-full max-w-[620px] max-h-[46vh] object-contain drop-shadow-[0_20px_44px_rgba(15,23,42,0.18)] xl:max-h-[50vh]"
+                        />
                     </div>
                 </div>
             </div>
 
             {/* Right panel – form */}
-            <div className="flex-1 flex items-center justify-center p-8 bg-background transition-colors duration-300">
-                <div className="w-full max-w-md">
+            <div className="flex-1 flex items-center justify-center bg-background px-5 py-6 transition-colors duration-300 lg:px-8 lg:py-6">
+                <div className="w-full max-w-lg">
                     <div className="lg:hidden flex items-center gap-3 mb-8">
                         <div className="w-10 h-10 rounded-lg gradient-brand flex items-center justify-center">
                             <Zap className="text-white" size={22} />
@@ -181,8 +154,8 @@ export default function LoginPage() {
                         <span className="text-xl font-bold text-foreground">InternBridge AI</span>
                     </div>
 
-                    <h1 className="text-2xl font-bold text-foreground mb-2">Welcome back</h1>
-                    <p className="text-muted-foreground mb-8">Sign in to your account to continue</p>
+                    <h1 className="text-2xl font-bold text-foreground mb-1">Welcome back</h1>
+                    <p className="text-muted-foreground mb-6">Sign in to your account to continue</p>
 
                     {error && (
                         <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
@@ -190,7 +163,7 @@ export default function LoginPage() {
                         </div>
                     )}
 
-                    <form onSubmit={handleLogin} className="space-y-4">
+                    <form onSubmit={handleLogin} className="space-y-3">
                         <Input
                             label="Email"
                             type="email"
@@ -215,13 +188,13 @@ export default function LoginPage() {
                         </Button>
                     </form>
 
-                    <div className="mt-4 flex items-center gap-3">
+                    <div className="mt-3 flex items-center gap-3">
                         <div className="flex-1 h-px bg-border" />
                         <span className="text-xs text-muted-foreground">OR</span>
                         <div className="flex-1 h-px bg-border" />
                     </div>
 
-                    <div className="mt-4 space-y-3">
+                    <div className="mt-3 space-y-3">
                         <Button
                             type="button"
                             variant="outline"
@@ -251,7 +224,7 @@ export default function LoginPage() {
                         </Button>
                     </div>
 
-                    <p className="mt-8 text-center text-sm text-muted-foreground">
+                    <p className="mt-6 text-center text-sm text-muted-foreground">
                         Don&apos;t have an account?{' '}
                         <Link href="/register" className="text-primary font-medium hover:underline">
                             Sign up

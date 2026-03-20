@@ -130,64 +130,36 @@ export default function RegisterPage() {
     return (
         <div className="min-h-screen flex">
             {/* Left panel */}
-            <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-brand-600 via-purple-600 to-brand-800 relative overflow-hidden">
+            <div className="hidden lg:flex lg:w-[48%] bg-gradient-to-br from-brand-600 via-purple-600 to-brand-800 relative overflow-hidden xl:w-1/2">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-40" />
                 <div className="absolute left-12 top-20 h-44 w-44 rounded-full bg-white/12 blur-3xl" />
                 <div className="absolute right-8 bottom-10 h-60 w-60 rounded-full bg-fuchsia-300/15 blur-3xl" />
-                <div className="relative z-10 flex flex-col justify-center px-14 py-16 text-white xl:px-16">
+                <div className="relative z-10 flex w-full flex-col justify-center px-10 py-8 text-white xl:px-14">
                     <div className="flex items-center gap-3 mb-8">
                         <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                             <Zap size={28} />
                         </div>
                         <span className="text-2xl font-bold">InternBridge AI</span>
                     </div>
-                    <h2 className="text-4xl font-bold leading-tight mb-4">
+                    <h2 className="max-w-xl text-4xl font-bold leading-tight xl:text-5xl">
                         Join the Future of<br />Internship Matching
                     </h2>
-                    <p className="text-lg text-white/80 max-w-md">
+                    <p className="mt-4 max-w-xl text-lg text-white/80">
                         Create your account and let AI match you with the perfect internship opportunities.
                     </p>
-
-                    <div className="mt-10 rounded-[2rem] border border-white/15 bg-white/10 p-5 shadow-[0_28px_80px_-40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-                        <div className="mb-4 flex items-center justify-between">
-                            <div>
-                                <p className="text-[11px] font-black uppercase tracking-[0.28em] text-white/60">Guided Onboarding</p>
-                                <p className="mt-2 text-2xl font-bold leading-tight">Create a profile that feels credible from day one</p>
-                            </div>
-                            <div className="rounded-2xl bg-white/15 px-3 py-2 text-right">
-                                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/70">Launch</p>
-                                <p className="text-sm font-semibold">AI + Verification</p>
-                            </div>
-                        </div>
-
-                        <div className="rounded-[1.75rem] border border-white/15 bg-white/95 px-4 py-5">
-                            <img
-                                src="/illustrations/mobile-login-animate.svg"
-                                alt="Animated onboarding illustration"
-                                className="mx-auto h-auto w-full max-w-[430px] object-contain"
-                            />
-                        </div>
-
-                        <div className="mt-4 grid grid-cols-2 gap-3 text-slate-950">
-                            {[
-                                { label: 'Resume', value: 'AI parsed' },
-                                { label: 'Skills', value: 'Verified' },
-                                { label: 'Matching', value: 'Smarter' },
-                                { label: 'Onboarding', value: 'Guided' },
-                            ].map((feature) => (
-                                <div key={feature.label} className="rounded-2xl bg-white/90 px-3 py-3">
-                                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">{feature.label}</p>
-                                    <p className="mt-2 text-sm font-bold text-slate-950">{feature.value}</p>
-                                </div>
-                            ))}
-                        </div>
+                    <div className="mt-6 flex flex-1 items-center">
+                        <img
+                            src="/illustrations/mobile-login-animate.svg"
+                            alt="Animated onboarding illustration"
+                            className="pointer-events-none h-auto w-full max-w-[620px] max-h-[46vh] object-contain drop-shadow-[0_20px_44px_rgba(15,23,42,0.18)] xl:max-h-[50vh]"
+                        />
                     </div>
                 </div>
             </div>
 
             {/* Right panel */}
-            <div className="flex-1 flex items-center justify-center p-8 bg-background transition-colors duration-300">
-                <div className="w-full max-w-md">
+            <div className="flex-1 flex items-center justify-center bg-background px-5 py-6 transition-colors duration-300 lg:px-8 lg:py-6">
+                <div className="w-full max-w-lg">
                     <div className="lg:hidden flex items-center gap-3 mb-8">
                         <div className="w-10 h-10 rounded-lg gradient-brand flex items-center justify-center">
                             <Zap className="text-white" size={22} />
@@ -195,8 +167,8 @@ export default function RegisterPage() {
                         <span className="text-xl font-bold text-foreground">InternBridge AI</span>
                     </div>
 
-                    <h1 className="text-2xl font-bold text-foreground mb-2">Create your account</h1>
-                    <p className="text-muted-foreground mb-8">Get started with InternBridge AI</p>
+                    <h1 className="text-2xl font-bold text-foreground mb-1">Create your account</h1>
+                    <p className="text-muted-foreground mb-6">Get started with InternBridge AI</p>
 
                     {error && (
                         <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
@@ -204,16 +176,28 @@ export default function RegisterPage() {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <Input
-                            label="Full Name"
-                            name="fullName"
-                            placeholder="John Doe"
-                            value={formData.fullName}
-                            onChange={handleChange}
-                            icon={<User size={16} />}
-                            required
-                        />
+                    <form onSubmit={handleSubmit} className="space-y-3">
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Input
+                                label="Full Name"
+                                name="fullName"
+                                placeholder="John Doe"
+                                value={formData.fullName}
+                                onChange={handleChange}
+                                icon={<User size={16} />}
+                                required
+                            />
+                            <Input
+                                label="Phone Number"
+                                name="phone"
+                                type="tel"
+                                placeholder="+91 98765 43210"
+                                value={formData.phone}
+                                onChange={handleChange}
+                                icon={<Phone size={16} />}
+                                required
+                            />
+                        </div>
                         <Input
                             label="Email"
                             name="email"
@@ -224,36 +208,28 @@ export default function RegisterPage() {
                             icon={<Mail size={16} />}
                             required
                         />
-                        <Input
-                            label="Phone Number"
-                            name="phone"
-                            type="tel"
-                            placeholder="+91 98765 43210"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            icon={<Phone size={16} />}
-                            required
-                        />
-                        <Input
-                            label="Password"
-                            name="password"
-                            type="password"
-                            placeholder="••••••••"
-                            value={formData.password}
-                            onChange={handleChange}
-                            icon={<Lock size={16} />}
-                            required
-                        />
-                        <Input
-                            label="Confirm Password"
-                            name="confirmPassword"
-                            type="password"
-                            placeholder="••••••••"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            icon={<Lock size={16} />}
-                            required
-                        />
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Input
+                                label="Password"
+                                name="password"
+                                type="password"
+                                placeholder="••••••••"
+                                value={formData.password}
+                                onChange={handleChange}
+                                icon={<Lock size={16} />}
+                                required
+                            />
+                            <Input
+                                label="Confirm Password"
+                                name="confirmPassword"
+                                type="password"
+                                placeholder="••••••••"
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                                icon={<Lock size={16} />}
+                                required
+                            />
+                        </div>
 
                         <label className="flex items-start gap-3 text-sm text-muted-foreground">
                             <input
@@ -272,13 +248,13 @@ export default function RegisterPage() {
                         </Button>
                     </form>
 
-                    <div className="mt-4 flex items-center gap-3">
+                    <div className="mt-3 flex items-center gap-3">
                         <div className="flex-1 h-px bg-border" />
                         <span className="text-xs text-muted-foreground">OR</span>
                         <div className="flex-1 h-px bg-border" />
                     </div>
 
-                    <div className="mt-4 space-y-3">
+                    <div className="mt-3 space-y-3">
                         <Button
                             type="button"
                             variant="outline"
@@ -307,12 +283,12 @@ export default function RegisterPage() {
                             Sign up with Google
                         </Button>
 
-                        <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
+                        <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
                             If you continue with Google, we will ask you to set a password before role selection so you can also sign in with email and password later.
                         </div>
                     </div>
 
-                    <p className="mt-6 text-center text-sm text-muted-foreground">
+                    <p className="mt-4 text-center text-sm text-muted-foreground">
                         Already have an account?{' '}
                         <Link href="/login" className="text-primary font-medium hover:underline">
                             Sign in
