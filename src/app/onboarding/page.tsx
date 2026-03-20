@@ -530,261 +530,119 @@ export default function OnboardingPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
-                <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-white/80 shadow-2xl backdrop-blur">
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    Preparing your onboarding workspace...
+            <div className="min-h-screen bg-background px-6 py-10 sm:px-8 lg:px-20">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Preparing your profile form...
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="relative min-h-screen overflow-hidden bg-slate-950">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.28),_transparent_34%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.14),_transparent_28%),linear-gradient(180deg,_#0f172a_0%,_#111827_48%,_#0f172a_100%)]" />
-            <div className="absolute inset-y-0 left-0 hidden w-1/2 bg-[linear-gradient(90deg,rgba(255,255,255,0.03),transparent)] lg:block" />
-            <div className="absolute -left-16 top-28 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
-            <div className="absolute right-10 top-12 h-40 w-40 rounded-full bg-sky-500/10 blur-3xl" />
+        <div className="min-h-screen bg-background">
+            <div className="w-full px-6 py-10 sm:px-8 lg:px-20 xl:px-24">
+                <div className="max-w-5xl">
+                    <div className="space-y-3">
+                        <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                            Complete Your Profile
+                        </h1>
+                        <p className="max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
+                            Add the details needed to finish setup and personalize your experience.
+                        </p>
+                    </div>
 
-            <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-                <div className="grid items-start gap-8 xl:grid-cols-[0.95fr,1.18fr]">
-                    <div className="space-y-6 xl:sticky xl:top-8">
-                        <Card className="overflow-hidden border-white/10 bg-slate-950/75 text-white shadow-[0_32px_90px_-35px_rgba(59,130,246,0.55)] backdrop-blur">
-                            <div className={`h-1.5 w-full bg-gradient-to-r ${roleGradient}`} />
-                            <CardContent className="space-y-6 p-6 sm:p-8">
-                                <div className="flex items-center justify-between gap-4">
-                                    <Badge className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-white hover:bg-white/10">
-                                        Step 3 of 3
-                                    </Badge>
-                                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-white shadow-[0_18px_40px_-20px_rgba(255,255,255,0.45)]">
-                                        <Zap size={26} />
-                                    </div>
+                    <form onSubmit={handleSave} className="mt-10 space-y-10">
+                        <section className="space-y-6">
+                            <div className="space-y-2">
+                                <Label>Joining as</Label>
+                                <div className="flex h-11 w-full items-center rounded-md border border-input bg-background px-3 text-sm font-medium">
+                                    {roleLabel}
                                 </div>
+                            </div>
 
-                                <div className="space-y-4">
+                            <div className="space-y-4">
+                                <Label className="flex items-center gap-2">
+                                    <MapPin size={14} className="text-primary" /> Your Location
+                                </Label>
+
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                                     <div className="space-y-2">
-                                        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/55">
-                                            InternBridge Flow
-                                        </p>
-                                        <h1 className="max-w-xl text-4xl font-black tracking-tight text-white sm:text-[2.85rem] sm:leading-[1.02]">
-                                            Build a profile that feels verified, relevant, and ready to match.
-                                        </h1>
-                                    </div>
-                                    <p className="max-w-xl text-sm leading-7 text-white/70">
-                                        {roleNarrative}
-                                    </p>
-                                </div>
-
-                                <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
-                                    <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                                        <p className="text-[11px] uppercase tracking-[0.24em] text-white/45">Where you’re visible</p>
-                                        <p className="mt-3 text-lg font-semibold text-white">{locationSummary}</p>
-                                    </div>
-                                    <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                                        <p className="text-[11px] uppercase tracking-[0.24em] text-white/45">
-                                            {userRole === 'student' ? 'Institution link' : userRole === 'tpo' ? 'Campus identity' : 'Employer identity'}
-                                        </p>
-                                        <p className="mt-3 text-lg font-semibold text-white">{primaryEntity}</p>
-                                    </div>
-                                    <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                                        <p className="text-[11px] uppercase tracking-[0.24em] text-white/45">Readiness score</p>
-                                        <div className="mt-3 flex items-end justify-between gap-3">
-                                            <div>
-                                                <p className="text-3xl font-black text-white">{progressPercentage}%</p>
-                                                <p className="text-xs text-white/55">{completedSteps} of {flowSteps.length} flow stages complete</p>
-                                            </div>
-                                            <div className="rounded-2xl bg-white/10 px-3 py-2 text-right">
-                                                <p className="text-xs text-white/45">Signals</p>
-                                                <p className="text-base font-semibold text-white">{signalCount + trustSignalCount}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
-                                    <div className="flex items-center justify-between gap-4">
-                                        <div>
-                                            <p className="text-[11px] uppercase tracking-[0.28em] text-white/45">Guided flow</p>
-                                            <h2 className="mt-2 text-xl font-bold text-white">Move through the profile with clarity</h2>
-                                        </div>
-                                        <Badge className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] text-white hover:bg-white/10">
-                                            {roleLabel}
-                                        </Badge>
+                                        <Label className="text-xs text-muted-foreground">Country</Label>
+                                        <select
+                                            className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                                            value={selectedCountry}
+                                            onChange={(e) => {
+                                                setSelectedCountry(e.target.value);
+                                                setSelectedState('');
+                                                setSelectedCity('');
+                                                if (userRole === 'student') {
+                                                    setFormData(prev => ({ ...prev, college_id: '', university: '', college_name: '' }));
+                                                }
+                                            }}
+                                            required
+                                        >
+                                            <option value="">Select Country</option>
+                                            {countries.map((c) => (
+                                                <option key={c.isoCode} value={c.isoCode}>{c.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
 
-                                    <div className="mt-5 space-y-4">
-                                        {flowSteps.map((step, index) => {
-                                            const StepIcon = step.icon;
-                                            return (
-                                                <div key={step.label} className="flex gap-4">
-                                                    <div className="flex flex-col items-center">
-                                                        <div className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${step.done ? 'border-white/15 bg-white text-slate-950' : 'border-white/12 bg-white/5 text-white/70'}`}>
-                                                            {step.done ? <CheckCircle className="h-4 w-4" /> : <StepIcon className="h-4 w-4" />}
-                                                        </div>
-                                                        {index < flowSteps.length - 1 && (
-                                                            <div className={`mt-2 h-8 w-px ${step.done ? 'bg-white/30' : 'bg-white/10'}`} />
-                                                        )}
-                                                    </div>
-                                                    <div className="pt-1">
-                                                        <p className="text-sm font-semibold text-white">{step.label}</p>
-                                                        <p className="mt-1 text-sm leading-6 text-white/60">{step.detail}</p>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
+                                    <div className="space-y-2">
+                                        <Label className="text-xs text-muted-foreground">State</Label>
+                                        <select
+                                            className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                                            value={selectedState}
+                                            onChange={(e) => {
+                                                setSelectedState(e.target.value);
+                                                setSelectedCity('');
+                                                if (userRole === 'student') {
+                                                    setFormData(prev => ({ ...prev, college_id: '', university: '', college_name: '' }));
+                                                }
+                                            }}
+                                            disabled={!selectedCountry}
+                                            required
+                                        >
+                                            <option value="">Select State</option>
+                                            {states.map((s) => (
+                                                <option key={s.isoCode} value={s.isoCode}>{s.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
 
-                    <Card className="overflow-hidden border-slate-200/75 bg-white/92 shadow-[0_36px_110px_-40px_rgba(15,23,42,0.55)] backdrop-blur">
-                        <CardHeader className="border-b border-slate-200/80 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.12),_transparent_38%),linear-gradient(180deg,_rgba(255,255,255,0.92)_0%,_rgba(248,250,252,0.92)_100%)] px-6 py-6 sm:px-8">
-                            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                                <div className="space-y-3">
-                                    <Badge className={`w-fit rounded-full bg-gradient-to-r ${roleGradient} px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-white shadow-sm`}>
-                                        {roleLabel}
-                                    </Badge>
-                                    <div>
-                                        <CardTitle className="text-3xl font-black tracking-tight text-slate-950">
-                                            Complete your profile
-                                        </CardTitle>
-                                        <CardDescription className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
-                                            This is the final setup pass. We’ll use these details to personalize recommendations, connect the right institutions, and raise trust across the platform.
-                                        </CardDescription>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3 lg:min-w-[280px]">
-                                    <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-                                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Signals added</p>
-                                        <p className="mt-2 text-2xl font-black text-slate-950">{signalCount}</p>
-                                    </div>
-                                    <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-                                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Trust assets</p>
-                                        <p className="mt-2 text-2xl font-black text-slate-950">{trustSignalCount}</p>
+                                    <div className="space-y-2">
+                                        <Label className="text-xs text-muted-foreground">City</Label>
+                                        <select
+                                            className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                                            value={selectedCity}
+                                            onChange={(e) => {
+                                                setSelectedCity(e.target.value);
+                                                if (userRole === 'student') {
+                                                    setFormData(prev => ({ ...prev, college_id: '', university: '', college_name: '' }));
+                                                }
+                                            }}
+                                            disabled={!selectedState}
+                                            required
+                                        >
+                                            <option value="">Select City</option>
+                                            {cities.map((c) => (
+                                                <option key={c.name} value={c.name}>{c.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
                             </div>
-                        </CardHeader>
-                        <CardContent className="px-6 pb-8 pt-6 sm:px-8">
-                            <form onSubmit={handleSave} className="space-y-8">
-                                <section className="rounded-[28px] border border-slate-200 bg-slate-50/85 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] sm:p-6">
-                                    <div className="mb-6 flex flex-col gap-4 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-start sm:justify-between">
-                                        <div>
-                                            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">Profile basics</p>
-                                            <h3 className="mt-2 text-xl font-black tracking-tight text-slate-950">Start with your role and location</h3>
-                                            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                                                Location is the first unlock. It controls what colleges appear, which course list is valid, and how the platform routes your verification journey.
-                                            </p>
-                                        </div>
-                                        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                                            <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Current role</p>
-                                            <p className="mt-2 text-base font-semibold text-slate-950">{roleLabel}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-6">
-                        <div className="space-y-2">
-                            <Label>Joining as</Label>
-                            <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm flex items-center font-medium">
-                                {roleLabel}
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <Label className="flex items-center gap-2">
-                                <MapPin size={14} className="text-primary" /> Your Location
-                            </Label>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <div className="space-y-1">
-                                    <span className="text-[10px] uppercase font-bold opacity-50">Country</span>
-                                    <select
-                                        className="w-full h-9 px-3 py-1 rounded-md border border-input bg-background/50 text-xs focus:ring-1 focus:ring-primary outline-none"
-                                        value={selectedCountry}
-                                        onChange={(e) => {
-                                            setSelectedCountry(e.target.value);
-                                            setSelectedState('');
-                                            setSelectedCity('');
-                                            if (userRole === 'student') {
-                                                setFormData(prev => ({ ...prev, college_id: '', university: '', college_name: '' }));
-                                            }
-                                        }}
-                                        required
-                                    >
-                                        <option value="">Select Country</option>
-                                        {countries.map((c) => (
-                                            <option key={c.isoCode} value={c.isoCode}>{c.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="space-y-1">
-                                    <span className="text-[10px] uppercase font-bold opacity-50">State</span>
-                                    <select
-                                        className="w-full h-9 px-3 py-1 rounded-md border border-input bg-background/50 text-xs focus:ring-1 focus:ring-primary outline-none disabled:opacity-50"
-                                        value={selectedState}
-                                        onChange={(e) => {
-                                            setSelectedState(e.target.value);
-                                            setSelectedCity('');
-                                            if (userRole === 'student') {
-                                                setFormData(prev => ({ ...prev, college_id: '', university: '', college_name: '' }));
-                                            }
-                                        }}
-                                        disabled={!selectedCountry}
-                                        required
-                                    >
-                                        <option value="">Select State</option>
-                                        {states.map((s) => (
-                                            <option key={s.isoCode} value={s.isoCode}>{s.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="space-y-1">
-                                    <span className="text-[10px] uppercase font-bold opacity-50">City</span>
-                                    <select
-                                        className="w-full h-9 px-3 py-1 rounded-md border border-input bg-background/50 text-xs focus:ring-1 focus:ring-primary outline-none disabled:opacity-50"
-                                        value={selectedCity}
-                                        onChange={(e) => {
-                                            setSelectedCity(e.target.value);
-                                            if (userRole === 'student') {
-                                                setFormData(prev => ({ ...prev, college_id: '', university: '', college_name: '' }));
-                                            }
-                                        }}
-                                        disabled={!selectedState}
-                                        required
-                                    >
-                                        <option value="">Select City</option>
-                                        {cities.map((c) => (
-                                            <option key={c.name} value={c.name}>{c.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+                        </section>
 
                         {userRole === 'student' && (
-                            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                                <div className="mb-6 flex flex-col gap-4 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-start sm:justify-between">
-                                    <div>
-                                        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">Student profile</p>
-                                        <h3 className="mt-2 text-xl font-black tracking-tight text-slate-950">{roleSectionTitle}</h3>
-                                        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                                            {roleSectionDescription}
-                                        </p>
-                                    </div>
-                                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm">
-                                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Career signals</p>
-                                        <p className="mt-2 text-base font-semibold text-slate-950">
-                                            {selectedSkillItems.length} skills · {selectedPreferredRoleItems.length} preferred roles
-                                        </p>
-                                    </div>
+                            <section className="space-y-6">
+                                <div className="space-y-2">
+                                    <h2 className="text-xl font-semibold tracking-tight text-foreground">Student Details</h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        Add your college, course, graduation plan, and proof of work.
+                                    </p>
                                 </div>
-
                                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
                                 <div className="space-y-2">
                                     <Label>Select Your College</Label>
@@ -1239,21 +1097,13 @@ export default function OnboardingPage() {
                         )}
 
                         {userRole === 'tpo' && (
-                            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                                <div className="mb-6 flex flex-col gap-4 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-start sm:justify-between">
-                                    <div>
-                                        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">Institution profile</p>
-                                        <h3 className="mt-2 text-xl font-black tracking-tight text-slate-950">{roleSectionTitle}</h3>
-                                        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                                            {roleSectionDescription}
-                                        </p>
-                                    </div>
-                                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm">
-                                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Courses live</p>
-                                        <p className="mt-2 text-base font-semibold text-slate-950">{myCourses.length} published</p>
-                                    </div>
+                            <section className="space-y-6">
+                                <div className="space-y-2">
+                                    <h2 className="text-xl font-semibold tracking-tight text-foreground">College Details</h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        Register your institution and publish the courses students can select.
+                                    </p>
                                 </div>
-
                                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
                                 <div className="space-y-2">
                                     <Label>College / Institution Name</Label>
@@ -1368,21 +1218,13 @@ export default function OnboardingPage() {
                         )}
 
                         {userRole === 'company' && (
-                            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                                <div className="mb-6 flex flex-col gap-4 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-start sm:justify-between">
-                                    <div>
-                                        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">Employer profile</p>
-                                        <h3 className="mt-2 text-xl font-black tracking-tight text-slate-950">{roleSectionTitle}</h3>
-                                        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                                            {roleSectionDescription}
-                                        </p>
-                                    </div>
-                                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm">
-                                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Trust signals</p>
-                                        <p className="mt-2 text-base font-semibold text-slate-950">{trustSignalCount} added</p>
-                                    </div>
+                            <section className="space-y-6">
+                                <div className="space-y-2">
+                                    <h2 className="text-xl font-semibold tracking-tight text-foreground">Company Details</h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        Add the essential company and verification details candidates need.
+                                    </p>
                                 </div>
-
                                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
                                 <div className="space-y-2">
                                     <Label>Company Name</Label>
@@ -1478,30 +1320,18 @@ export default function OnboardingPage() {
                             </section>
                         )}
 
-                        <div className={`rounded-[28px] bg-gradient-to-r ${roleGradient} p-[1px] shadow-[0_24px_80px_-32px_rgba(99,102,241,0.55)]`}>
-                            <div className="flex flex-col gap-4 rounded-[27px] bg-slate-950 px-5 py-5 text-white sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                                <div className="space-y-1">
-                                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/45">Final step</p>
-                                    <h3 className="text-xl font-black tracking-tight">Launch the dashboard with a complete, trustworthy profile.</h3>
-                                    <p className="max-w-2xl text-sm leading-6 text-white/65">
-                                        Save this setup to unlock the right recommendations, verification flow, and connected college or company experience.
-                                    </p>
-                                </div>
-
-                                <Button
-                                    type="submit"
-                                    className="h-12 min-w-[220px] rounded-2xl bg-white text-slate-950 shadow-lg transition-transform hover:-translate-y-0.5 hover:bg-white"
-                                    disabled={isSaving}
-                                >
-                                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Launch Dashboard'}
-                                </Button>
-                            </div>
+                        <div className="pt-2">
+                            <Button
+                                type="submit"
+                                className="h-11 min-w-[220px]"
+                                disabled={isSaving}
+                            >
+                                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Launch Dashboard'}
+                            </Button>
                         </div>
                     </form>
-                </CardContent>
-            </Card>
-        </div>
-    </div>
+                </div>
+            </div>
         </div>
     );
 }
