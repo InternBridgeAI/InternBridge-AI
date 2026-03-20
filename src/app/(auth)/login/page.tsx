@@ -119,7 +119,9 @@ export default function LoginPage() {
             {/* Left panel – branding */}
             <div className="hidden lg:flex lg:w-1/2 gradient-brand relative overflow-hidden">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-40" />
-                <div className="relative z-10 flex flex-col justify-center px-16 text-white">
+                <div className="absolute left-12 top-20 h-40 w-40 rounded-full bg-white/12 blur-3xl" />
+                <div className="absolute right-10 bottom-16 h-56 w-56 rounded-full bg-cyan-300/15 blur-3xl" />
+                <div className="relative z-10 flex flex-col justify-center px-14 py-16 text-white xl:px-16">
                     <div className="flex items-center gap-3 mb-8">
                         <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                             <Zap size={28} />
@@ -132,6 +134,40 @@ export default function LoginPage() {
                     <p className="text-lg text-white/80 max-w-md">
                         AI-powered matching, resume parsing, skill verification, and micro-internship opportunities — all in one platform.
                     </p>
+
+                    <div className="mt-10 rounded-[2rem] border border-white/15 bg-white/10 p-5 shadow-[0_28px_80px_-40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+                        <div className="mb-4 flex items-center justify-between">
+                            <div>
+                                <p className="text-[11px] font-black uppercase tracking-[0.28em] text-white/60">InternBridge Flow</p>
+                                <p className="mt-2 text-2xl font-bold leading-tight">Sign in to your verified internship network</p>
+                            </div>
+                            <div className="rounded-2xl bg-white/15 px-3 py-2 text-right">
+                                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/70">Trusted</p>
+                                <p className="text-sm font-semibold">Student + TPO + Company</p>
+                            </div>
+                        </div>
+
+                        <div className="rounded-[1.75rem] border border-white/15 bg-white/95 px-4 py-5">
+                            <img
+                                src="/illustrations/mobile-login-animate.svg"
+                                alt="Animated secure login illustration"
+                                className="mx-auto h-auto w-full max-w-[430px] object-contain"
+                            />
+                        </div>
+
+                        <div className="mt-4 grid grid-cols-3 gap-3 text-slate-950">
+                            {[
+                                { label: 'Profiles', value: 'Verified' },
+                                { label: 'Matching', value: 'AI-led' },
+                                { label: 'Access', value: 'Role-based' },
+                            ].map((item) => (
+                                <div key={item.label} className="rounded-2xl bg-white/90 px-3 py-3">
+                                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">{item.label}</p>
+                                    <p className="mt-2 text-sm font-bold text-slate-950">{item.value}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
 

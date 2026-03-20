@@ -132,7 +132,9 @@ export default function RegisterPage() {
             {/* Left panel */}
             <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-brand-600 via-purple-600 to-brand-800 relative overflow-hidden">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-40" />
-                <div className="relative z-10 flex flex-col justify-center px-16 text-white">
+                <div className="absolute left-12 top-20 h-44 w-44 rounded-full bg-white/12 blur-3xl" />
+                <div className="absolute right-8 bottom-10 h-60 w-60 rounded-full bg-fuchsia-300/15 blur-3xl" />
+                <div className="relative z-10 flex flex-col justify-center px-14 py-16 text-white xl:px-16">
                     <div className="flex items-center gap-3 mb-8">
                         <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                             <Zap size={28} />
@@ -146,18 +148,39 @@ export default function RegisterPage() {
                         Create your account and let AI match you with the perfect internship opportunities.
                     </p>
 
-                    <div className="mt-12 space-y-4">
-                        {[
-                            { icon: '🤖', text: 'AI-powered resume parsing & skill extraction' },
-                            { icon: '🎯', text: 'Smart matching with cosine similarity' },
-                            { icon: '✅', text: 'GitHub skill verification' },
-                            { icon: '📊', text: 'Market readiness scoring' },
-                        ].map((feature) => (
-                            <div key={feature.text} className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-3">
-                                <span className="text-xl">{feature.icon}</span>
-                                <span className="text-sm">{feature.text}</span>
+                    <div className="mt-10 rounded-[2rem] border border-white/15 bg-white/10 p-5 shadow-[0_28px_80px_-40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+                        <div className="mb-4 flex items-center justify-between">
+                            <div>
+                                <p className="text-[11px] font-black uppercase tracking-[0.28em] text-white/60">Guided Onboarding</p>
+                                <p className="mt-2 text-2xl font-bold leading-tight">Create a profile that feels credible from day one</p>
                             </div>
-                        ))}
+                            <div className="rounded-2xl bg-white/15 px-3 py-2 text-right">
+                                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/70">Launch</p>
+                                <p className="text-sm font-semibold">AI + Verification</p>
+                            </div>
+                        </div>
+
+                        <div className="rounded-[1.75rem] border border-white/15 bg-white/95 px-4 py-5">
+                            <img
+                                src="/illustrations/mobile-login-animate.svg"
+                                alt="Animated onboarding illustration"
+                                className="mx-auto h-auto w-full max-w-[430px] object-contain"
+                            />
+                        </div>
+
+                        <div className="mt-4 grid grid-cols-2 gap-3 text-slate-950">
+                            {[
+                                { label: 'Resume', value: 'AI parsed' },
+                                { label: 'Skills', value: 'Verified' },
+                                { label: 'Matching', value: 'Smarter' },
+                                { label: 'Onboarding', value: 'Guided' },
+                            ].map((feature) => (
+                                <div key={feature.label} className="rounded-2xl bg-white/90 px-3 py-3">
+                                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">{feature.label}</p>
+                                    <p className="mt-2 text-sm font-bold text-slate-950">{feature.value}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
