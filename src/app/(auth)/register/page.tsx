@@ -134,7 +134,7 @@ export default function RegisterPage() {
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-40" />
                 <div className="absolute left-12 top-20 h-44 w-44 rounded-full bg-white/12 blur-3xl" />
                 <div className="absolute right-8 bottom-10 h-60 w-60 rounded-full bg-fuchsia-300/15 blur-3xl" />
-                <div className="relative z-10 flex w-full flex-col justify-center px-10 py-8 text-white xl:px-14">
+                <div className="relative z-10 flex h-full w-full flex-col justify-between px-10 py-10 text-white xl:px-14 xl:py-12">
                     <div className="flex items-center gap-3 mb-8">
                         <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                             <Zap size={28} />
@@ -147,11 +147,11 @@ export default function RegisterPage() {
                     <p className="mt-4 max-w-xl text-lg text-white/80">
                         Create your account and let AI match you with the perfect internship opportunities.
                     </p>
-                    <div className="mt-6 flex flex-1 items-center">
+                    <div className="mt-8 flex flex-1 items-end justify-center overflow-visible">
                         <img
                             src="/illustrations/mobile-login-animate.svg"
                             alt="Animated onboarding illustration"
-                            className="pointer-events-none h-auto w-full max-w-[620px] max-h-[46vh] object-contain drop-shadow-[0_20px_44px_rgba(15,23,42,0.18)] xl:max-h-[50vh]"
+                            className="pointer-events-none h-auto w-[115%] max-w-[760px] max-h-[58vh] object-contain drop-shadow-[0_26px_54px_rgba(15,23,42,0.22)] xl:w-[122%] xl:max-w-[840px] xl:max-h-[62vh]"
                         />
                     </div>
                 </div>
