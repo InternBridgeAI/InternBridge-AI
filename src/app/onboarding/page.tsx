@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -530,36 +531,125 @@ export default function OnboardingPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-background px-6 py-10 sm:px-8 lg:px-20">
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Preparing your profile form...
-                </div>
+            <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-white to-cyan-100 px-6 py-10 sm:px-8 lg:px-20">
+                <Card className="w-full max-w-md border-slate-200/80 bg-white/95 shadow-xl">
+                    <CardContent className="flex items-center gap-3 p-6 text-sm text-slate-600">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        Preparing your profile form...
+                    </CardContent>
+                </Card>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-background">
-            <div className="w-full px-6 py-10 sm:px-8 lg:px-20 xl:px-24">
-                <div className="max-w-5xl">
-                    <div className="space-y-3">
-                        <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                            Complete Your Profile
-                        </h1>
-                        <p className="max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
-                            Add the details needed to finish setup and personalize your experience.
-                        </p>
-                    </div>
+        <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-100 via-blue-50 to-cyan-100">
+            <div className="pointer-events-none absolute -left-20 top-14 h-72 w-72 rounded-full bg-cyan-200/40 blur-3xl" />
+            <div className="pointer-events-none absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-sky-300/35 blur-3xl" />
 
-                    <form onSubmit={handleSave} className="mt-10 space-y-10">
-                        <section className="space-y-6">
+            <div className="relative mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-10">
+                <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+                    <Card className="border-slate-200/80 bg-white/95 shadow-xl backdrop-blur">
+                        <CardHeader className="space-y-4 pb-4">
+                            <Badge className={`w-fit bg-gradient-to-r ${roleGradient} text-white shadow-sm`}>
+                                {roleLabel}
+                            </Badge>
                             <div className="space-y-2">
-                                <Label>Joining as</Label>
-                                <div className="flex h-11 w-full items-center rounded-md border border-input bg-background px-3 text-sm font-medium">
-                                    {roleLabel}
+                                <CardTitle className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+                                    Complete Your Profile
+                                </CardTitle>
+                                <CardDescription className="max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
+                                    {roleNarrative}
+                                </CardDescription>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4 pt-0">
+                            <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+                                <div className="mb-2 flex items-center justify-between text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    <span>Onboarding progress</span>
+                                    <span>{progressPercentage}% complete</span>
+                                </div>
+                                <div className="h-2 w-full rounded-full bg-slate-200">
+                                    <div
+                                        className={`h-full rounded-full bg-gradient-to-r ${roleGradient} transition-all duration-500`}
+                                        style={{ width: `${progressPercentage}%` }}
+                                    />
                                 </div>
                             </div>
+                            <div className="grid gap-3 sm:grid-cols-3">
+                                <div className="rounded-xl border border-slate-200 bg-white p-3">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Identity</p>
+                                    <p className="mt-1 line-clamp-2 text-sm font-semibold text-slate-900">{primaryEntity}</p>
+                                </div>
+                                <div className="rounded-xl border border-slate-200 bg-white p-3">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Profile Signals</p>
+                                    <p className="mt-1 text-sm font-semibold text-slate-900">{signalCount}</p>
+                                </div>
+                                <div className="rounded-xl border border-slate-200 bg-white p-3">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Trust Signals</p>
+                                    <p className="mt-1 text-sm font-semibold text-slate-900">{trustSignalCount}</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-slate-200/80 bg-white/95 shadow-xl backdrop-blur">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-lg font-semibold text-slate-900">Profile Blueprint</CardTitle>
+                            <CardDescription className="text-sm text-slate-600">
+                                Keep this checklist green and your dashboard will feel complete from day one.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4 pt-0">
+                            <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-cyan-50 p-4">
+                                <Image
+                                    src="/illustrations/profile-data-animate.svg"
+                                    alt="Illustration of profile and data onboarding"
+                                    width={560}
+                                    height={430}
+                                    priority
+                                    className="mx-auto h-auto w-full max-w-md"
+                                />
+                            </div>
+                            <p className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs text-slate-600">
+                                {locationSummary}
+                            </p>
+                            <div className="space-y-2">
+                                {flowSteps.map((step) => {
+                                    const StepIcon = step.icon;
+                                    return (
+                                        <div key={step.label} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                                            <span className={`mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full ${step.done ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
+                                                <StepIcon className="h-4 w-4" />
+                                            </span>
+                                            <div className="space-y-0.5">
+                                                <p className="text-sm font-medium text-slate-900">{step.label}</p>
+                                                <p className="text-xs text-slate-600">{step.detail}</p>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <Card className="mt-6 border-slate-200/80 bg-white/95 shadow-xl backdrop-blur">
+                    <CardHeader className="space-y-2 pb-4">
+                        <CardTitle className="text-2xl font-semibold tracking-tight text-slate-900">{roleSectionTitle}</CardTitle>
+                        <CardDescription className="max-w-3xl text-sm leading-6 text-slate-600">
+                            {roleSectionDescription}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-8 pt-0">
+                        <form onSubmit={handleSave} className="space-y-8">
+                            <section className="space-y-6 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5 sm:p-6">
+                                <div className="space-y-2">
+                                    <Label>Joining as</Label>
+                                    <div className="flex h-11 w-full items-center rounded-md border border-input bg-white px-3 text-sm font-medium">
+                                        {roleLabel}
+                                    </div>
+                </div>
 
                             <div className="space-y-4">
                                 <Label className="flex items-center gap-2">
@@ -636,7 +726,7 @@ export default function OnboardingPage() {
                         </section>
 
                         {userRole === 'student' && (
-                            <section className="space-y-6">
+                            <section className="space-y-6 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5 sm:p-6">
                                 <div className="space-y-2">
                                     <h2 className="text-xl font-semibold tracking-tight text-foreground">Student Details</h2>
                                     <p className="text-sm text-muted-foreground">
@@ -1097,7 +1187,7 @@ export default function OnboardingPage() {
                         )}
 
                         {userRole === 'tpo' && (
-                            <section className="space-y-6">
+                            <section className="space-y-6 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5 sm:p-6">
                                 <div className="space-y-2">
                                     <h2 className="text-xl font-semibold tracking-tight text-foreground">College Details</h2>
                                     <p className="text-sm text-muted-foreground">
@@ -1218,7 +1308,7 @@ export default function OnboardingPage() {
                         )}
 
                         {userRole === 'company' && (
-                            <section className="space-y-6">
+                            <section className="space-y-6 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5 sm:p-6">
                                 <div className="space-y-2">
                                     <h2 className="text-xl font-semibold tracking-tight text-foreground">Company Details</h2>
                                     <p className="text-sm text-muted-foreground">
@@ -1320,17 +1410,21 @@ export default function OnboardingPage() {
                             </section>
                         )}
 
-                        <div className="pt-2">
-                            <Button
-                                type="submit"
-                                className="h-11 min-w-[220px]"
-                                disabled={isSaving}
-                            >
-                                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Launch Dashboard'}
-                            </Button>
-                        </div>
-                    </form>
-                </div>
+                            <div className="flex flex-col gap-3 border-t border-slate-200/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                                <p className="text-xs text-slate-500">
+                                    You can edit these details later from your dashboard settings.
+                                </p>
+                                <Button
+                                    type="submit"
+                                    className={`h-11 w-full sm:w-auto sm:min-w-[220px] bg-gradient-to-r ${roleGradient} text-white shadow-md hover:opacity-95`}
+                                    disabled={isSaving}
+                                >
+                                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Launch Dashboard'}
+                                </Button>
+                            </div>
+                        </form>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );
