@@ -143,6 +143,66 @@ export default function OnboardingPage() {
             : 'Student / Candidate';
 
     const getFileName = (url?: string) => (url ? url.split('/').pop() || 'Uploaded file' : '');
+    const selectedSkillItems = parseCommaList(formData.skills);
+    const selectedPreferredRoleItems = parseCommaList(formData.preferred_roles);
+    const isLocationReady = Boolean(selectedCountry && selectedState && selectedCity);
+    const locationSummary = isLocationReady
+        ? `${selectedCity}, ${selectedStateName || selectedState}, ${selectedCountryName}`
+        : 'Add your location to unlock the right institution or company path.';
+    const primaryEntity = userRole === 'student'
+        ? (formData.college_name || formData.university || 'College not selected yet')
+        : userRole === 'tpo'
+            ? (formData.college_name || 'Institution details pending')
+            : (formData.company_name || 'Company details pending');
+    const signalCount = userRole === 'student'
+        ? selectedSkillItems.length + selectedPreferredRoleItems.length + (formData.expected_graduation ? 1 : 0)
+        : userRole === 'tpo'
+            ? myCourses.length + (formData.university ? 1 : 0)
+            : [formData.company_industry, formData.company_size, formData.hr_contact].filter(Boolean).length;
+    const trustSignalCount = userRole === 'student'
+        ? [formData.resume_url, formData.student_id_url, formData.github_username, formData.college_email].filter(Boolean).length
+        : userRole === 'tpo'
+            ? [formData.college_official_email, formData.college_website, formData.college_verification_url].filter(Boolean).length
+            : [formData.company_website, formData.company_linkedin_url, formData.gst_number, formData.company_document_url, formData.hr_contact].filter(Boolean).length;
+    const roleGradient = userRole === 'company'
+        ? 'from-cyan-400 via-sky-500 to-emerald-400'
+        : userRole === 'tpo'
+            ? 'from-amber-300 via-orange-400 to-rose-400'
+            : 'from-blue-500 via-violet-500 to-fuchsia-500';
+    const roleNarrative = userRole === 'student'
+        ? 'Shape a profile colleges and companies can trust. Your location, college, course, and skill signals directly improve matching quality.'
+        : userRole === 'tpo'
+            ? 'Create a polished institution presence so students can connect to the right college, choose valid courses, and move through verification cleanly.'
+            : 'Turn this into a credible employer profile. Strong company details and verification signals help attract serious, relevant candidates faster.';
+    const roleSectionTitle = userRole === 'student'
+        ? 'Academic + career details'
+        : userRole === 'tpo'
+            ? 'Institution details'
+            : 'Employer details';
+    const roleSectionDescription = userRole === 'student'
+        ? 'Connect your college, course, graduation plan, and portfolio signals so matching feels personal instead of generic.'
+        : userRole === 'tpo'
+            ? 'Register your institution once, then make it easy for students to find the right college and course during onboarding.'
+            : 'Add the hiring context candidates care about most: company identity, operating context, and verification proof.';
+    const flowSteps = userRole === 'student'
+        ? [
+            { icon: Zap, label: 'Role locked in', detail: 'Your student track is ready for AI matching.', done: true },
+            { icon: MapPin, label: 'Location + college', detail: 'Pick your city, college, and course so we can surface the right campus network.', done: isLocationReady && Boolean((formData.college_id && formData.college_id !== 'other') || formData.university) },
+            { icon: Briefcase, label: 'Career signals', detail: 'Skills, preferred roles, and proof of work make recommendations sharper.', done: Boolean(formData.expected_graduation && (selectedSkillItems.length > 0 || selectedPreferredRoleItems.length > 0)) },
+        ]
+        : userRole === 'tpo'
+            ? [
+                { icon: Zap, label: 'Institution path', detail: 'Your college / TPO profile is the source of truth for student onboarding.', done: true },
+                { icon: GraduationCap, label: 'Courses published', detail: 'Add real courses so students can select them instead of typing manually.', done: myCourses.length > 0 },
+                { icon: FileText, label: 'Verification ready', detail: 'Official email, website, and supporting document build trust across the platform.', done: Boolean(formData.college_official_email && formData.college_website && formData.college_verification_url) },
+            ]
+            : [
+                { icon: Zap, label: 'Company profile', detail: 'Set the employer identity candidates will see first.', done: Boolean(formData.company_name && formData.company_website) },
+                { icon: Briefcase, label: 'Hiring context', detail: 'Industry, team size, and HR contact turn a profile into a real hiring destination.', done: Boolean(formData.company_industry && formData.company_size && formData.hr_contact) },
+                { icon: FileText, label: 'Trust signals', detail: 'LinkedIn, GST, and company documents make applications feel safe and verified.', done: Boolean(formData.company_linkedin_url && formData.gst_number && formData.company_document_url) },
+            ];
+    const completedSteps = flowSteps.filter((step) => step.done).length;
+    const progressPercentage = Math.round((completedSteps / flowSteps.length) * 100);
 
     const uploadFile = async (file: File, bucket: string, folder: string) => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -356,16 +416,11 @@ export default function OnboardingPage() {
                     toast.error('Please select your college.');
                     return;
                 }
-                if (availableCourses.length > 0) {
-                    if (!formData.course_id) {
-                        toast.error('Please select your course.');
-                        return;
-                    }
-                    if (formData.course_id === 'other' && !formData.course_name.trim()) {
-                        toast.error('Please enter your course name.');
-                        return;
-                    }
-                } else if (!formData.course_name.trim()) {
+                if (availableCourses.length > 0 && !formData.course_id) {
+                    toast.error('Please select your course.');
+                    return;
+                }
+                if (availableCourses.length === 0 && !formData.course_name.trim()) {
                     toast.error('Please enter your course name.');
                     return;
                 }
@@ -413,17 +468,14 @@ export default function OnboardingPage() {
                 const selectedCollege = colleges.find(c => c.id === formData.college_id);
                 const resolvedCollegeName = selectedCollege?.college_name || selectedCollege?.full_name || formData.university || '';
                 const isOtherCollege = formData.college_id === 'other';
-                const isOtherCourse = !isOtherCollege && formData.course_id === 'other';
                 const selectedCourse = availableCourses.find((c) => c.id === formData.course_id);
 
                 updatePayload.university = isOtherCollege ? formData.university : resolvedCollegeName;
                 updatePayload.college_id = isOtherCollege ? null : (formData.college_id || null);
                 updatePayload.college_name = isOtherCollege ? formData.university : resolvedCollegeName;
                 updatePayload.student_verification_status = isOtherCollege ? 'verified' : 'pending';
-                updatePayload.course_id = (isOtherCollege || isOtherCourse)
-                    ? null
-                    : (formData.course_id || null);
-                updatePayload.course_name = (isOtherCollege || isOtherCourse)
+                updatePayload.course_id = isOtherCollege ? null : (formData.course_id || null);
+                updatePayload.course_name = isOtherCollege
                     ? (formData.course_name || null)
                     : (selectedCourse?.name || formData.course_name || null);
                 updatePayload.year_of_study = formData.year_of_study ? parseInt(formData.year_of_study) : null;
@@ -476,22 +528,163 @@ export default function OnboardingPage() {
         }
     };
 
-    if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+                <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-white/80 shadow-2xl backdrop-blur">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    Preparing your onboarding workspace...
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
-            <Card className="w-full max-w-lg shadow-2xl glass border-primary/20">
-                <CardHeader className="text-center space-y-4">
-                    <div className="mx-auto w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                        <Zap size={28} />
+        <div className="relative min-h-screen overflow-hidden bg-slate-950">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.28),_transparent_34%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.14),_transparent_28%),linear-gradient(180deg,_#0f172a_0%,_#111827_48%,_#0f172a_100%)]" />
+            <div className="absolute inset-y-0 left-0 hidden w-1/2 bg-[linear-gradient(90deg,rgba(255,255,255,0.03),transparent)] lg:block" />
+            <div className="absolute -left-16 top-28 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
+            <div className="absolute right-10 top-12 h-40 w-40 rounded-full bg-sky-500/10 blur-3xl" />
+
+            <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+                <div className="grid items-start gap-8 xl:grid-cols-[0.95fr,1.18fr]">
+                    <div className="space-y-6 xl:sticky xl:top-8">
+                        <Card className="overflow-hidden border-white/10 bg-slate-950/75 text-white shadow-[0_32px_90px_-35px_rgba(59,130,246,0.55)] backdrop-blur">
+                            <div className={`h-1.5 w-full bg-gradient-to-r ${roleGradient}`} />
+                            <CardContent className="space-y-6 p-6 sm:p-8">
+                                <div className="flex items-center justify-between gap-4">
+                                    <Badge className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-white hover:bg-white/10">
+                                        Step 3 of 3
+                                    </Badge>
+                                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-white shadow-[0_18px_40px_-20px_rgba(255,255,255,0.45)]">
+                                        <Zap size={26} />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/55">
+                                            InternBridge Flow
+                                        </p>
+                                        <h1 className="max-w-xl text-4xl font-black tracking-tight text-white sm:text-[2.85rem] sm:leading-[1.02]">
+                                            Build a profile that feels verified, relevant, and ready to match.
+                                        </h1>
+                                    </div>
+                                    <p className="max-w-xl text-sm leading-7 text-white/70">
+                                        {roleNarrative}
+                                    </p>
+                                </div>
+
+                                <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
+                                    <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                                        <p className="text-[11px] uppercase tracking-[0.24em] text-white/45">Where you’re visible</p>
+                                        <p className="mt-3 text-lg font-semibold text-white">{locationSummary}</p>
+                                    </div>
+                                    <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                                        <p className="text-[11px] uppercase tracking-[0.24em] text-white/45">
+                                            {userRole === 'student' ? 'Institution link' : userRole === 'tpo' ? 'Campus identity' : 'Employer identity'}
+                                        </p>
+                                        <p className="mt-3 text-lg font-semibold text-white">{primaryEntity}</p>
+                                    </div>
+                                    <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                                        <p className="text-[11px] uppercase tracking-[0.24em] text-white/45">Readiness score</p>
+                                        <div className="mt-3 flex items-end justify-between gap-3">
+                                            <div>
+                                                <p className="text-3xl font-black text-white">{progressPercentage}%</p>
+                                                <p className="text-xs text-white/55">{completedSteps} of {flowSteps.length} flow stages complete</p>
+                                            </div>
+                                            <div className="rounded-2xl bg-white/10 px-3 py-2 text-right">
+                                                <p className="text-xs text-white/45">Signals</p>
+                                                <p className="text-base font-semibold text-white">{signalCount + trustSignalCount}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div>
+                                            <p className="text-[11px] uppercase tracking-[0.28em] text-white/45">Guided flow</p>
+                                            <h2 className="mt-2 text-xl font-bold text-white">Move through the profile with clarity</h2>
+                                        </div>
+                                        <Badge className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] text-white hover:bg-white/10">
+                                            {roleLabel}
+                                        </Badge>
+                                    </div>
+
+                                    <div className="mt-5 space-y-4">
+                                        {flowSteps.map((step, index) => {
+                                            const StepIcon = step.icon;
+                                            return (
+                                                <div key={step.label} className="flex gap-4">
+                                                    <div className="flex flex-col items-center">
+                                                        <div className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${step.done ? 'border-white/15 bg-white text-slate-950' : 'border-white/12 bg-white/5 text-white/70'}`}>
+                                                            {step.done ? <CheckCircle className="h-4 w-4" /> : <StepIcon className="h-4 w-4" />}
+                                                        </div>
+                                                        {index < flowSteps.length - 1 && (
+                                                            <div className={`mt-2 h-8 w-px ${step.done ? 'bg-white/30' : 'bg-white/10'}`} />
+                                                        )}
+                                                    </div>
+                                                    <div className="pt-1">
+                                                        <p className="text-sm font-semibold text-white">{step.label}</p>
+                                                        <p className="mt-1 text-sm leading-6 text-white/60">{step.detail}</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
-                    <div>
-                        <CardTitle className="text-2xl font-black">Complete Your Profile</CardTitle>
-                        <CardDescription>Tell the AI a bit more to get the best internship matches.</CardDescription>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSave} className="space-y-6">
+
+                    <Card className="overflow-hidden border-slate-200/75 bg-white/92 shadow-[0_36px_110px_-40px_rgba(15,23,42,0.55)] backdrop-blur">
+                        <CardHeader className="border-b border-slate-200/80 bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.12),_transparent_38%),linear-gradient(180deg,_rgba(255,255,255,0.92)_0%,_rgba(248,250,252,0.92)_100%)] px-6 py-6 sm:px-8">
+                            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                                <div className="space-y-3">
+                                    <Badge className={`w-fit rounded-full bg-gradient-to-r ${roleGradient} px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-white shadow-sm`}>
+                                        {roleLabel}
+                                    </Badge>
+                                    <div>
+                                        <CardTitle className="text-3xl font-black tracking-tight text-slate-950">
+                                            Complete your profile
+                                        </CardTitle>
+                                        <CardDescription className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
+                                            This is the final setup pass. We’ll use these details to personalize recommendations, connect the right institutions, and raise trust across the platform.
+                                        </CardDescription>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 lg:min-w-[280px]">
+                                    <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
+                                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Signals added</p>
+                                        <p className="mt-2 text-2xl font-black text-slate-950">{signalCount}</p>
+                                    </div>
+                                    <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
+                                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Trust assets</p>
+                                        <p className="mt-2 text-2xl font-black text-slate-950">{trustSignalCount}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="px-6 pb-8 pt-6 sm:px-8">
+                            <form onSubmit={handleSave} className="space-y-8">
+                                <section className="rounded-[28px] border border-slate-200 bg-slate-50/85 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] sm:p-6">
+                                    <div className="mb-6 flex flex-col gap-4 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-start sm:justify-between">
+                                        <div>
+                                            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">Profile basics</p>
+                                            <h3 className="mt-2 text-xl font-black tracking-tight text-slate-950">Start with your role and location</h3>
+                                            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                                                Location is the first unlock. It controls what colleges appear, which course list is valid, and how the platform routes your verification journey.
+                                            </p>
+                                        </div>
+                                        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                                            <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Current role</p>
+                                            <p className="mt-2 text-base font-semibold text-slate-950">{roleLabel}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-6">
                         <div className="space-y-2">
                             <Label>Joining as</Label>
                             <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm flex items-center font-medium">
@@ -571,9 +764,28 @@ export default function OnboardingPage() {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </section>
 
                         {userRole === 'student' && (
-                            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                                <div className="mb-6 flex flex-col gap-4 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-start sm:justify-between">
+                                    <div>
+                                        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">Student profile</p>
+                                        <h3 className="mt-2 text-xl font-black tracking-tight text-slate-950">{roleSectionTitle}</h3>
+                                        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                                            {roleSectionDescription}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm">
+                                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Career signals</p>
+                                        <p className="mt-2 text-base font-semibold text-slate-950">
+                                            {selectedSkillItems.length} skills · {selectedPreferredRoleItems.length} preferred roles
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
                                 <div className="space-y-2">
                                     <Label>Select Your College</Label>
                                     <div className="relative">
@@ -632,34 +844,10 @@ export default function OnboardingPage() {
                                                     className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none disabled:opacity-60"
                                                     value={formData.course_id}
                                                     onChange={(e) => {
-                                                        const value = e.target.value;
-
-                                                        if (!value) {
-                                                            setFormData(prev => ({
-                                                                ...prev,
-                                                                course_id: '',
-                                                                course_name: '',
-                                                                year_of_study: '',
-                                                            }));
-                                                            setSelectedCourseDuration(null);
-                                                            return;
-                                                        }
-
-                                                        if (value === 'other') {
-                                                            setFormData(prev => ({
-                                                                ...prev,
-                                                                course_id: 'other',
-                                                                course_name: '',
-                                                                year_of_study: '',
-                                                            }));
-                                                            setSelectedCourseDuration(4);
-                                                            return;
-                                                        }
-
-                                                        const selected = availableCourses.find((c) => c.id === value);
+                                                        const selected = availableCourses.find((c) => c.id === e.target.value);
                                                         setFormData(prev => ({
                                                             ...prev,
-                                                            course_id: value,
+                                                            course_id: e.target.value,
                                                             course_name: selected?.name || '',
                                                             year_of_study: '',
                                                         }));
@@ -674,12 +862,9 @@ export default function OnboardingPage() {
                                                     {availableCourses.map((c) => (
                                                         <option key={c.id} value={c.id}>{c.name} ({c.duration_years} yrs)</option>
                                                     ))}
-                                                    {availableCourses.length > 0 && (
-                                                        <option value="other">Other / Not Listed</option>
-                                                    )}
                                                 </select>
 
-                                                {(formData.course_id === 'other' || (availableCourses.length === 0 && !isCoursesLoading)) && (
+                                                {availableCourses.length === 0 && !isCoursesLoading && (
                                                     <Input
                                                         className="mt-2"
                                                         placeholder="Enter Course Name (e.g. B.Tech CSE)"
@@ -698,7 +883,7 @@ export default function OnboardingPage() {
                                             />
                                         )}
 
-                                        {(formData.college_id === 'other' || formData.course_id === 'other' || (formData.college_id !== 'other' && availableCourses.length === 0 && !isCoursesLoading)) && (
+                                        {(formData.college_id === 'other' || (formData.college_id !== 'other' && availableCourses.length === 0 && !isCoursesLoading)) && (
                                             <div className="mt-2 space-y-1">
                                                 <span className="text-[10px] uppercase font-bold opacity-50">Course Duration (Years)</span>
                                                 <select
@@ -740,7 +925,7 @@ export default function OnboardingPage() {
                                                 })}
                                         </select>
                                         <p className="text-[10px] text-muted-foreground">
-                                            {(formData.college_id === 'other' || formData.course_id === 'other' || (formData.college_id !== 'other' && availableCourses.length === 0 && !isCoursesLoading))
+                                            {(formData.college_id === 'other' || (formData.college_id !== 'other' && availableCourses.length === 0 && !isCoursesLoading))
                                                 ? `Course duration set to: ${selectedCourseDuration || 4} years.`
                                                 : (selectedCourseDuration
                                                     ? `Based on course duration: ${selectedCourseDuration} years.`
@@ -1049,11 +1234,27 @@ export default function OnboardingPage() {
                                         )}
                                     </div>
                                 </div>
-                            </div>
+                                </div>
+                            </section>
                         )}
 
                         {userRole === 'tpo' && (
-                            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                                <div className="mb-6 flex flex-col gap-4 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-start sm:justify-between">
+                                    <div>
+                                        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">Institution profile</p>
+                                        <h3 className="mt-2 text-xl font-black tracking-tight text-slate-950">{roleSectionTitle}</h3>
+                                        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                                            {roleSectionDescription}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm">
+                                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Courses live</p>
+                                        <p className="mt-2 text-base font-semibold text-slate-950">{myCourses.length} published</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
                                 <div className="space-y-2">
                                     <Label>College / Institution Name</Label>
                                     <Input
@@ -1162,11 +1363,27 @@ export default function OnboardingPage() {
                                     </div>
                                 </div>
                                 <p className="text-[10px] text-muted-foreground">Registering your college allows your students to select it during their onboarding.</p>
-                            </div>
+                                </div>
+                            </section>
                         )}
 
                         {userRole === 'company' && (
-                            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                                <div className="mb-6 flex flex-col gap-4 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-start sm:justify-between">
+                                    <div>
+                                        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">Employer profile</p>
+                                        <h3 className="mt-2 text-xl font-black tracking-tight text-slate-950">{roleSectionTitle}</h3>
+                                        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                                            {roleSectionDescription}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm">
+                                        <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Trust signals</p>
+                                        <p className="mt-2 text-base font-semibold text-slate-950">{trustSignalCount} added</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
                                 <div className="space-y-2">
                                     <Label>Company Name</Label>
                                     <Input
@@ -1257,15 +1474,34 @@ export default function OnboardingPage() {
                                         )}
                                     </div>
                                 </div>
-                            </div>
+                                </div>
+                            </section>
                         )}
 
-                        <Button type="submit" className="w-full font-bold uppercase tracking-widest" disabled={isSaving}>
-                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Launch Dashboard'}
-                        </Button>
+                        <div className={`rounded-[28px] bg-gradient-to-r ${roleGradient} p-[1px] shadow-[0_24px_80px_-32px_rgba(99,102,241,0.55)]`}>
+                            <div className="flex flex-col gap-4 rounded-[27px] bg-slate-950 px-5 py-5 text-white sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                                <div className="space-y-1">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/45">Final step</p>
+                                    <h3 className="text-xl font-black tracking-tight">Launch the dashboard with a complete, trustworthy profile.</h3>
+                                    <p className="max-w-2xl text-sm leading-6 text-white/65">
+                                        Save this setup to unlock the right recommendations, verification flow, and connected college or company experience.
+                                    </p>
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    className="h-12 min-w-[220px] rounded-2xl bg-white text-slate-950 shadow-lg transition-transform hover:-translate-y-0.5 hover:bg-white"
+                                    disabled={isSaving}
+                                >
+                                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Launch Dashboard'}
+                                </Button>
+                            </div>
+                        </div>
                     </form>
                 </CardContent>
             </Card>
+        </div>
+    </div>
         </div>
     );
 }
