@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Loader2, Zap, GraduationCap, MapPin, Briefcase, FileText, UploadCloud, Github, X } from 'lucide-react';
+import { CheckCircle, Loader2, GraduationCap, MapPin, Briefcase, FileText, UploadCloud, Github, X } from 'lucide-react';
 import { apiFetch } from '@/lib/api-client';
 import { toast } from 'sonner';
 import { Country, State, City } from 'country-state-city';
@@ -144,37 +144,9 @@ export default function OnboardingPage() {
             : 'Student / Candidate';
 
     const getFileName = (url?: string) => (url ? url.split('/').pop() || 'Uploaded file' : '');
-    const selectedSkillItems = parseCommaList(formData.skills);
-    const selectedPreferredRoleItems = parseCommaList(formData.preferred_roles);
-    const isLocationReady = Boolean(selectedCountry && selectedState && selectedCity);
-    const locationSummary = isLocationReady
+    const locationSummary = selectedCountry && selectedState && selectedCity
         ? `${selectedCity}, ${selectedStateName || selectedState}, ${selectedCountryName}`
         : 'Add your location to unlock the right institution or company path.';
-    const primaryEntity = userRole === 'student'
-        ? (formData.college_name || formData.university || 'College not selected yet')
-        : userRole === 'tpo'
-            ? (formData.college_name || 'Institution details pending')
-            : (formData.company_name || 'Company details pending');
-    const signalCount = userRole === 'student'
-        ? selectedSkillItems.length + selectedPreferredRoleItems.length + (formData.expected_graduation ? 1 : 0)
-        : userRole === 'tpo'
-            ? myCourses.length + (formData.university ? 1 : 0)
-            : [formData.company_industry, formData.company_size, formData.hr_contact].filter(Boolean).length;
-    const trustSignalCount = userRole === 'student'
-        ? [formData.resume_url, formData.student_id_url, formData.github_username, formData.college_email].filter(Boolean).length
-        : userRole === 'tpo'
-            ? [formData.college_official_email, formData.college_website, formData.college_verification_url].filter(Boolean).length
-            : [formData.company_website, formData.company_linkedin_url, formData.gst_number, formData.company_document_url, formData.hr_contact].filter(Boolean).length;
-    const roleGradient = userRole === 'company'
-        ? 'from-cyan-400 via-sky-500 to-emerald-400'
-        : userRole === 'tpo'
-            ? 'from-amber-300 via-orange-400 to-rose-400'
-            : 'from-blue-500 via-violet-500 to-fuchsia-500';
-    const roleNarrative = userRole === 'student'
-        ? 'Shape a profile colleges and companies can trust. Your location, college, course, and skill signals directly improve matching quality.'
-        : userRole === 'tpo'
-            ? 'Create a polished institution presence so students can connect to the right college, choose valid courses, and move through verification cleanly.'
-            : 'Turn this into a credible employer profile. Strong company details and verification signals help attract serious, relevant candidates faster.';
     const roleSectionTitle = userRole === 'student'
         ? 'Academic + career details'
         : userRole === 'tpo'
@@ -185,26 +157,6 @@ export default function OnboardingPage() {
         : userRole === 'tpo'
             ? 'Register your institution once, then make it easy for students to find the right college and course during onboarding.'
             : 'Add the hiring context candidates care about most: company identity, operating context, and verification proof.';
-    const flowSteps = userRole === 'student'
-        ? [
-            { icon: Zap, label: 'Role locked in', detail: 'Your student track is ready for AI matching.', done: true },
-            { icon: MapPin, label: 'Location + college', detail: 'Pick your city, college, and course so we can surface the right campus network.', done: isLocationReady && Boolean((formData.college_id && formData.college_id !== 'other') || formData.university) },
-            { icon: Briefcase, label: 'Career signals', detail: 'Skills, preferred roles, and proof of work make recommendations sharper.', done: Boolean(formData.expected_graduation && (selectedSkillItems.length > 0 || selectedPreferredRoleItems.length > 0)) },
-        ]
-        : userRole === 'tpo'
-            ? [
-                { icon: Zap, label: 'Institution path', detail: 'Your college / TPO profile is the source of truth for student onboarding.', done: true },
-                { icon: GraduationCap, label: 'Courses published', detail: 'Add real courses so students can select them instead of typing manually.', done: myCourses.length > 0 },
-                { icon: FileText, label: 'Verification ready', detail: 'Official email, website, and supporting document build trust across the platform.', done: Boolean(formData.college_official_email && formData.college_website && formData.college_verification_url) },
-            ]
-            : [
-                { icon: Zap, label: 'Company profile', detail: 'Set the employer identity candidates will see first.', done: Boolean(formData.company_name && formData.company_website) },
-                { icon: Briefcase, label: 'Hiring context', detail: 'Industry, team size, and HR contact turn a profile into a real hiring destination.', done: Boolean(formData.company_industry && formData.company_size && formData.hr_contact) },
-                { icon: FileText, label: 'Trust signals', detail: 'LinkedIn, GST, and company documents make applications feel safe and verified.', done: Boolean(formData.company_linkedin_url && formData.gst_number && formData.company_document_url) },
-            ];
-    const completedSteps = flowSteps.filter((step) => step.done).length;
-    const progressPercentage = Math.round((completedSteps / flowSteps.length) * 100);
-
     const uploadFile = async (file: File, bucket: string, folder: string) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
@@ -543,106 +495,61 @@ export default function OnboardingPage() {
     }
 
     return (
-        <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-100 via-blue-50 to-cyan-100">
-            <div className="pointer-events-none absolute -left-20 top-14 h-72 w-72 rounded-full bg-cyan-200/40 blur-3xl" />
-            <div className="pointer-events-none absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-sky-300/35 blur-3xl" />
-
-            <div className="relative mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-10">
-                <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-                    <Card className="border-slate-200/80 bg-white/95 shadow-xl backdrop-blur">
-                        <CardHeader className="space-y-4 pb-4">
-                            <Badge className={`w-fit bg-gradient-to-r ${roleGradient} text-white shadow-sm`}>
-                                {roleLabel}
-                            </Badge>
-                            <div className="space-y-2">
-                                <CardTitle className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-                                    Complete Your Profile
-                                </CardTitle>
-                                <CardDescription className="max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
-                                    {roleNarrative}
-                                </CardDescription>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4 pt-0">
-                            <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-                                <div className="mb-2 flex items-center justify-between text-xs font-medium uppercase tracking-wide text-slate-500">
-                                    <span>Onboarding progress</span>
-                                    <span>{progressPercentage}% complete</span>
-                                </div>
-                                <div className="h-2 w-full rounded-full bg-slate-200">
-                                    <div
-                                        className={`h-full rounded-full bg-gradient-to-r ${roleGradient} transition-all duration-500`}
-                                        style={{ width: `${progressPercentage}%` }}
-                                    />
-                                </div>
-                            </div>
-                            <div className="grid gap-3 sm:grid-cols-3">
-                                <div className="rounded-xl border border-slate-200 bg-white p-3">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Identity</p>
-                                    <p className="mt-1 line-clamp-2 text-sm font-semibold text-slate-900">{primaryEntity}</p>
-                                </div>
-                                <div className="rounded-xl border border-slate-200 bg-white p-3">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Profile Signals</p>
-                                    <p className="mt-1 text-sm font-semibold text-slate-900">{signalCount}</p>
-                                </div>
-                                <div className="rounded-xl border border-slate-200 bg-white p-3">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Trust Signals</p>
-                                    <p className="mt-1 text-sm font-semibold text-slate-900">{trustSignalCount}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="border-slate-200/80 bg-white/95 shadow-xl backdrop-blur">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-lg font-semibold text-slate-900">Profile Blueprint</CardTitle>
-                            <CardDescription className="text-sm text-slate-600">
-                                Keep this checklist green and your dashboard will feel complete from day one.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4 pt-0">
-                            <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-cyan-50 p-4">
-                                <Image
-                                    src="/illustrations/profile-data-animate.svg"
-                                    alt="Illustration of profile and data onboarding"
-                                    width={560}
-                                    height={430}
-                                    priority
-                                    className="mx-auto h-auto w-full max-w-md"
-                                />
-                            </div>
-                            <p className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs text-slate-600">
-                                {locationSummary}
+        <div className="h-screen bg-slate-100">
+            <div className="mx-auto grid h-full w-full max-w-[1700px] lg:grid-cols-2">
+                <aside className="relative hidden h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-10 lg:flex">
+                    <div className="pointer-events-none absolute -left-24 top-12 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
+                    <div className="pointer-events-none absolute -right-24 bottom-12 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
+                    <div className="relative z-10 w-full max-w-xl space-y-8">
+                        <div className="space-y-3 text-center text-white">
+                            <p className="text-sm font-medium uppercase tracking-[0.2em] text-slate-300">InternBridge</p>
+                            <h1 className="text-4xl font-semibold tracking-tight">Complete Your Profile</h1>
+                            <p className="text-base leading-7 text-slate-300">
+                                Fill your profile once and unlock personalized internships, matching, and verification.
                             </p>
-                            <div className="space-y-2">
-                                {flowSteps.map((step) => {
-                                    const StepIcon = step.icon;
-                                    return (
-                                        <div key={step.label} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2">
-                                            <span className={`mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full ${step.done ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
-                                                <StepIcon className="h-4 w-4" />
-                                            </span>
-                                            <div className="space-y-0.5">
-                                                <p className="text-sm font-medium text-slate-900">{step.label}</p>
-                                                <p className="text-xs text-slate-600">{step.detail}</p>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                        </div>
+                        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+                            <Image
+                                src="/illustrations/profile-data-animate.svg"
+                                alt="Profile data onboarding illustration"
+                                width={620}
+                                height={480}
+                                priority
+                                className="mx-auto h-auto w-full max-w-lg"
+                            />
+                        </div>
+                        <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center text-sm text-slate-200">
+                            {locationSummary}
+                        </p>
+                    </div>
+                </aside>
 
-                <Card className="mt-6 border-slate-200/80 bg-white/95 shadow-xl backdrop-blur">
-                    <CardHeader className="space-y-2 pb-4">
-                        <CardTitle className="text-2xl font-semibold tracking-tight text-slate-900">{roleSectionTitle}</CardTitle>
-                        <CardDescription className="max-w-3xl text-sm leading-6 text-slate-600">
-                            {roleSectionDescription}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-8 pt-0">
-                        <form onSubmit={handleSave} className="space-y-8">
+                <main className="h-screen overflow-y-auto">
+                    <div className="mx-auto flex min-h-full w-full max-w-3xl items-center px-4 py-8 sm:px-6 lg:px-10">
+                        <Card className="w-full border-slate-200 bg-white shadow-xl">
+                            <CardHeader className="space-y-3 pb-4">
+                                <Badge variant="secondary" className="w-fit bg-slate-100 text-slate-700">
+                                    {roleLabel}
+                                </Badge>
+                                <CardTitle className="text-3xl font-semibold tracking-tight text-slate-900">
+                                    {roleSectionTitle}
+                                </CardTitle>
+                                <CardDescription className="text-sm leading-6 text-slate-600">
+                                    {roleSectionDescription}
+                                </CardDescription>
+                                <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:hidden">
+                                    <Image
+                                        src="/illustrations/profile-data-animate.svg"
+                                        alt="Profile data onboarding illustration"
+                                        width={520}
+                                        height={380}
+                                        className="mx-auto h-auto w-full max-w-sm"
+                                    />
+                                    <p className="text-center text-xs text-slate-600">{locationSummary}</p>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                                <form onSubmit={handleSave} className="space-y-8">
                             <section className="space-y-6 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5 sm:p-6">
                                 <div className="space-y-2">
                                     <Label>Joining as</Label>
@@ -1416,7 +1323,7 @@ export default function OnboardingPage() {
                                 </p>
                                 <Button
                                     type="submit"
-                                    className={`h-11 w-full sm:w-auto sm:min-w-[220px] bg-gradient-to-r ${roleGradient} text-white shadow-md hover:opacity-95`}
+                                    className="h-11 w-full sm:w-auto sm:min-w-[220px] bg-slate-900 text-white shadow-md hover:bg-slate-800"
                                     disabled={isSaving}
                                 >
                                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Launch Dashboard'}
@@ -1424,7 +1331,9 @@ export default function OnboardingPage() {
                             </div>
                         </form>
                     </CardContent>
-                </Card>
+                        </Card>
+                    </div>
+                </main>
             </div>
         </div>
     );
