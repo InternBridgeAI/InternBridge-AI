@@ -160,10 +160,14 @@ export default function OnboardingPage() {
             : 'Add the hiring context candidates care about most: company identity, operating context, and verification proof.';
     const onboardingIllustrationSrc = userRole === 'company'
         ? '/illustrations/company-animate.svg'
-        : '/illustrations/profile-data-animate.svg';
+        : userRole === 'tpo'
+            ? '/illustrations/college-class-animate.svg'
+            : '/illustrations/profile-data-animate.svg';
     const onboardingIllustrationAlt = userRole === 'company'
         ? 'Company onboarding illustration'
-        : 'Profile data onboarding illustration';
+        : userRole === 'tpo'
+            ? 'College onboarding illustration'
+            : 'Profile data onboarding illustration';
     const uploadFile = async (file: File, bucket: string, folder: string) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
