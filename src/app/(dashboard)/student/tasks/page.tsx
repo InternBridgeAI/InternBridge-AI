@@ -3,15 +3,15 @@
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { GraduationCap, Clock, Award, Code2, ArrowRight, CheckCircle, Brain, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { GraduationCap, Clock, Award, Code2, CheckCircle, Brain, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import Link from 'next/link';
 import { apiFetch } from '@/lib/api-client';
 
 export default function TasksPage() {
     const [tasks, setTasks] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchTasks();
@@ -39,7 +39,7 @@ export default function TasksPage() {
                 </div>
                 <div className="flex items-center gap-3 bg-primary/10 px-4 py-2 rounded-lg border border-primary/20">
                     <Award className="h-5 w-5 text-primary" />
-                    <span className="text-sm font-bold text-primary">Points: 1,450 XP</span>
+                    <span className="text-sm font-bold text-primary">Live Challenges: {tasks.length}</span>
                 </div>
             </div>
 
@@ -62,12 +62,12 @@ export default function TasksPage() {
                                         </div>
                                     </div>
                                     <Badge className="bg-primary/10 text-primary border-primary/20">
-                                        <Sparkles className="h-3 w-3 mr-1" /> Direct Interview Invite
+                                        <Sparkles className="h-3 w-3 mr-1" /> Skill Challenge
                                     </Badge>
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
+                                <p className={`text-sm text-muted-foreground ${expandedTaskId === task.id ? '' : 'line-clamp-2'}`}>{task.description}</p>
                                 <div className="flex flex-wrap gap-2">
                                     {task.skills_tested?.map((skill: string) => (
                                         <Badge key={skill} variant="outline" className="text-[10px]">{skill}</Badge>
@@ -78,14 +78,19 @@ export default function TasksPage() {
                                         <Clock className="h-3.5 w-3.5" /> Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'No deadline'}
                                     </div>
                                     <div className="flex items-center gap-1.5 text-primary font-medium">
-                                        <CheckCircle className="h-3.5 w-3.5" /> 128 submissions
+                                        <CheckCircle className="h-3.5 w-3.5" /> Skills: {task.skills_tested?.length || 0}
                                     </div>
                                 </div>
                             </CardContent>
                             <CardFooter className="bg-muted/30 border-t border-border/50 py-3">
-                                <Link href={`/student/tasks/${task.id}`} className={buttonVariants({ className: 'w-full' })}>
-                                    Take Challenge <ArrowRight className="ml-2 h-4 w-4" />
-                                </Link>
+                                <Button
+                                    type="button"
+                                    className="w-full"
+                                    variant="outline"
+                                    onClick={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                                >
+                                    {expandedTaskId === task.id ? 'Hide Brief' : 'Read Brief'}
+                                </Button>
                             </CardFooter>
                         </Card>
                     ))

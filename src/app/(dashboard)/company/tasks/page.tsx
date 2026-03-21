@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Plus, Target, Users, Clock, CheckCircle, Trash2, Loader2, Sparkles, X } from 'lucide-react';
+import { Plus, Target, Users, Clock, Trash2, Loader2, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-client';
 
@@ -66,6 +66,20 @@ export default function CompanyTasksPage() {
             toast.error(error.message || 'Failed to create task');
         } finally {
             setIsCreating(false);
+        }
+    };
+
+    const handleDeleteTask = async (taskId: string) => {
+        try {
+            const result = await apiFetch(`/api/tasks/${taskId}`, {
+                method: 'DELETE',
+            });
+            if (result.success) {
+                setTasks(tasks.filter((task) => task.id !== taskId));
+                toast.success('Challenge removed');
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to delete task');
         }
     };
 
@@ -155,7 +169,15 @@ export default function CompanyTasksPage() {
                                                 {task.skills_tested?.map((s: string) => <Badge key={s} variant="outline" className="text-[10px]">{s}</Badge>)}
                                             </div>
                                         </div>
-                                        <Button variant="ghost" size="icon" className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="h-4 w-4" /></Button>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            onClick={() => handleDeleteTask(task.id)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
                                     </div>
                                 </CardHeader>
                                 <CardContent>
@@ -165,7 +187,7 @@ export default function CompanyTasksPage() {
                                             <Users className="h-4 w-4 text-primary" />
                                             <div>
                                                 <p className="text-[10px] text-muted-foreground uppercase font-bold">Submissions</p>
-                                                <p className="font-bold text-lg">12</p>
+                                                <p className="font-bold text-lg">{task.submission_count ?? 0}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-50/30 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800">
@@ -177,11 +199,10 @@ export default function CompanyTasksPage() {
                                         </div>
                                     </div>
                                 </CardContent>
-                                <CardFooter className="bg-muted/30 border-t border-border/50 py-3 flex justify-between">
+                                <CardFooter className="bg-muted/30 border-t border-border/50 py-3">
                                     <p className="text-xs text-muted-foreground italic flex items-center gap-1">
-                                        <Sparkles className="h-3 w-3 text-primary" /> AI Ranking enabled for submissions
+                                        <Sparkles className="h-3 w-3 text-primary" /> Challenge is live for student discovery and company-owned management.
                                     </p>
-                                    <Button variant="outline" size="sm">Evaluate Submissions</Button>
                                 </CardFooter>
                             </Card>
                         ))

@@ -92,9 +92,16 @@ export default function AdminCompaniesPage() {
                       </div>
                       <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {company.email}</span>
-                        {company.website && (
-                          <a href={`https://${company.website}`} target="_blank" className="flex items-center gap-1.5 text-primary hover:underline">
-                            <Globe className="h-3.5 w-3.5" /> {company.website} <ExternalLink className="h-2 w-2" />
+                        {company.company_website && (
+                          <a
+                            href={company.company_website.startsWith('http://') || company.company_website.startsWith('https://')
+                              ? company.company_website
+                              : `https://${company.company_website}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-1.5 text-primary hover:underline"
+                          >
+                            <Globe className="h-3.5 w-3.5" /> {company.company_website} <ExternalLink className="h-2 w-2" />
                           </a>
                         )}
                       </div>

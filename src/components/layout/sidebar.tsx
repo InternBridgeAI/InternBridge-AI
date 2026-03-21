@@ -55,7 +55,6 @@ const navigationMap: Record<string, NavItem[]> = {
         { label: 'Users', href: '/admin/users', icon: <Users size={20} /> },
         { label: 'Fraud Detection', href: '/admin/fraud', icon: <AlertTriangle size={20} /> },
         { label: 'Activity Logs', href: '/admin/logs', icon: <Shield size={20} /> },
-        { label: 'Analytics', href: '/admin/analytics', icon: <BarChart3 size={20} /> },
     ],
     tpo: [
         { label: 'Dashboard', href: '/tpo', icon: <LayoutDashboard size={20} /> },

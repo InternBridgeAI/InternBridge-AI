@@ -92,7 +92,7 @@ export default async function CompanyDashboard() {
                 </div>
                 <div className="flex items-center gap-3">
                     <Button variant="outline" asChild>
-                        <Link href="/company/tasks/new">
+                        <Link href="/company/tasks">
                             <PlusCircle className="mr-2 h-4 w-4" /> Create Challenge
                         </Link>
                     </Button>
