@@ -4,13 +4,15 @@ import { useRouter } from 'next/navigation';
 import { getInitials } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
+import { NotificationCenter } from './notification-center';
 
 interface NavbarProps {
+    userId: string;
     userName: string;
     userRole: string;
 }
 
-export function Navbar({ userName, userRole }: NavbarProps) {
+export function Navbar({ userId, userName, userRole }: NavbarProps) {
     const router = useRouter();
 
     const handleLogout = async () => {
@@ -44,6 +46,7 @@ export function Navbar({ userName, userRole }: NavbarProps) {
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-4 ml-4">
+                    <NotificationCenter userId={userId} />
                     <ThemeToggle />
                     <div className="flex items-center gap-3 pr-2 border-r border-border">
                         <div className="w-8 h-8 rounded-full gradient-brand flex items-center justify-center text-white text-xs font-bold">

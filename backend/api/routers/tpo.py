@@ -5,6 +5,7 @@ from pydantic import BaseModel  # type: ignore
 from datetime import datetime, timezone
 
 from core.dependencies import get_current_user  # type: ignore
+from core.notifications import create_notification  # type: ignore
 from core.supabase_provider import supabase  # type: ignore
 from api.routers.admin import _get_role  # type: ignore
 
@@ -155,6 +156,20 @@ async def verify_student(
             }
         ).execute()
 
+        create_notification(
+            student_id,
+            actor_id=user.id,
+            notification_type="student_verified" if body.action == "verify" else "student_rejected",
+            title="Profile verified" if body.action == "verify" else "Profile rejected",
+            message=(
+                "Your college has verified your student profile. You can now apply to internships."
+                if body.action == "verify"
+                else "Your college rejected your student verification. Please review your documents and profile."
+            ),
+            link="/student/profile" if body.action != "verify" else "/student/internships",
+            metadata={"notes": body.notes},
+        )
+
         return {"success": True, "data": updated.data[0] if updated.data else None}
     except HTTPException:
         raise
@@ -209,6 +224,20 @@ async def decide_company_request(
                 },
             }
         ).execute()
+
+        create_notification(
+            req_row.get("company_id"),
+            actor_id=user.id,
+            notification_type="company_request_approved" if body.action == "approve" else "company_request_rejected",
+            title="College partnership approved" if body.action == "approve" else "College partnership rejected",
+            message=(
+                "Your partnership request has been approved. You can now post internships for this college."
+                if body.action == "approve"
+                else "Your partnership request was rejected by the college."
+            ),
+            link="/company/internships/new",
+            metadata={"request_id": request_id, "notes": body.notes},
+        )
 
         return {"success": True, "data": updated.data[0] if updated.data else None}
     except HTTPException:

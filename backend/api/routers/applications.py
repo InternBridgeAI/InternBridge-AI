@@ -6,6 +6,7 @@ from pydantic import BaseModel  # type: ignore
 
 from core.ai_utils import calculate_match_score  # type: ignore
 from core.dependencies import get_current_user  # type: ignore
+from core.notifications import create_notification  # type: ignore
 from core.supabase_provider import supabase  # type: ignore
 
 router = APIRouter()
@@ -34,6 +35,48 @@ def _get_user_role(user_id: str) -> str:
     if not role:
         raise HTTPException(status_code=403, detail="User profile not found")
     return role
+
+
+def _application_status_copy(
+    status: ApplicationStatus,
+    internship_title: str,
+    interview_details: Optional[Dict[str, Any]] = None,
+) -> Dict[str, str]:
+    if status == "shortlisted":
+        return {
+            "title": "You have been shortlisted",
+            "message": f"Your application for {internship_title} has been shortlisted.",
+        }
+    if status == "interview":
+        when = ""
+        if interview_details:
+            date = interview_details.get("date")
+            time = interview_details.get("time")
+            if date and time:
+                when = f" on {date} at {time}"
+        return {
+            "title": "Interview scheduled",
+            "message": f"Your interview for {internship_title} is scheduled{when}.",
+        }
+    if status == "accepted":
+        return {
+            "title": "Application accepted",
+            "message": f"Congratulations. You have been selected for {internship_title}.",
+        }
+    if status == "rejected":
+        return {
+            "title": "Application update",
+            "message": f"Your application for {internship_title} was not selected this time.",
+        }
+    if status == "withdrawn":
+        return {
+            "title": "Application withdrawn",
+            "message": f"The student withdrew their application for {internship_title}.",
+        }
+    return {
+        "title": "Application updated",
+        "message": f"Your application for {internship_title} is now {status}.",
+    }
 
 
 def _attach_relations(
@@ -269,6 +312,32 @@ async def apply_to_internship(
             }
         ).execute()
 
+        student_name_response = (
+            supabase.table("profiles").select("full_name").eq("id", user.id).single().execute()
+        )
+        student_name = (student_name_response.data or {}).get("full_name") or "A student"
+        internship_title = str(internship_data.get("title") or "the internship")
+        internship_id = str(body.internship_id)
+
+        create_notification(
+            user.id,
+            actor_id=user.id,
+            notification_type="application_submitted",
+            title="Application submitted",
+            message=f"Your application for {internship_title} has been submitted successfully.",
+            link="/student/applications",
+            metadata={"internship_id": internship_id},
+        )
+        create_notification(
+            internship_data.get("company_id"),
+            actor_id=user.id,
+            notification_type="application_received",
+            title="New application received",
+            message=f"{student_name} applied for {internship_title}.",
+            link=f"/company/candidates?internship_id={internship_id}",
+            metadata={"internship_id": internship_id, "student_id": user.id},
+        )
+
         return {"success": True, "data": response.data[0]}
     except HTTPException:
         raise
@@ -337,6 +406,51 @@ async def update_application_status(
             .eq("id", body.application_id)
             .execute()
         )
+
+        internship_response = (
+            supabase.table("internships")
+            .select("id, title, company_id")
+            .eq("id", application["internship_id"])
+            .single()
+            .execute()
+        )
+        internship_row = internship_response.data or {}
+        internship_title = str(internship_row.get("title") or "the internship")
+
+        if body.status != application.get("status"):
+            copy = _application_status_copy(
+                body.status,
+                internship_title,
+                cast(Optional[Dict[str, Any]], update_data.get("interview_details")),
+            )
+            if body.status == "withdrawn":
+                student_response = (
+                    supabase.table("profiles")
+                    .select("full_name")
+                    .eq("id", application["student_id"])
+                    .single()
+                    .execute()
+                )
+                student_name = (student_response.data or {}).get("full_name") or "A student"
+                create_notification(
+                    internship_row.get("company_id"),
+                    actor_id=user.id,
+                    notification_type="application_withdrawn",
+                    title=copy["title"],
+                    message=f"{student_name} withdrew their application for {internship_title}.",
+                    link=f"/company/candidates?internship_id={application['internship_id']}",
+                    metadata={"application_id": body.application_id, "internship_id": application["internship_id"]},
+                )
+            else:
+                create_notification(
+                    application["student_id"],
+                    actor_id=user.id,
+                    notification_type=f"application_{body.status}",
+                    title=copy["title"],
+                    message=copy["message"],
+                    link="/student/applications",
+                    metadata={"application_id": body.application_id, "internship_id": application["internship_id"]},
+                )
 
         return {"success": True, "data": response.data[0] if response.data else None}
     except HTTPException:

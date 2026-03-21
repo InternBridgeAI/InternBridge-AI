@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException  # type: ignore
 from pydantic import BaseModel  # type: ignore
 
 from core.dependencies import get_current_user  # type: ignore
+from core.notifications import create_notification  # type: ignore
 from core.supabase_provider import supabase  # type: ignore
 from api.routers.admin import _get_role  # type: ignore
 
@@ -103,6 +104,24 @@ async def request_partnership(body: PartnershipRequest, user=Depends(get_current
                     .execute()
                 )
                 row = refreshed.data[0] if refreshed.data else existing
+                create_notification(
+                    body.college_id,
+                    actor_id=user.id,
+                    notification_type="company_request_pending",
+                    title="Partnership request resubmitted",
+                    message="A company has resubmitted a partnership request for your review.",
+                    link="/tpo/approvals",
+                    metadata={"request_id": row.get("id"), "company_id": user.id},
+                )
+                create_notification(
+                    user.id,
+                    actor_id=user.id,
+                    notification_type="company_request_pending",
+                    title="Partnership request resubmitted",
+                    message="Your college partnership request was resubmitted successfully.",
+                    link="/company/internships/new",
+                    metadata={"request_id": row.get("id"), "college_id": body.college_id},
+                )
                 return {"success": True, "data": row, "message": "Request resubmitted"}
 
             return {"success": True, "data": existing, "message": "Request already exists"}
@@ -125,6 +144,25 @@ async def request_partnership(body: PartnershipRequest, user=Depends(get_current
                 },
             }
         ).execute()
+
+        create_notification(
+            body.college_id,
+            actor_id=user.id,
+            notification_type="company_request_pending",
+            title="New partnership request",
+            message="A company wants to partner with your college for internships.",
+            link="/tpo/approvals",
+            metadata={"request_id": row.get("id") if row else None, "company_id": user.id},
+        )
+        create_notification(
+            user.id,
+            actor_id=user.id,
+            notification_type="company_request_pending",
+            title="Request submitted",
+            message="Your partnership request was sent to the college for review.",
+            link="/company/internships/new",
+            metadata={"request_id": row.get("id") if row else None, "college_id": body.college_id},
+        )
 
         return {"success": True, "data": row, "message": "Request submitted"}
     except HTTPException:

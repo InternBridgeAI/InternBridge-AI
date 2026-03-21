@@ -16,6 +16,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, role }: DashboardLayoutProps) {
     const [collapsed, setCollapsed] = useState(false);
+    const [userId, setUserId] = useState('');
     const [userName, setUserName] = useState('');
     const [isChecking, setIsChecking] = useState(true);
     const router = useRouter();
@@ -27,6 +28,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
             const supabase = createClient();
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
+                setUserId(user.id);
                 const { data: profile } = await supabase
                     .from('profiles')
                     .select('full_name, is_onboarded')
@@ -55,7 +57,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         <div className="min-h-screen bg-background">
             <Sidebar role={role} collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
             <div className={cn('transition-all duration-300 min-h-screen flex flex-col', collapsed ? 'ml-[70px]' : 'ml-64')}>
-                <Navbar userName={userName} userRole={role} />
+                <Navbar userId={userId} userName={userName} userRole={role} />
                 <main className="p-6 animate-fade-in flex-grow">
                     {children}
                 </main>

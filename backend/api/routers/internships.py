@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from core.ai_utils import generate_skills_embedding
 from core.dependencies import get_current_user
+from core.notifications import create_notification
 from core.supabase_provider import supabase
 
 router = APIRouter()
@@ -228,6 +229,38 @@ async def create_internship(
             }
         ).execute()
 
+        company_profile = (
+            supabase.table("profiles")
+            .select("company_name, full_name")
+            .eq("id", user.id)
+            .single()
+            .execute()
+        )
+        company_label = (
+            (company_profile.data or {}).get("company_name")
+            or (company_profile.data or {}).get("full_name")
+            or "A company"
+        )
+
+        create_notification(
+            user.id,
+            actor_id=user.id,
+            notification_type="internship_created",
+            title="Internship created",
+            message=f"{body.title} was created successfully and is now awaiting approval.",
+            link="/company/internships",
+            metadata={"internship_id": created["id"]},
+        )
+        create_notification(
+            body.college_id,
+            actor_id=user.id,
+            notification_type="internship_pending_review",
+            title="Internship awaiting approval",
+            message=f"{company_label} submitted {body.title} for your college approval.",
+            link="/tpo/approvals",
+            metadata={"internship_id": created["id"], "company_id": user.id},
+        )
+
         return {"success": True, "data": created}
     except HTTPException:
         raise
@@ -250,7 +283,7 @@ async def approve_internship(
 
         existing = (
             supabase.table("internships")
-            .select("id, title, college_id")
+            .select("id, title, college_id, company_id")
             .eq("id", internship_id)
             .single()
             .execute()
@@ -297,6 +330,20 @@ async def approve_internship(
                 },
             }
         ).execute()
+
+        create_notification(
+            existing.data.get("company_id"),
+            actor_id=user.id,
+            notification_type="internship_approved" if body.is_approved else "internship_rejected",
+            title="Internship approved" if body.is_approved else "Internship rejected",
+            message=(
+                f"{existing.data.get('title')} is now live for students."
+                if body.is_approved
+                else f"{existing.data.get('title')} was rejected during review."
+            ),
+            link="/company/internships",
+            metadata={"internship_id": internship_id},
+        )
 
         return {"success": True, "data": response.data[0] if response.data else None}
     except HTTPException:

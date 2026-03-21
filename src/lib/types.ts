@@ -151,6 +151,20 @@ export interface CollegeReport {
     generated_at: string;
 }
 
+export interface AppNotification {
+    id: string;
+    recipient_id: string;
+    actor_id: string | null;
+    type: string;
+    title: string;
+    message: string;
+    link: string | null;
+    metadata: Record<string, unknown> | null;
+    is_read: boolean;
+    read_at: string | null;
+    created_at: string;
+}
+
 /** API response wrapper */
 export interface ApiResponse<T = unknown> {
     success: boolean;

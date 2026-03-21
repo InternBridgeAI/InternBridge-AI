@@ -243,6 +243,26 @@ CREATE INDEX idx_activity_logs_user ON activity_logs(user_id);
 CREATE INDEX idx_activity_logs_created ON activity_logs(created_at DESC);
 
 -- ============================================================
+-- NOTIFICATIONS
+-- ============================================================
+CREATE TABLE notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  recipient_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  actor_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  type TEXT NOT NULL DEFAULT 'general',
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  link TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}',
+  is_read BOOLEAN NOT NULL DEFAULT FALSE,
+  read_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_notifications_recipient_created ON notifications(recipient_id, created_at DESC);
+CREATE INDEX idx_notifications_recipient_unread ON notifications(recipient_id, is_read, created_at DESC);
+
+-- ============================================================
 -- COLLEGE REPORTS
 -- ============================================================
 CREATE TABLE college_reports (
@@ -302,6 +322,7 @@ ALTER TABLE task_submissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE certificates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE verifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE college_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE college_courses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE college_company_requests ENABLE ROW LEVEL SECURITY;
@@ -410,6 +431,12 @@ CREATE POLICY "Update verifications" ON verifications FOR UPDATE USING (true);
 CREATE POLICY "Users see own logs" ON activity_logs FOR SELECT USING (user_id = auth.uid());
 CREATE POLICY "Insert logs" ON activity_logs FOR INSERT WITH CHECK (user_id = auth.uid());
 
+-- Notifications: recipients manage their own inbox
+CREATE POLICY "Users view own notifications" ON notifications FOR SELECT USING (recipient_id = auth.uid());
+CREATE POLICY "Users update own notifications" ON notifications
+  FOR UPDATE USING (recipient_id = auth.uid())
+  WITH CHECK (recipient_id = auth.uid());
+
 -- College reports: TPO manages own
 CREATE POLICY "TPO sees own reports" ON college_reports FOR SELECT USING (tpo_id = auth.uid());
 CREATE POLICY "TPO creates reports" ON college_reports FOR INSERT WITH CHECK (tpo_id = auth.uid());
@@ -450,3 +477,19 @@ CREATE TRIGGER set_profiles_updated_at BEFORE UPDATE ON profiles FOR EACH ROW EX
 CREATE TRIGGER set_internships_updated_at BEFORE UPDATE ON internships FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER set_applications_updated_at BEFORE UPDATE ON applications FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER set_verifications_updated_at BEFORE UPDATE ON verifications FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'notifications'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+  END IF;
+EXCEPTION
+  WHEN undefined_object THEN
+    NULL;
+END $$;

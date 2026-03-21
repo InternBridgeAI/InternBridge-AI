@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException  # type: ignore
 from pydantic import BaseModel  # type: ignore
 
 from core.dependencies import get_current_user  # type: ignore
+from core.notifications import create_notification  # type: ignore
 from core.supabase_provider import supabase  # type: ignore
 from api.routers.admin import _get_role  # type: ignore
 
@@ -52,6 +53,16 @@ async def issue_certificate(data: CertificateCreate, user=Depends(get_current_us
             "action": "certificate_issued",
             "details": {"student_id": data.student_id, "certificate_id": cert_id, "tx_hash": blockchain_hash}
         }).execute()
+
+        create_notification(
+            data.student_id,
+            actor_id=user.id,
+            notification_type="certificate_issued",
+            title="Certificate issued",
+            message=f"You received a new certificate: {data.title}.",
+            link="/student/applications",
+            metadata={"certificate_id": cert_id, "internship_id": data.internship_id},
+        )
         
         return {"success": True, "data": response.data[0] if response.data else None}
     except HTTPException:

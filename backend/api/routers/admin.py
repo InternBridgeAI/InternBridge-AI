@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException  # type: ignore
 from pydantic import BaseModel  # type: ignore
 
 from core.dependencies import get_current_user  # type: ignore
+from core.notifications import create_notification  # type: ignore
 from core.supabase_provider import supabase  # type: ignore
 from core.security import detect_fake_posting, verify_company_document  # type: ignore
 
@@ -95,6 +96,20 @@ async def verify_company(data: VerifyRequest, user=Depends(get_current_user)):
                 },
             }
         ).execute()
+
+        create_notification(
+            data.profile_id,
+            actor_id=user.id,
+            notification_type="company_verified" if is_verified else "company_rejected",
+            title="Company verified" if is_verified else "Company verification rejected",
+            message=(
+                "Your company profile has been approved. You can now operate fully on InternBridge."
+                if is_verified
+                else "Your company verification was rejected. Please review your documents and details."
+            ),
+            link="/company",
+            metadata={"notes": data.notes},
+        )
 
         return {
             "success": True,
