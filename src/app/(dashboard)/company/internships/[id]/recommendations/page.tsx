@@ -57,37 +57,71 @@ export default function RecommendationsPage() {
                 <div className="grid gap-6">
                     {recommendations.map((candidate) => (
                         <Card key={candidate.id} className="glass group hover:border-primary/50 transition-all overflow-hidden shadow-xl shadow-primary/5">
-                            <div className="flex flex-col md:flex-row p-6 items-center justify-between gap-6">
-                                <div className="flex items-center gap-6">
-                                    <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-2xl font-black shadow-inner border border-primary/20 overflow-hidden shrink-0">
-                                        {candidate.avatar_url ? (
-                                            <img src={candidate.avatar_url} alt={candidate.full_name} className="h-full w-full object-cover" />
-                                        ) : (
-                                            candidate.full_name?.[0]
-                                        )}
+                            <div className="flex flex-col gap-6 p-6">
+                                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                                    <div className="flex items-center gap-6">
+                                        <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-2xl font-black shadow-inner border border-primary/20 overflow-hidden shrink-0">
+                                            {candidate.avatar_url ? (
+                                                <img src={candidate.avatar_url} alt={candidate.full_name} className="h-full w-full object-cover" />
+                                            ) : (
+                                                candidate.full_name?.[0]
+                                            )}
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-extrabold tracking-tight underline decoration-primary/30 decoration-2 underline-offset-4">{candidate.full_name}</h3>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <Mail className="h-3 w-3 opacity-50" />
+                                                <span className="text-xs text-muted-foreground">{candidate.email}</span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2 mt-4">
+                                                {candidate.skills?.map((skill: string) => (
+                                                    <Badge key={skill} variant="secondary" className="text-[10px] font-bold uppercase tracking-tighter bg-primary/5 text-primary border-none px-2 py-0.5">{skill}</Badge>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h3 className="text-xl font-extrabold tracking-tight underline decoration-primary/30 decoration-2 underline-offset-4">{candidate.full_name}</h3>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <Mail className="h-3 w-3 opacity-50" />
-                                            <span className="text-xs text-muted-foreground">{candidate.email}</span>
+
+                                    <div className="flex flex-col items-center md:items-end gap-3 min-w-[150px] w-full md:w-auto">
+                                        <div className="text-center md:text-right">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Match Accuracy</p>
+                                            <p className="text-4xl font-black italic tracking-tighter text-primary">{Math.round(candidate.score)}%</p>
                                         </div>
-                                        <div className="flex flex-wrap gap-2 mt-4">
-                                            {candidate.skills?.map((skill: string) => (
-                                                <Badge key={skill} variant="secondary" className="text-[10px] font-bold uppercase tracking-tighter bg-primary/5 text-primary border-none px-2 py-0.5">{skill}</Badge>
-                                            ))}
-                                        </div>
+                                        <Button className="w-full font-black uppercase text-[10px] tracking-widest h-10 rounded-xl shadow-lg hover:shadow-primary/20 transition-all active:scale-95">
+                                            Send Invitation
+                                        </Button>
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col items-center md:items-end gap-3 min-w-[150px] w-full md:w-auto">
-                                    <div className="text-center md:text-right">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Match Accuracy</p>
-                                        <p className="text-4xl font-black italic tracking-tighter text-primary">{Math.round(candidate.score)}%</p>
+                                <div className="grid gap-4 rounded-2xl border border-border/50 bg-muted/20 p-4 md:grid-cols-2">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Why AI Picked This Candidate</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {(candidate.matchedSkills || []).length > 0 ? (
+                                                candidate.matchedSkills.map((skill: string) => (
+                                                    <Badge key={skill} className="bg-green-500/10 text-green-700 dark:text-green-300 border-none">
+                                                        <CheckCircle className="mr-1 h-3 w-3" />
+                                                        {skill}
+                                                    </Badge>
+                                                ))
+                                            ) : (
+                                                <p className="text-sm text-muted-foreground">No direct matched skills detected yet.</p>
+                                            )}
+                                        </div>
                                     </div>
-                                    <Button className="w-full font-black uppercase text-[10px] tracking-widest h-10 rounded-xl shadow-lg hover:shadow-primary/20 transition-all active:scale-95">
-                                        Send Invitation
-                                    </Button>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Gaps To Close</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {(candidate.missingSkills || []).length > 0 ? (
+                                                candidate.missingSkills.map((skill: string) => (
+                                                    <Badge key={skill} variant="outline" className="border-yellow-500/30 text-yellow-700 dark:text-yellow-300">
+                                                        {skill}
+                                                    </Badge>
+                                                ))
+                                            ) : (
+                                                <p className="text-sm text-muted-foreground">Strong coverage across your required skill set.</p>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </Card>

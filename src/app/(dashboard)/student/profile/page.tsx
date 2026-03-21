@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Github, Linkedin, Save, Loader2, Link as LinkIcon, GraduationCap, User, Sparkles, CheckCircle, MapPin, Plus, Briefcase, X } from 'lucide-react';
+import { Github, Linkedin, Save, Loader2, Link as LinkIcon, GraduationCap, User, Sparkles, CheckCircle, MapPin, Plus, Briefcase, X, Brain } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-client';
 import { createClient } from '@/lib/supabase/client';
@@ -35,6 +35,7 @@ export default function ProfilePage() {
     const [isLinkingLinkedin, setIsLinkingLinkedin] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [projectInput, setProjectInput] = useState({ name: '', description: '', technologies: '', link: '' });
+    const [githubVerification, setGithubVerification] = useState<any>(null);
 
     // Skills State
     const [skillDraft, setSkillDraft] = useState('');
@@ -256,14 +257,29 @@ export default function ProfilePage() {
                 body: JSON.stringify({ resume_url: publicUrl }),
             });
 
-            toast.success('Resume uploaded successfully!');
-            fetchProfile();
+            let parseSummary = '';
+            try {
+                const parseResult = await apiFetch('/api/ai/parse-resume-file', {
+                    method: 'POST',
+                    body: JSON.stringify({ resumeUrl: publicUrl }),
+                });
 
-            // Trigger AI parsing in background
-            apiFetch('/api/ai/resume-parse', {
-                method: 'POST',
-                body: JSON.stringify({ resumeUrl: publicUrl })
-            }).catch(console.error);
+                if (parseResult.success) {
+                    parseSummary = `AI parsed ${parseResult.data?.skills?.length || 0} skills`;
+                    setProfile((prev: any) => ({
+                        ...prev,
+                        resume_url: publicUrl,
+                        market_readiness_score: parseResult.marketReadinessScore,
+                        skills: parseResult.data?.skills?.length ? parseResult.data.skills : prev.skills,
+                        full_name: prev.full_name || parseResult.data?.full_name || '',
+                    }));
+                }
+            } catch (parseError: any) {
+                toast.error(parseError.message || 'Resume uploaded, but AI could not extract text from this file.');
+            }
+
+            toast.success(parseSummary ? `Resume uploaded. ${parseSummary}.` : 'Resume uploaded successfully!');
+            fetchProfile();
 
         } catch (error: any) {
             toast.error(error.message || 'Upload failed');
@@ -287,7 +303,12 @@ export default function ProfilePage() {
                 }),
             });
             if (result.success) {
-                toast.success(`Verified ${result.data.verifiedSkills.length} skills!`);
+                setGithubVerification(result.data);
+                setProfile((prev: any) => ({
+                    ...prev,
+                    market_readiness_score: result.marketReadinessScore ?? prev.market_readiness_score,
+                }));
+                toast.success(`Verified ${result.data.verifiedSkills.length} skills. Evidence score: ${result.data.evidenceScore ?? 0}.`);
             }
         } catch (error: any) {
             toast.error(error.message || 'An error occurred');
@@ -397,10 +418,11 @@ export default function ProfilePage() {
                                             className="h-6 text-[9px] uppercase font-black opacity-50 hover:opacity-100"
                                             onClick={async () => {
                                                 setProfile({ ...profile, github_username: '' });
+                                                setGithubVerification(null);
                                                 try {
                                                     await apiFetch('/api/auth/profile', {
                                                         method: 'PATCH',
-                                                        body: JSON.stringify({ github_username: null }),
+                                                            body: JSON.stringify({ github_username: null }),
                                                     });
                                                 } catch (e) { }
                                             }}
@@ -448,6 +470,48 @@ export default function ProfilePage() {
                                     </div>
                                 )}
                                 <p className="text-[9px] text-center text-muted-foreground italic">Verified via GitHub OAuth — no fake input accepted</p>
+                                {githubVerification && (
+                                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-3">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-primary">AI Evidence Snapshot</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {githubVerification.totalRepos} repos scanned • {githubVerification.recentRepos} active in last 12 months
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-xl font-black tracking-tight text-primary">{githubVerification.evidenceScore ?? 0}</p>
+                                                <p className="text-[9px] uppercase font-bold text-muted-foreground">Evidence Score</p>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Verified Skills</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {(githubVerification.verifiedSkills || []).length > 0 ? (
+                                                    githubVerification.verifiedSkills.map((skill: string) => (
+                                                        <Badge key={skill} variant="secondary" className="bg-green-500/10 text-green-700 dark:text-green-300">
+                                                            {skill}
+                                                        </Badge>
+                                                    ))
+                                                ) : (
+                                                    <p className="text-xs text-muted-foreground">No strong GitHub evidence found yet.</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {(githubVerification.unverifiedSkills || []).length > 0 && (
+                                            <div className="space-y-2">
+                                                <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Needs Better Proof</p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {githubVerification.unverifiedSkills.map((skill: string) => (
+                                                        <Badge key={skill} variant="outline" className="border-yellow-500/30 text-yellow-700 dark:text-yellow-300">
+                                                            {skill}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
 

@@ -28,7 +28,11 @@ export default function ResumePage() {
             });
 
             if (result.success) {
-                setParsedData(result.data);
+                setParsedData({
+                    ...result.data,
+                    marketReadinessScore: result.marketReadinessScore,
+                    skillVectorSize: result.skillVector,
+                });
                 toast.success('Resume parsed successfully!');
             } else {
                 toast.error(result.error || 'Failed to parse resume');
@@ -76,7 +80,7 @@ export default function ResumePage() {
                             ) : (
                                 <>
                                     <Brain className="mr-2 h-4 w-4" />
-                                    Parse with Gemini AI
+                                    Parse with AI Engine
                                 </>
                             )}
                         </Button>
@@ -118,7 +122,9 @@ export default function ResumePage() {
                                 </div>
 
                                 <div className="bg-white/50 dark:bg-black/50 p-4 rounded-lg border border-border/50">
-                                    <p className="text-xs font-mono text-primary italic">"Skill vector generated and updated in system for real-time matching."</p>
+                                    <p className="text-xs font-mono text-primary italic">
+                                        Skill vector size: {parsedData.skillVectorSize ?? 0}. Market readiness: {parsedData.marketReadinessScore ?? 'N/A'} / 100.
+                                    </p>
                                 </div>
 
                                 <Button className="w-full" variant="outline" asChild>

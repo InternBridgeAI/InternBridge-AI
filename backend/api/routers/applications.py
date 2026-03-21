@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Literal, Optional, cast
 from fastapi import APIRouter, Depends, HTTPException  # type: ignore
 from pydantic import BaseModel  # type: ignore
 
-from core.ai_utils import cosine_similarity  # type: ignore
+from core.ai_utils import calculate_match_score  # type: ignore
 from core.dependencies import get_current_user  # type: ignore
 from core.supabase_provider import supabase  # type: ignore
 
@@ -219,18 +219,32 @@ async def apply_to_internship(
             )
 
         profile_response = (
-            supabase.table("profiles").select("skill_vector").eq("id", user.id).single().execute()
+            supabase.table("profiles")
+            .select("skill_vector, skills")
+            .eq("id", user.id)
+            .single()
+            .execute()
         )
+        all_internships_response = (
+            supabase.table("internships").select("required_skills").execute()
+        )
+        all_internships_skills = [
+            row.get("required_skills") or [] for row in (all_internships_response.data or [])
+        ]
 
         match_score = 0.0
         if profile_response.data and internship_data:
-            student_vec = (profile_response.data or {}).get("skill_vector")
+            profile_data = profile_response.data or {}
+            student_vec = profile_data.get("skill_vector")
             internship_vec = internship_data.get("skill_vector")
+            student_skills = profile_data.get("skills") or []
             if isinstance(student_vec, list) and isinstance(internship_vec, list):
-                # Supabase stores float8[]; guard for null/invalid values for safety.
-                match_score = cosine_similarity(
-                    cast(List[float], student_vec),
-                    cast(List[float], internship_vec),
+                match_score = calculate_match_score(
+                    student_vector=cast(List[float], student_vec),
+                    internship_vector=cast(List[float], internship_vec),
+                    student_skills=cast(List[str], student_skills),
+                    required_skills=cast(List[str], internship_data.get("required_skills") or []),
+                    all_internships_skills=cast(List[List[str]], all_internships_skills),
                 )
 
         insert_data = {

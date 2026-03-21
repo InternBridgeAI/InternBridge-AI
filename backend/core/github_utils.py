@@ -1,6 +1,7 @@
 import requests
 import os
-from typing import Dict, List
+from datetime import datetime, timedelta, timezone
+from typing import Dict, List, Tuple
 
 # Skills mapping from GitHub languages/topics to common skill names
 SKILL_MAPPING = {
@@ -39,24 +40,38 @@ def fetch_github_repos(username: str) -> List[Dict]:
         
     return response.json()
 
-def analyze_repos(repos: List[Dict]):
+def analyze_repos(repos: List[Dict]) -> Tuple[Dict[str, int], List[str], int, int]:
     languages = {}
     topics_set = set()
+    total_stars = 0
+    recent_repo_count = 0
+    cutoff = datetime.now(timezone.utc) - timedelta(days=365)
     
     for repo in repos:
         lang = repo.get("language")
         if lang:
             languages[lang] = languages.get(lang, 0) + 1
+
+        total_stars += int(repo.get("stargazers_count") or 0)
+
+        pushed_at = repo.get("pushed_at")
+        if pushed_at:
+            try:
+                pushed_dt = datetime.fromisoformat(str(pushed_at).replace("Z", "+00:00"))
+                if pushed_dt >= cutoff:
+                    recent_repo_count += 1
+            except Exception:
+                pass
         
         repo_topics = repo.get("topics") or []
         for topic in repo_topics:
             topics_set.add(topic.lower())
             
-    return languages, list(topics_set)
+    return languages, list(topics_set), total_stars, recent_repo_count
 
 async def verify_github_skills(username: str, claimed_skills: List[str]):
     repos = fetch_github_repos(username)
-    languages, topics = analyze_repos(repos)
+    languages, topics, total_stars, recent_repo_count = analyze_repos(repos)
     
     # Build a set of all detected skills from GitHub
     detected_skills = set()
@@ -91,10 +106,24 @@ async def verify_github_skills(username: str, claimed_skills: List[str]):
     
     if len(claimed_skills) > 0 and len(unverified_skills) > len(claimed_skills) * 0.6:
         suspicious_reasons.append("More than 60% of claimed skills are unverified on GitHub")
+
+    if recent_repo_count == 0 and len(claimed_skills) >= 3:
+        suspicious_reasons.append("No repository activity detected in the last 12 months")
+
+    evidence_score = min(
+        100,
+        (len(verified_skills) * 12) +
+        (len(languages) * 4) +
+        (recent_repo_count * 3) +
+        min(total_stars, 20)
+    )
         
     return {
         "username": username,
         "totalRepos": len(repos),
+        "recentRepos": recent_repo_count,
+        "totalStars": total_stars,
+        "evidenceScore": evidence_score,
         "languages": languages,
         "verifiedSkills": verified_skills,
         "unverifiedSkills": unverified_skills,
