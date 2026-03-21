@@ -520,9 +520,9 @@ export default function OnboardingPage() {
 
     if (isLoading) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-white to-cyan-100 px-6 py-10 sm:px-8 lg:px-20">
-                <Card className="w-full max-w-md border-slate-200/80 bg-white/95 shadow-xl">
-                    <CardContent className="flex items-center gap-3 p-6 text-sm text-slate-600">
+            <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-brand-50 via-background to-brand-100/70 px-6 py-10 sm:px-8 lg:px-20">
+                <Card className="w-full max-w-md border-border/70 bg-card/95 shadow-xl">
+                    <CardContent className="flex items-center gap-3 p-6 text-sm text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin text-primary" />
                         Preparing your profile form...
                     </CardContent>
@@ -532,16 +532,16 @@ export default function OnboardingPage() {
     }
 
     return (
-        <div className="h-screen bg-slate-100">
+        <div className="h-screen bg-gradient-to-b from-surface-50 via-background to-brand-50/30">
             <div className="mx-auto grid h-full w-full max-w-[1700px] lg:grid-cols-2">
-                <aside className="relative hidden h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-10 lg:flex">
-                    <div className="pointer-events-none absolute -left-24 top-12 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
-                    <div className="pointer-events-none absolute -right-24 bottom-12 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
+                <aside className="relative hidden h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-brand-800 via-brand-700 to-brand-900 p-10 lg:flex">
+                    <div className="pointer-events-none absolute -left-24 top-12 h-72 w-72 rounded-full bg-brand-300/25 blur-3xl" />
+                    <div className="pointer-events-none absolute -right-24 bottom-12 h-72 w-72 rounded-full bg-fuchsia-300/20 blur-3xl" />
                     <div className="relative z-10 w-full max-w-xl space-y-8">
                         <div className="space-y-3 text-center text-white">
-                            <p className="text-sm font-medium uppercase tracking-[0.2em] text-slate-300">InternBridge</p>
+                            <p className="text-sm font-medium uppercase tracking-[0.2em] text-white/80">InternBridge</p>
                             <h1 className="text-4xl font-semibold tracking-tight">Complete Your Profile</h1>
-                            <p className="text-base leading-7 text-slate-300">
+                            <p className="text-base leading-7 text-white/80">
                                 Fill your profile once and unlock personalized internships, matching, and verification.
                             </p>
                         </div>
@@ -555,7 +555,7 @@ export default function OnboardingPage() {
                                 className="mx-auto h-auto w-full max-w-lg"
                             />
                         </div>
-                        <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center text-sm text-slate-200">
+                        <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center text-sm text-white/85">
                             {locationSummary}
                         </p>
                     </div>
@@ -563,18 +563,18 @@ export default function OnboardingPage() {
 
                 <main className="h-screen overflow-y-auto">
                     <div className="mx-auto flex min-h-full w-full max-w-3xl items-center px-4 py-8 sm:px-6 lg:px-10">
-                        <Card className="w-full border-slate-200 bg-white shadow-xl">
+                        <Card className="w-full border-border/70 bg-background/95 shadow-2xl backdrop-blur-sm">
                             <CardHeader className="space-y-3 pb-4">
-                                <Badge variant="secondary" className="w-fit bg-slate-100 text-slate-700">
+                                <Badge variant="secondary" className="w-fit border border-primary/20 bg-primary/10 text-primary">
                                     {roleLabel}
                                 </Badge>
-                                <CardTitle className="text-3xl font-semibold tracking-tight text-slate-900">
+                                <CardTitle className="text-3xl font-semibold tracking-tight text-foreground">
                                     {roleSectionTitle}
                                 </CardTitle>
-                                <CardDescription className="text-sm leading-6 text-slate-600">
+                                <CardDescription className="text-sm leading-6 text-muted-foreground">
                                     {roleSectionDescription}
                                 </CardDescription>
-                                <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:hidden">
+                                <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/40 p-4 lg:hidden">
                                     <Image
                                         src={onboardingIllustrationSrc}
                                         alt={onboardingIllustrationAlt}
@@ -582,12 +582,12 @@ export default function OnboardingPage() {
                                         height={380}
                                         className="mx-auto h-auto w-full max-w-sm"
                                     />
-                                    <p className="text-center text-xs text-slate-600">{locationSummary}</p>
+                                    <p className="text-center text-xs text-muted-foreground">{locationSummary}</p>
                                 </div>
                             </CardHeader>
                             <CardContent className="pt-0">
                                 <form onSubmit={handleSave} className="space-y-8">
-                            <section className="space-y-6 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5 sm:p-6">
+                            <section className="space-y-6 rounded-2xl border border-border/70 bg-muted/35 p-5 sm:p-6">
                                 <div className="space-y-2">
                                     <Label>Joining as</Label>
                                     <div className="flex h-11 w-full items-center rounded-md border border-input bg-white px-3 text-sm font-medium">
@@ -670,7 +670,7 @@ export default function OnboardingPage() {
                         </section>
 
                         {userRole === 'student' && (
-                            <section className="space-y-6 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5 sm:p-6">
+                            <section className="space-y-6 rounded-2xl border border-border/70 bg-muted/35 p-5 sm:p-6">
                                 <div className="space-y-2">
                                     <h2 className="text-xl font-semibold tracking-tight text-foreground">Student Details</h2>
                                     <p className="text-sm text-muted-foreground">
@@ -1149,7 +1149,7 @@ export default function OnboardingPage() {
                         )}
 
                         {userRole === 'tpo' && (
-                            <section className="space-y-6 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5 sm:p-6">
+                            <section className="space-y-6 rounded-2xl border border-border/70 bg-muted/35 p-5 sm:p-6">
                                 <div className="space-y-2">
                                     <h2 className="text-xl font-semibold tracking-tight text-foreground">College Details</h2>
                                     <p className="text-sm text-muted-foreground">
@@ -1270,7 +1270,7 @@ export default function OnboardingPage() {
                         )}
 
                         {userRole === 'company' && (
-                            <section className="space-y-6 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5 sm:p-6">
+                            <section className="space-y-6 rounded-2xl border border-border/70 bg-muted/35 p-5 sm:p-6">
                                 <div className="space-y-2">
                                     <h2 className="text-xl font-semibold tracking-tight text-foreground">Company Details</h2>
                                     <p className="text-sm text-muted-foreground">
@@ -1372,13 +1372,13 @@ export default function OnboardingPage() {
                             </section>
                         )}
 
-                            <div className="flex flex-col gap-3 border-t border-slate-200/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                                <p className="text-xs text-slate-500">
+                            <div className="flex flex-col gap-3 border-t border-border/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                                <p className="text-xs text-muted-foreground">
                                     You can edit these details later from your dashboard settings.
                                 </p>
                                 <Button
                                     type="submit"
-                                    className="h-11 w-full sm:w-auto sm:min-w-[220px] bg-slate-900 text-white shadow-md hover:bg-slate-800"
+                                    className="h-11 w-full sm:w-auto sm:min-w-[220px] bg-primary text-primary-foreground shadow-md hover:bg-primary/90"
                                     disabled={isSaving}
                                 >
                                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Launch Dashboard'}
