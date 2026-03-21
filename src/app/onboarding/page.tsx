@@ -520,7 +520,7 @@ export default function OnboardingPage() {
 
     if (isLoading) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-brand-50 via-background to-brand-100/70 px-6 py-10 sm:px-8 lg:px-20">
+            <div className="flex min-h-screen items-center justify-center bg-background px-6 py-10 sm:px-8 lg:px-20">
                 <Card className="w-full max-w-md border-border/70 bg-card/95 shadow-xl">
                     <CardContent className="flex items-center gap-3 p-6 text-sm text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin text-primary" />
@@ -532,11 +532,12 @@ export default function OnboardingPage() {
     }
 
     return (
-        <div className="h-screen bg-gradient-to-b from-surface-50 via-background to-brand-50/30">
+        <div className="h-screen bg-background">
             <div className="mx-auto grid h-full w-full max-w-[1700px] lg:grid-cols-2">
-                <aside className="relative hidden h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-brand-800 via-brand-700 to-brand-900 p-10 lg:flex">
-                    <div className="pointer-events-none absolute -left-24 top-12 h-72 w-72 rounded-full bg-brand-300/25 blur-3xl" />
-                    <div className="pointer-events-none absolute -right-24 bottom-12 h-72 w-72 rounded-full bg-fuchsia-300/20 blur-3xl" />
+                <aside className="gradient-brand relative hidden h-screen items-center justify-center overflow-hidden p-10 lg:flex">
+                    <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-40" />
+                    <div className="pointer-events-none absolute -left-24 top-12 h-72 w-72 rounded-full bg-white/12 blur-3xl" />
+                    <div className="pointer-events-none absolute -right-24 bottom-12 h-72 w-72 rounded-full bg-cyan-300/15 blur-3xl" />
                     <div className="relative z-10 w-full max-w-xl space-y-8">
                         <div className="space-y-3 text-center text-white">
                             <p className="text-sm font-medium uppercase tracking-[0.2em] text-white/80">InternBridge</p>
@@ -574,7 +575,7 @@ export default function OnboardingPage() {
                                 <CardDescription className="text-sm leading-6 text-muted-foreground">
                                     {roleSectionDescription}
                                 </CardDescription>
-                                <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/40 p-4 lg:hidden">
+                                <div className="space-y-3 rounded-2xl border border-border/70 bg-background p-4 lg:hidden">
                                     <Image
                                         src={onboardingIllustrationSrc}
                                         alt={onboardingIllustrationAlt}
@@ -587,7 +588,7 @@ export default function OnboardingPage() {
                             </CardHeader>
                             <CardContent className="pt-0">
                                 <form onSubmit={handleSave} className="space-y-8">
-                            <section className="space-y-6 rounded-2xl border border-border/70 bg-muted/35 p-5 sm:p-6">
+                            <section className="space-y-6 rounded-2xl border border-border/70 bg-background p-5 sm:p-6">
                                 <div className="space-y-2">
                                     <Label>Joining as</Label>
                                     <div className="flex h-11 w-full items-center rounded-md border border-input bg-white px-3 text-sm font-medium">
@@ -670,7 +671,7 @@ export default function OnboardingPage() {
                         </section>
 
                         {userRole === 'student' && (
-                            <section className="space-y-6 rounded-2xl border border-border/70 bg-muted/35 p-5 sm:p-6">
+                            <section className="space-y-6 rounded-2xl border border-border/70 bg-background p-5 sm:p-6">
                                 <div className="space-y-2">
                                     <h2 className="text-xl font-semibold tracking-tight text-foreground">Student Details</h2>
                                     <p className="text-sm text-muted-foreground">
@@ -1149,7 +1150,7 @@ export default function OnboardingPage() {
                         )}
 
                         {userRole === 'tpo' && (
-                            <section className="space-y-6 rounded-2xl border border-border/70 bg-muted/35 p-5 sm:p-6">
+                            <section className="space-y-6 rounded-2xl border border-border/70 bg-background p-5 sm:p-6">
                                 <div className="space-y-2">
                                     <h2 className="text-xl font-semibold tracking-tight text-foreground">College Details</h2>
                                     <p className="text-sm text-muted-foreground">
@@ -1270,7 +1271,7 @@ export default function OnboardingPage() {
                         )}
 
                         {userRole === 'company' && (
-                            <section className="space-y-6 rounded-2xl border border-border/70 bg-muted/35 p-5 sm:p-6">
+                            <section className="space-y-6 rounded-2xl border border-border/70 bg-background p-5 sm:p-6">
                                 <div className="space-y-2">
                                     <h2 className="text-xl font-semibold tracking-tight text-foreground">Company Details</h2>
                                     <p className="text-sm text-muted-foreground">
