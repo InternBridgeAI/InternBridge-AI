@@ -57,16 +57,49 @@ CREATE TABLE IF NOT EXISTS public.college_company_requests (
 ALTER TABLE public.college_company_requests ENABLE ROW LEVEL SECURITY;
 
 -- Companies can create requests for themselves
-CREATE POLICY IF NOT EXISTS "Companies create own partnership requests" ON public.college_company_requests
-  FOR INSERT WITH CHECK (company_id = auth.uid());
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'college_company_requests'
+      AND policyname = 'Companies create own partnership requests'
+  ) THEN
+    CREATE POLICY "Companies create own partnership requests" ON public.college_company_requests
+      FOR INSERT WITH CHECK (company_id = auth.uid());
+  END IF;
+END $$;
 
 -- Companies and the target college can view the request
-CREATE POLICY IF NOT EXISTS "Companies/Colleges view partnership requests" ON public.college_company_requests
-  FOR SELECT USING (company_id = auth.uid() OR college_id = auth.uid());
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'college_company_requests'
+      AND policyname = 'Companies/Colleges view partnership requests'
+  ) THEN
+    CREATE POLICY "Companies/Colleges view partnership requests" ON public.college_company_requests
+      FOR SELECT USING (company_id = auth.uid() OR college_id = auth.uid());
+  END IF;
+END $$;
 
 -- Colleges/TPO can decide requests targeting them
-CREATE POLICY IF NOT EXISTS "Colleges decide partnership requests" ON public.college_company_requests
-  FOR UPDATE USING (college_id = auth.uid());
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'college_company_requests'
+      AND policyname = 'Colleges decide partnership requests'
+  ) THEN
+    CREATE POLICY "Colleges decide partnership requests" ON public.college_company_requests
+      FOR UPDATE USING (college_id = auth.uid());
+  END IF;
+END $$;
 
 DO $$
 BEGIN

@@ -22,16 +22,38 @@ CREATE INDEX IF NOT EXISTS idx_notifications_recipient_unread
 
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Users view own notifications"
-  ON public.notifications
-  FOR SELECT
-  USING (recipient_id = auth.uid());
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'notifications'
+      AND policyname = 'Users view own notifications'
+  ) THEN
+    CREATE POLICY "Users view own notifications"
+      ON public.notifications
+      FOR SELECT
+      USING (recipient_id = auth.uid());
+  END IF;
+END $$;
 
-CREATE POLICY IF NOT EXISTS "Users update own notifications"
-  ON public.notifications
-  FOR UPDATE
-  USING (recipient_id = auth.uid())
-  WITH CHECK (recipient_id = auth.uid());
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'notifications'
+      AND policyname = 'Users update own notifications'
+  ) THEN
+    CREATE POLICY "Users update own notifications"
+      ON public.notifications
+      FOR UPDATE
+      USING (recipient_id = auth.uid())
+      WITH CHECK (recipient_id = auth.uid());
+  END IF;
+END $$;
 
 DO $$
 BEGIN

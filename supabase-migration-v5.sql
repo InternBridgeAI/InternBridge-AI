@@ -19,12 +19,34 @@ CREATE TABLE IF NOT EXISTS public.college_courses (
 ALTER TABLE public.college_courses ENABLE ROW LEVEL SECURITY;
 
 -- Students should be able to read courses for dropdowns
-CREATE POLICY IF NOT EXISTS "Courses are viewable" ON public.college_courses
-  FOR SELECT USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'college_courses'
+      AND policyname = 'Courses are viewable'
+  ) THEN
+    CREATE POLICY "Courses are viewable" ON public.college_courses
+      FOR SELECT USING (true);
+  END IF;
+END $$;
 
 -- Colleges/TPO manage their own courses
-CREATE POLICY IF NOT EXISTS "Colleges manage own courses" ON public.college_courses
-  FOR ALL USING (college_id = auth.uid()) WITH CHECK (college_id = auth.uid());
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'college_courses'
+      AND policyname = 'Colleges manage own courses'
+  ) THEN
+    CREATE POLICY "Colleges manage own courses" ON public.college_courses
+      FOR ALL USING (college_id = auth.uid()) WITH CHECK (college_id = auth.uid());
+  END IF;
+END $$;
 
 -- Updated-at helper (reuse existing function if present)
 DO $$
@@ -37,4 +59,3 @@ BEGIN
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
   END IF;
 END $$;
-

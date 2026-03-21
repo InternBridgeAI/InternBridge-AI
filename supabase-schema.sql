@@ -372,17 +372,75 @@ EXCEPTION
 END $$;
 
 -- College courses: students can read, colleges manage their own
-CREATE POLICY IF NOT EXISTS "Courses are viewable" ON college_courses FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Colleges manage own courses" ON college_courses
-  FOR ALL USING (college_id = auth.uid()) WITH CHECK (college_id = auth.uid());
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'college_courses'
+      AND policyname = 'Courses are viewable'
+  ) THEN
+    CREATE POLICY "Courses are viewable" ON college_courses FOR SELECT USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'college_courses'
+      AND policyname = 'Colleges manage own courses'
+  ) THEN
+    CREATE POLICY "Colleges manage own courses" ON college_courses
+      FOR ALL USING (college_id = auth.uid()) WITH CHECK (college_id = auth.uid());
+  END IF;
+END $$;
 
 -- Company requests: companies create their own requests, colleges manage their own
-CREATE POLICY IF NOT EXISTS "Companies create own partnership requests" ON college_company_requests
-  FOR INSERT WITH CHECK (company_id = auth.uid());
-CREATE POLICY IF NOT EXISTS "Companies view own partnership requests" ON college_company_requests
-  FOR SELECT USING (company_id = auth.uid() OR college_id = auth.uid());
-CREATE POLICY IF NOT EXISTS "Colleges manage partnership requests" ON college_company_requests
-  FOR UPDATE USING (college_id = auth.uid());
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'college_company_requests'
+      AND policyname = 'Companies create own partnership requests'
+  ) THEN
+    CREATE POLICY "Companies create own partnership requests" ON college_company_requests
+      FOR INSERT WITH CHECK (company_id = auth.uid());
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'college_company_requests'
+      AND policyname = 'Companies view own partnership requests'
+  ) THEN
+    CREATE POLICY "Companies view own partnership requests" ON college_company_requests
+      FOR SELECT USING (company_id = auth.uid() OR college_id = auth.uid());
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'college_company_requests'
+      AND policyname = 'Colleges manage partnership requests'
+  ) THEN
+    CREATE POLICY "Colleges manage partnership requests" ON college_company_requests
+      FOR UPDATE USING (college_id = auth.uid());
+  END IF;
+END $$;
 
 -- Internships: everyone can read approved, companies manage own
 CREATE POLICY "Approved internships are viewable" ON internships FOR SELECT USING (is_approved = true OR company_id = auth.uid());
