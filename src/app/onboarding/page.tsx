@@ -227,7 +227,7 @@ export default function OnboardingPage() {
 
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('is_onboarded, role, role_selected, github_username')
+                .select('is_onboarded, role, role_selected, github_username, gender')
                 .eq('id', session.user.id)
                 .single();
 
