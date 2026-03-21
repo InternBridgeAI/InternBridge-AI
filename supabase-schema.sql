@@ -42,6 +42,7 @@ CREATE TABLE profiles (
   college_name TEXT,
   university TEXT,
   expected_graduation INTEGER,
+  gender TEXT CHECK (gender IN ('male', 'female', 'non_binary', 'prefer_not_to_say')),
   preferred_roles TEXT[] DEFAULT '{}',
   course_id UUID,
   course_name TEXT,

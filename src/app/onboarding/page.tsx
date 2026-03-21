@@ -33,6 +33,7 @@ export default function OnboardingPage() {
     const [userId, setUserId] = useState<string>('');
     const [formData, setFormData] = useState({
         university: '',
+        gender: '',
         expected_graduation: '',
         preferred_roles: '',
         skills: '',
@@ -157,6 +158,12 @@ export default function OnboardingPage() {
         : userRole === 'tpo'
             ? 'Register your institution once, then make it easy for students to find the right college and course during onboarding.'
             : 'Add the hiring context candidates care about most: company identity, operating context, and verification proof.';
+    const onboardingIllustrationSrc = userRole === 'company'
+        ? '/illustrations/company-animate.svg'
+        : '/illustrations/profile-data-animate.svg';
+    const onboardingIllustrationAlt = userRole === 'company'
+        ? 'Company onboarding illustration'
+        : 'Profile data onboarding illustration';
     const uploadFile = async (file: File, bucket: string, folder: string) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
@@ -250,9 +257,11 @@ export default function OnboardingPage() {
             setIsLoading(false);
 
             // Prefill GitHub connection state (set by /auth/callback after OAuth link)
-            if (profile?.github_username) {
-                setFormData((prev) => ({ ...prev, github_username: profile.github_username || '' }));
-            }
+            setFormData((prev) => ({
+                ...prev,
+                github_username: profile?.github_username || '',
+                gender: profile?.gender || '',
+            }));
 
             if (effectiveRole === 'tpo') {
                 fetchMyCourses(session.user.id);
@@ -395,6 +404,10 @@ export default function OnboardingPage() {
                     return;
                 }
             }
+            if (!formData.gender) {
+                toast.error('Please select your gender.');
+                return;
+            }
         }
 
         setIsSaving(true);
@@ -433,6 +446,7 @@ export default function OnboardingPage() {
                     : (selectedCourse?.name || formData.course_name || null);
                 updatePayload.year_of_study = formData.year_of_study ? parseInt(formData.year_of_study) : null;
                 updatePayload.expected_graduation = parseInt(formData.expected_graduation) || null;
+                updatePayload.gender = formData.gender || null;
                 updatePayload.preferred_roles = formData.preferred_roles.split(',').map(s => s.trim()).filter(s => s);
                 updatePayload.skills = formData.skills.split(',').map(s => s.trim()).filter(s => s);
                 if (formData.github_username?.trim()) {
@@ -459,10 +473,29 @@ export default function OnboardingPage() {
             }
 
             // Call normal patch API
-            const result = await apiFetch('/api/auth/profile', {
-                method: 'PATCH',
-                body: JSON.stringify(updatePayload)
-            });
+            let result: any;
+            try {
+                result = await apiFetch('/api/auth/profile', {
+                    method: 'PATCH',
+                    body: JSON.stringify(updatePayload)
+                });
+            } catch (error: any) {
+                // Backward-compatible fallback if DB migration for gender is pending.
+                if (
+                    userRole === 'student' &&
+                    'gender' in updatePayload &&
+                    /gender/i.test(error?.message || '')
+                ) {
+                    const { gender, ...fallbackPayload } = updatePayload;
+                    result = await apiFetch('/api/auth/profile', {
+                        method: 'PATCH',
+                        body: JSON.stringify(fallbackPayload)
+                    });
+                    toast.warning('Gender field will start saving after DB migration v7 is applied.');
+                } else {
+                    throw error;
+                }
+            }
 
             if (result.success || result.data) {
                 toast.success('Profile completed!');
@@ -510,8 +543,8 @@ export default function OnboardingPage() {
                         </div>
                         <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
                             <Image
-                                src="/illustrations/profile-data-animate.svg"
-                                alt="Profile data onboarding illustration"
+                                src={onboardingIllustrationSrc}
+                                alt={onboardingIllustrationAlt}
                                 width={620}
                                 height={480}
                                 priority
@@ -539,8 +572,8 @@ export default function OnboardingPage() {
                                 </CardDescription>
                                 <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:hidden">
                                     <Image
-                                        src="/illustrations/profile-data-animate.svg"
-                                        alt="Profile data onboarding illustration"
+                                        src={onboardingIllustrationSrc}
+                                        alt={onboardingIllustrationAlt}
                                         width={520}
                                         height={380}
                                         className="mx-auto h-auto w-full max-w-sm"
@@ -797,6 +830,24 @@ export default function OnboardingPage() {
                                         onChange={(e) => setFormData({ ...formData, expected_graduation: e.target.value })}
                                         required
                                     />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Gender</Label>
+                                    <select
+                                        className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
+                                        value={formData.gender}
+                                        onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                                        required
+                                    >
+                                        <option value="">Select gender</option>
+                                        <option value="female">Female</option>
+                                        <option value="male">Male</option>
+                                        <option value="non_binary">Non-binary</option>
+                                        <option value="prefer_not_to_say">Prefer not to say</option>
+                                    </select>
+                                    <p className="text-[10px] text-muted-foreground">
+                                        Used only for eligibility where internships are gender-specific.
+                                    </p>
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Preferred Roles</Label>

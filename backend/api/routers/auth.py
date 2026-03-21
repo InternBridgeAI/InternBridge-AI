@@ -20,6 +20,7 @@ class ProfileUpdate(BaseModel):
     location: Optional[str] = None
     university: Optional[str] = None
     expected_graduation: Optional[int] = None
+    gender: Optional[str] = None
     preferred_roles: Optional[List[str]] = None
     college_id: Optional[str] = None
     college_name: Optional[str] = None

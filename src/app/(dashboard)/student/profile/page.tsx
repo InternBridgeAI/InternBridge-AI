@@ -26,6 +26,7 @@ export default function ProfilePage() {
         avatar_url: '',
         university: '',
         expected_graduation: '',
+        gender: '',
         preferred_roles: '',
         location: '',
         resume_url: '',
@@ -72,6 +73,7 @@ export default function ProfilePage() {
                     linkedin_url: data.linkedin_url || '',
                     university: data.university || '',
                     expected_graduation: data.expected_graduation || '',
+                    gender: data.gender || '',
                     preferred_roles: data.preferred_roles ? data.preferred_roles.join(', ') : '',
                     location: data.location || '',
                 });
@@ -648,7 +650,7 @@ export default function ProfilePage() {
                                     </div>
                                     <p className="text-[10px] text-muted-foreground mt-1">Pick from dropdown or type and press Enter.</p>
                                 </div>
-                                <div className="grid gap-4 md:grid-cols-2">
+                                <div className="grid gap-4 md:grid-cols-3">
                                     <div className="space-y-2">
                                         <Label htmlFor="university">University / College</Label>
                                         <Input
@@ -667,6 +669,21 @@ export default function ProfilePage() {
                                             value={profile.expected_graduation || ''}
                                             onChange={(e) => setProfile({ ...profile, expected_graduation: e.target.value })}
                                         />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="gender">Gender</Label>
+                                        <select
+                                            id="gender"
+                                            className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
+                                            value={profile.gender || ''}
+                                            onChange={(e) => setProfile({ ...profile, gender: e.target.value })}
+                                        >
+                                            <option value="">Select gender</option>
+                                            <option value="female">Female</option>
+                                            <option value="male">Male</option>
+                                            <option value="non_binary">Non-binary</option>
+                                            <option value="prefer_not_to_say">Prefer not to say</option>
+                                        </select>
                                     </div>
                                 </div>
                                 <div className="grid gap-4 md:grid-cols-2">
