@@ -4,20 +4,29 @@ import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Brain, TrendingUp, AlertTriangle, BookOpen, ExternalLink, CheckCircle2, Flame, Target } from 'lucide-react';
+import { Brain, TrendingUp, AlertTriangle, BookOpen, ExternalLink, CheckCircle2, Flame, Target, Sparkles, Rocket, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-client';
 
 export default function SkillsPage() {
     const [data, setData] = useState<any>(null);
+    const [roadmap, setRoadmap] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchSkillData = async () => {
             try {
-                const result = await apiFetch('/api/ai/skill-gaps');
-                if (result.success) {
-                    setData(result.data);
+                const [skillResult, roadmapResult] = await Promise.allSettled([
+                    apiFetch('/api/ai/skill-gaps'),
+                    apiFetch('/api/ai/student-roadmap'),
+                ]);
+
+                if (skillResult.status === 'fulfilled' && skillResult.value.success) {
+                    setData(skillResult.value.data);
+                }
+
+                if (roadmapResult.status === 'fulfilled' && roadmapResult.value.success) {
+                    setRoadmap(roadmapResult.value.data);
                 }
             } catch (error: any) {
                 toast.error(error.message || 'Failed to load analysis');
@@ -47,6 +56,105 @@ export default function SkillsPage() {
                 <p className="text-muted-foreground mt-2">AI analysis of how your current skills align with real-world industry demands.</p>
             </div>
 
+            {roadmap && (
+                <Card className="glass overflow-hidden border-primary/20 bg-gradient-to-br from-primary/[0.08] via-background to-blue-500/[0.08] shadow-xl shadow-primary/5">
+                    <CardContent className="p-6 md:p-7 space-y-6">
+                        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="max-w-2xl space-y-4">
+                                <Badge className="bg-primary/10 text-primary border-primary/20 font-bold uppercase tracking-[0.2em] text-[10px] px-3 py-1">
+                                    <Sparkles className="mr-1.5 h-3 w-3" /> AI Career Roadmap
+                                </Badge>
+                                <div className="space-y-2">
+                                    <h2 className="text-2xl font-black tracking-tight">{roadmap.headline}</h2>
+                                    <p className="text-sm text-muted-foreground leading-6">
+                                        {Array.isArray(roadmap.marketAdvice) && roadmap.marketAdvice.length > 0
+                                            ? roadmap.marketAdvice[0]
+                                            : 'The roadmap combines your current skill graph, proof signals, and live internship demand.'}
+                                    </p>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {(roadmap.roleTargets || []).slice(0, 3).map((role: string) => (
+                                        <Badge key={role} variant="outline" className="border-primary/20 bg-background/70 text-[11px] font-semibold">
+                                            {role}
+                                        </Badge>
+                                    ))}
+                                    {(roadmap.prioritySkills || []).slice(0, 2).map((skill: string) => (
+                                        <Badge key={skill} className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-none">
+                                            <Target className="mr-1 h-3 w-3" /> {skill}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="grid w-full gap-3 sm:grid-cols-3 lg:max-w-md">
+                                <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Role Targets</p>
+                                    <p className="mt-2 text-3xl font-black tracking-tight text-primary">{(roadmap.roleTargets || []).length}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">priority career lanes</p>
+                                </div>
+                                <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Skill Priorities</p>
+                                    <p className="mt-2 text-3xl font-black tracking-tight">{(roadmap.prioritySkills || []).length}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">gaps worth closing next</p>
+                                </div>
+                                <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Proof Projects</p>
+                                    <p className="mt-2 text-3xl font-black tracking-tight">{(roadmap.proofProjects || []).length}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">artifacts to build visibly</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+                            <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+                                <div className="flex items-center justify-between gap-3 mb-4">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Next Best Moves</p>
+                                        <p className="text-sm font-semibold mt-1">Highest-leverage actions for the next 30 days</p>
+                                    </div>
+                                    <Rocket className="h-4 w-4 text-primary" />
+                                </div>
+                                <div className="space-y-3">
+                                    {(roadmap.nextSteps || []).slice(0, 4).map((step: any, index: number) => (
+                                        <div key={`${step.title}-${index}`} className="rounded-2xl border border-border/60 bg-muted/20 p-4">
+                                            <p className="text-sm font-bold tracking-tight">{step.title}</p>
+                                            <p className="text-xs text-muted-foreground mt-1 leading-5">{step.why}</p>
+                                            <p className="text-xs font-medium text-primary mt-2">{step.impact}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+                                <div className="flex items-center justify-between gap-3 mb-4">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Proof Projects</p>
+                                        <p className="text-sm font-semibold mt-1">Build these to turn claims into evidence</p>
+                                    </div>
+                                    <ArrowRight className="h-4 w-4 text-primary" />
+                                </div>
+                                <div className="space-y-3">
+                                    {(roadmap.proofProjects || []).slice(0, 3).map((project: any, index: number) => (
+                                        <div key={`${project.title}-${index}`} className="rounded-2xl border border-border/60 bg-muted/20 p-4">
+                                            <p className="text-sm font-bold tracking-tight">{project.title}</p>
+                                            <p className="text-xs text-muted-foreground mt-1 leading-5">{project.why}</p>
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                {(project.skills || []).slice(0, 4).map((skill: string) => (
+                                                    <Badge key={skill} variant="outline" className="text-[10px]">
+                                                        {skill}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                            <p className="text-xs font-medium text-primary mt-3">{project.deliverable}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             <div className="grid gap-6 md:grid-cols-12">
                 {/* Readiness Score Card */}
                 <Card className="glass md:col-span-4 bg-primary/5 border-primary/20">
@@ -68,7 +176,9 @@ export default function SkillsPage() {
                             </div>
                         </div>
                         <p className="mt-6 text-sm text-muted-foreground">You are ready for <strong>{data?.matchCount || 0}</strong> active roles in the system.</p>
-                        <Button className="mt-6 w-full" variant="outline" size="sm">Download Skill Report</Button>
+                        <p className="mt-6 text-xs text-muted-foreground">
+                            Keep this score moving by pairing every new skill with visible proof, not just profile text.
+                        </p>
                     </CardContent>
                 </Card>
 
@@ -135,7 +245,9 @@ export default function SkillsPage() {
                                 </div>
                             </div>
                         )) || <p className="text-sm text-muted-foreground">No recommendations available.</p>}
-                        <Button className="w-full mt-2" variant="outline">Browse All Courses</Button>
+                        <p className="text-xs text-muted-foreground">
+                            Use these resources to close the market gaps above, then add project proof so recruiters can validate the new skill.
+                        </p>
                     </CardContent>
                 </Card>
 

@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, Filter, Brain, Sparkles, CheckCircle, Github, Mail } from 'lucide-react';
+import { Search, Filter, Brain, Sparkles, Github, Loader2, Target, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-client';
 
@@ -19,6 +19,10 @@ function CandidatesContent() {
     const [isInterviewModalOpen, setIsInterviewModalOpen] = useState(false);
     const [selectedApp, setSelectedApp] = useState<any>(null);
     const [interviewData, setInterviewData] = useState({ date: '', time: '', link: '' });
+    const [isInterviewKitOpen, setIsInterviewKitOpen] = useState(false);
+    const [kitApp, setKitApp] = useState<any>(null);
+    const [kitLoadingId, setKitLoadingId] = useState<string | null>(null);
+    const [interviewKit, setInterviewKit] = useState<any | null>(null);
 
     useEffect(() => {
         fetchCandidates();
@@ -71,6 +75,26 @@ function CandidatesContent() {
             time: interviewData.time,
             ...(interviewData.link.trim() ? { meet_link: interviewData.link.trim() } : {}),
         });
+    };
+
+    const openInterviewKit = async (app: any) => {
+        setKitApp(app);
+        setInterviewKit(null);
+        setIsInterviewKitOpen(true);
+        setKitLoadingId(app.id);
+        try {
+            const result = await apiFetch('/api/ai/interview-kit', {
+                method: 'POST',
+                body: JSON.stringify({ application_id: app.id }),
+            });
+            if (result.success) {
+                setInterviewKit(result.data);
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to generate interview kit');
+        } finally {
+            setKitLoadingId(null);
+        }
     };
 
     const filteredCandidates = candidates.filter(c =>
@@ -153,7 +177,11 @@ function CandidatesContent() {
                                     </div>
 
                                     {/* Actions */}
-                                    <div className="flex items-center gap-2 lg:ml-auto">
+                                    <div className="flex items-center gap-2 lg:ml-auto flex-wrap justify-end">
+                                        <Button size="sm" variant="outline" onClick={() => openInterviewKit(app)} disabled={kitLoadingId === app.id}>
+                                            {kitLoadingId === app.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
+                                            AI Interview Kit
+                                        </Button>
                                         {app.status === 'pending' || app.status === 'shortlisted' ? (
                                             <>
                                                 {app.status === 'pending' && (
@@ -234,6 +262,121 @@ function CandidatesContent() {
                         <CardFooter className="flex justify-end gap-3 pt-2">
                             <Button variant="ghost" className="font-bold text-xs uppercase transition-all" onClick={() => setIsInterviewModalOpen(false)}>Cancel</Button>
                             <Button className="font-black text-xs uppercase tracking-widest px-6 shadow-lg shadow-primary/20" onClick={handleScheduleInterview}>Send Invitation</Button>
+                        </CardFooter>
+                    </Card>
+                </div>
+            )}
+
+            {isInterviewKitOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+                    <Card className="w-full max-w-4xl glass shadow-2xl border-primary/20">
+                        <CardHeader>
+                            <div className="flex items-start justify-between gap-4">
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Sparkles className="h-5 w-5 text-primary" /> AI Interview Kit
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Structured interview guide for {kitApp?.student?.full_name} on {kitApp?.internship?.title}.
+                                    </CardDescription>
+                                </div>
+                                <Button variant="ghost" size="sm" onClick={() => { setIsInterviewKitOpen(false); setKitApp(null); setInterviewKit(null); }}>
+                                    Close
+                                </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-5">
+                            {kitLoadingId === kitApp?.id && !interviewKit ? (
+                                <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 text-center">
+                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                    <p className="text-sm text-muted-foreground">Building a candidate-specific interview plan from live fit and role context.</p>
+                                </div>
+                            ) : interviewKit ? (
+                                <>
+                                    <div className="grid gap-4 lg:grid-cols-[0.75fr_1.25fr]">
+                                        <div className="space-y-4">
+                                            <div className="rounded-2xl border border-border/60 bg-muted/20 p-4">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Fit Score</p>
+                                                <p className="mt-2 text-3xl font-black tracking-tight text-primary">{interviewKit.fitScore || Math.round((kitApp?.match_score || 0) * 100)}%</p>
+                                                <p className="text-xs text-muted-foreground mt-1">{interviewKit.summary}</p>
+                                            </div>
+                                            <div className="rounded-2xl border border-border/60 bg-muted/20 p-4">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Strength Signals</p>
+                                                <div className="mt-3 flex flex-wrap gap-2">
+                                                    {(interviewKit.strengths || []).map((skill: string) => (
+                                                        <Badge key={skill} className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-none">
+                                                            {skill}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="rounded-2xl border border-border/60 bg-muted/20 p-4">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Risk Areas</p>
+                                                <div className="mt-3 space-y-2">
+                                                    {(interviewKit.risks || []).map((risk: string, index: number) => (
+                                                        <div key={`${risk}-${index}`} className="text-sm text-muted-foreground">
+                                                            {risk}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div className="rounded-2xl border border-border/60 bg-muted/20 p-4">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Focus Areas</p>
+                                                <div className="mt-3 flex flex-wrap gap-2">
+                                                    {(interviewKit.focusAreas || []).map((area: string) => (
+                                                        <Badge key={area} variant="outline" className="text-[10px]">
+                                                            <Target className="mr-1 h-3 w-3" /> {area}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="rounded-2xl border border-border/60 bg-muted/20 p-4">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Questions To Ask</p>
+                                                <div className="mt-3 space-y-3">
+                                                    {(interviewKit.questions || []).map((question: any, index: number) => (
+                                                        <div key={`${question.question}-${index}`} className="rounded-xl border border-border/50 bg-background/70 p-3">
+                                                            <p className="text-sm font-semibold leading-6">{question.question}</p>
+                                                            <p className="text-xs text-muted-foreground mt-1">Evaluate for: {question.evaluateFor}</p>
+                                                            <p className="text-xs font-medium text-primary mt-2 flex items-start gap-2">
+                                                                <ArrowRight className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                                                <span>{question.signal}</span>
+                                                            </p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="rounded-2xl border border-border/60 bg-muted/20 p-4">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Decision Guidance</p>
+                                                <p className="mt-2 text-sm font-semibold">{interviewKit.recommendation}</p>
+                                                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                                                    {(interviewKit.rubric || []).map((item: any, index: number) => (
+                                                        <div key={`${item.area}-${index}`} className="rounded-xl border border-border/50 bg-background/70 p-3">
+                                                            <p className="text-sm font-bold">{item.area}</p>
+                                                            <p className="text-xs text-primary mt-1">{item.weight}</p>
+                                                            <p className="text-xs text-muted-foreground mt-2">{item.note}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : null}
+                        </CardContent>
+                        <CardFooter className="flex justify-end gap-3 pt-2">
+                            <Button variant="outline" onClick={() => kitApp && openInterviewKit(kitApp)} disabled={kitLoadingId === kitApp?.id}>
+                                {kitLoadingId === kitApp?.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Regenerate'}
+                            </Button>
+                            {kitApp?.status !== 'interview' && (
+                                <Button onClick={() => { setSelectedApp(kitApp); setIsInterviewKitOpen(false); setIsInterviewModalOpen(true); }}>
+                                    Schedule Interview
+                                </Button>
+                            )}
                         </CardFooter>
                     </Card>
                 </div>

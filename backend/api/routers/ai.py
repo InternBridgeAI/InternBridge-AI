@@ -33,6 +33,14 @@ class ResumeFileParseRequest(pydantic.BaseModel):
     resumeUrl: str
 
 
+class ApplicationPitchRequest(pydantic.BaseModel):
+    internship_id: str
+
+
+class InterviewKitRequest(pydantic.BaseModel):
+    application_id: str
+
+
 def _get_user_role(user_id: str) -> str:
     profile_response = (
         supabase.table("profiles").select("role").eq("id", user_id).single().execute()
@@ -60,6 +68,72 @@ def _derive_cgpa(parsed: Dict[str, Any], existing_cgpa: Any) -> float:
             if isinstance(row, dict) and row.get("cgpa") not in (None, ""):
                 return _safe_float(row.get("cgpa"))
     return 0.0
+
+
+def _strip_code_fences(text: str) -> str:
+    cleaned = (text or "").strip()
+    if cleaned.startswith("```json"):
+        return cleaned.split("```json", 1)[1].split("```", 1)[0].strip()
+    if cleaned.startswith("```"):
+        return cleaned.split("```", 1)[1].split("```", 1)[0].strip()
+    return cleaned
+
+
+def _generate_structured_json(prompt: str, fallback: Dict[str, Any]) -> Dict[str, Any]:
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return fallback
+
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        f"gemini-1.5-flash:generateContent?key={api_key}"
+    )
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
+
+    try:
+        response = requests.post(url, json=payload, timeout=45)
+        if response.status_code != 200:
+            return fallback
+
+        result = response.json()
+        candidates = result.get("candidates") or []
+        if not candidates:
+            return fallback
+
+        parts = ((candidates[0].get("content") or {}).get("parts")) or []
+        if not parts or not parts[0].get("text"):
+            return fallback
+
+        parsed = json.loads(_strip_code_fences(parts[0]["text"]))
+        if not isinstance(parsed, dict):
+            return fallback
+
+        merged = dict(fallback)
+        merged.update(parsed)
+        return merged
+    except Exception:
+        return fallback
+
+
+def _list_to_text(items: List[str], fallback: str = "your current strengths") -> str:
+    cleaned = [item for item in items if item]
+    if not cleaned:
+        return fallback
+    if len(cleaned) == 1:
+        return cleaned[0]
+    if len(cleaned) == 2:
+        return f"{cleaned[0]} and {cleaned[1]}"
+    return f"{', '.join(cleaned[:-1])}, and {cleaned[-1]}"
+
+
+def _confidence_label(score: int) -> str:
+    if score >= 82:
+        return "Strong fit"
+    if score >= 65:
+        return "Good fit"
+    if score >= 45:
+        return "Stretch fit"
+    return "Early fit"
 
 
 def _recommend_resource(skill: str) -> Dict[str, str]:
@@ -90,6 +164,323 @@ def _extract_internship_skills(row: Dict[str, Any]) -> List[str]:
         ]
     ).strip()
     return extract_skills_from_text(fallback_text)
+
+
+def _fallback_student_roadmap(profile: Dict[str, Any], copilot: Dict[str, Any]) -> Dict[str, Any]:
+    strengths = list(copilot.get("strengths") or [])[:4] or normalize_skills(cast(List[str], profile.get("skills") or []))[:4]
+    priority_skills = list(copilot.get("topGaps") or [])[:4]
+    role_targets = list(copilot.get("roleFocus") or [])[:3]
+    readiness = int(round(_safe_float(profile.get("market_readiness_score"))))
+
+    next_steps: List[Dict[str, str]] = []
+    if not profile.get("parsed_resume"):
+        next_steps.append({
+            "title": "Upload and parse your resume",
+            "why": "Resume parsing sharpens skill extraction and recruiter trust.",
+            "impact": "Improves matching accuracy and readiness scoring.",
+        })
+    if not profile.get("github_username"):
+        next_steps.append({
+            "title": "Connect GitHub evidence",
+            "why": "Recruiters trust verified work more than self-declared skills.",
+            "impact": "Improves skill proof and interview confidence.",
+        })
+    for skill in priority_skills[:2]:
+        next_steps.append({
+            "title": f"Close the {skill} gap",
+            "why": f"{skill} appears repeatedly across your strongest-fit roles.",
+            "impact": f"Unlocks more shortlist-worthy openings in {', '.join(role_targets[:2]) or 'the current market'}.",
+        })
+    if not next_steps:
+        next_steps.append({
+            "title": "Deepen one visible proof project",
+            "why": "You already cover the visible market stack. Depth is the next differentiator.",
+            "impact": "Raises interview quality and recruiter confidence.",
+        })
+
+    seed_skills = priority_skills[:2] or strengths[:2] or ["Problem Solving"]
+    primary_target = role_targets[0] if role_targets else "target roles"
+    proof_projects = [
+        {
+            "title": f"{seed_skills[0]} project for {primary_target}",
+            "why": f"Turns {seed_skills[0]} into visible proof instead of a profile bullet.",
+            "skills": normalize_skills(seed_skills + strengths[:2])[:4],
+            "deliverable": "Ship a live demo, short README, and one clear outcome metric.",
+        }
+    ]
+    if len(seed_skills) > 1:
+        proof_projects.append(
+            {
+                "title": f"{seed_skills[1]} workflow challenge",
+                "why": f"Shows execution depth in a market-facing skill gap: {seed_skills[1]}.",
+                "skills": normalize_skills([seed_skills[1]] + strengths[:2])[:4],
+                "deliverable": "Build a small end-to-end feature and explain tradeoffs in 3 bullets.",
+            }
+        )
+
+    interview_themes = normalize_skills(priority_skills[:2] + strengths[:2])[:4]
+    market_advice = [
+        f"Anchor your profile around {_list_to_text(strengths[:2], 'one clear strength')} instead of listing too many shallow skills.",
+        f"Use {_list_to_text(priority_skills[:2], 'one missing market skill')} as the next learning sprint.",
+        "Pair every new skill with a visible project or GitHub proof link.",
+    ]
+
+    return {
+        "headline": (
+            f"Readiness is at {readiness}%."
+            + (
+                f" The fastest path to stronger shortlist odds is {_list_to_text(priority_skills[:2], 'deeper proof work')}."
+                if priority_skills
+                else " Your next upgrade is deeper proof of work and sharper applications."
+            )
+        ),
+        "roleTargets": role_targets,
+        "prioritySkills": priority_skills,
+        "strengths": strengths,
+        "nextSteps": next_steps[:4],
+        "proofProjects": proof_projects[:3],
+        "interviewThemes": interview_themes,
+        "marketAdvice": market_advice[:3],
+    }
+
+
+def _build_student_roadmap(profile: Dict[str, Any], copilot: Dict[str, Any]) -> Dict[str, Any]:
+    fallback = _fallback_student_roadmap(profile, copilot)
+    prompt = f"""
+    You are helping a student become interview-ready for internships.
+    Return ONLY a JSON object with these keys:
+    headline: string
+    roleTargets: array of strings
+    prioritySkills: array of strings
+    strengths: array of strings
+    nextSteps: array of objects with title, why, impact
+    proofProjects: array of objects with title, why, skills(array), deliverable
+    interviewThemes: array of strings
+    marketAdvice: array of strings
+
+    Student profile:
+    - Skills: {json.dumps(normalize_skills(cast(List[str], profile.get("skills") or [])))}
+    - Market readiness: {_safe_float(profile.get("market_readiness_score"))}
+    - Verified GitHub: {bool(profile.get("github_username"))}
+    - LinkedIn connected: {bool(profile.get("linkedin_url"))}
+    - Resume parsed: {bool(profile.get("parsed_resume"))}
+
+    Existing AI context:
+    {json.dumps(fallback)}
+
+    Make the plan practical, concise, and outcome-driven.
+    """
+    result = _generate_structured_json(prompt, fallback)
+    result["roleTargets"] = normalize_skills(cast(List[str], result.get("roleTargets") or fallback["roleTargets"]))
+    result["prioritySkills"] = normalize_skills(cast(List[str], result.get("prioritySkills") or fallback["prioritySkills"]))
+    result["strengths"] = normalize_skills(cast(List[str], result.get("strengths") or fallback["strengths"]))
+    result["interviewThemes"] = normalize_skills(cast(List[str], result.get("interviewThemes") or fallback["interviewThemes"]))
+    return result
+
+
+def _fallback_application_pitch(profile: Dict[str, Any], internship: Dict[str, Any]) -> Dict[str, Any]:
+    student_skills = normalize_skills(cast(List[str], profile.get("skills") or []))
+    required_skills = _extract_internship_skills(internship)
+    matched_skills = [skill for skill in required_skills if skill.lower() in {item.lower() for item in student_skills}]
+    missing_skills = [skill for skill in required_skills if skill.lower() not in {item.lower() for item in student_skills}]
+    all_internships_skills = [_extract_internship_skills(row) for row in _fetch_internship_rows(active_only=True)]
+    student_vector = cast(List[float], profile.get("skill_vector") or generate_skills_embedding(student_skills))
+    internship_vector = cast(List[float], internship.get("skill_vector") or generate_skills_embedding(required_skills))
+    fit_score = int(round(calculate_match_score(
+        student_vector=student_vector,
+        internship_vector=internship_vector,
+        student_skills=student_skills,
+        required_skills=required_skills,
+        all_internships_skills=all_internships_skills,
+    ) * 100))
+    summary = str((profile.get("parsed_resume") or {}).get("summary") or "").strip()
+    matched_text = _list_to_text(matched_skills[:3], _list_to_text(student_skills[:3], "relevant practical skills"))
+    missing_text = missing_skills[0] if missing_skills else ""
+    role_title = internship.get("title") or "this internship"
+    cover_letter = (
+        f"I’m applying for the {role_title} opportunity because my background aligns well with {matched_text}. "
+        + (f"{summary} " if summary else "")
+        + "I focus on building practical work with clear outcomes, and I can contribute quickly while adapting to the team’s workflow. "
+        + (
+            f"I already bring visible overlap in {matched_text}, and I’m actively sharpening {missing_text} to close the remaining gap fast. "
+            if missing_text
+            else "I already cover a strong share of the role’s visible stack and can add value from day one. "
+        )
+        + "I’d value the chance to discuss how I can contribute with ownership, learning speed, and execution discipline."
+    )
+    talking_points = [
+        f"Relevant overlap: {matched_text}.",
+        (
+            f"Fastest growth area: {missing_text}."
+            if missing_text
+            else "Position yourself as ready for immediate execution."
+        ),
+        "Anchor the conversation in one real project or proof of work.",
+    ]
+    return {
+        "headline": f"{_confidence_label(fit_score)} for {role_title}",
+        "fitScore": fit_score,
+        "confidenceLabel": _confidence_label(fit_score),
+        "matchedSkills": matched_skills[:4],
+        "missingSkills": missing_skills[:3],
+        "talkingPoints": talking_points,
+        "coverLetter": cover_letter.strip(),
+    }
+
+
+def _build_application_pitch(profile: Dict[str, Any], internship: Dict[str, Any]) -> Dict[str, Any]:
+    fallback = _fallback_application_pitch(profile, internship)
+    prompt = f"""
+    You are generating a sharp internship application pitch for a student.
+    Return ONLY a JSON object with these keys:
+    headline: string
+    fitScore: number
+    confidenceLabel: string
+    matchedSkills: array of strings
+    missingSkills: array of strings
+    talkingPoints: array of strings
+    coverLetter: string
+
+    Student:
+    - Name: {profile.get("full_name") or "Student"}
+    - Skills: {json.dumps(normalize_skills(cast(List[str], profile.get("skills") or [])))}
+    - Resume summary: {json.dumps(str((profile.get("parsed_resume") or {}).get("summary") or ""))}
+    - GitHub connected: {bool(profile.get("github_username"))}
+
+    Internship:
+    - Title: {internship.get("title") or ""}
+    - Description: {internship.get("description") or ""}
+    - Required skills: {json.dumps(_extract_internship_skills(internship))}
+
+    Baseline fit context:
+    {json.dumps(fallback)}
+
+    Write a concise, non-generic, recruiter-ready pitch. Keep the cover letter under 170 words.
+    """
+    result = _generate_structured_json(prompt, fallback)
+    result["matchedSkills"] = normalize_skills(cast(List[str], result.get("matchedSkills") or fallback["matchedSkills"]))
+    result["missingSkills"] = normalize_skills(cast(List[str], result.get("missingSkills") or fallback["missingSkills"]))
+    result["fitScore"] = int(round(_safe_float(result.get("fitScore") or fallback["fitScore"])))
+    if not result.get("confidenceLabel"):
+        result["confidenceLabel"] = _confidence_label(int(result["fitScore"]))
+    return result
+
+
+def _fallback_interview_kit(student: Dict[str, Any], internship: Dict[str, Any], application: Dict[str, Any]) -> Dict[str, Any]:
+    student_skills = normalize_skills(cast(List[str], student.get("skills") or []))
+    required_skills = _extract_internship_skills(internship)
+    student_skill_keys = {skill.lower() for skill in student_skills}
+    matched_skills = [skill for skill in required_skills if skill.lower() in student_skill_keys]
+    missing_skills = [skill for skill in required_skills if skill.lower() not in student_skill_keys]
+    fallback_score = int(round(_safe_float(application.get("match_score")) * 100))
+    fit_score = fallback_score if fallback_score > 0 else int(round(calculate_match_score(
+        student_vector=cast(List[float], student.get("skill_vector") or generate_skills_embedding(student_skills)),
+        internship_vector=cast(List[float], internship.get("skill_vector") or generate_skills_embedding(required_skills)),
+        student_skills=student_skills,
+        required_skills=required_skills,
+        all_internships_skills=[_extract_internship_skills(row) for row in _fetch_internship_rows(active_only=False)],
+    ) * 100))
+
+    strengths = matched_skills[:3] or student_skills[:3]
+    risks: List[str] = []
+    if missing_skills:
+        risks.append(f"No direct evidence of {missing_skills[0]} yet.")
+    if not student.get("github_username"):
+        risks.append("GitHub proof is missing, so depth must be validated through discussion.")
+    if not risks:
+        risks.append("Primary risk is whether the student can explain project decisions with real depth.")
+
+    focus_areas = normalize_skills(matched_skills[:2] + missing_skills[:2])[:4]
+    primary_role = internship.get("title") or "this role"
+    questions = [
+        {
+            "question": f"Walk me through a project where you used {_list_to_text(matched_skills[:2], primary_role)}. What tradeoffs did you make?",
+            "evaluateFor": "Real implementation depth and ownership",
+            "signal": "Strong answers reference architecture, debugging, and measurable outcomes.",
+        },
+        {
+            "question": f"This role depends on {_list_to_text(required_skills[:2], 'the visible stack')}. Which part are you strongest in, and why?",
+            "evaluateFor": "Self-awareness and stack depth",
+            "signal": "Look for precise examples rather than general claims.",
+        },
+        {
+            "question": (
+                f"{missing_skills[0]} is still a gap. How would you ramp up in your first two weeks?"
+                if missing_skills
+                else f"If you joined as a {primary_role}, what would your first two weeks look like?"
+            ),
+            "evaluateFor": "Learning velocity and execution planning",
+            "signal": "Strong answers include milestones, resources, and realistic sequencing.",
+        },
+        {
+            "question": "Describe a time requirements changed mid-build. How did you respond?",
+            "evaluateFor": "Adaptability, communication, and accountability",
+            "signal": "Look for prioritization and stakeholder awareness.",
+        },
+        {
+            "question": f"What outcome would you try to create in the first 30 days of {primary_role}?",
+            "evaluateFor": "Role understanding and product thinking",
+            "signal": "Strong answers connect technical work to business impact.",
+        },
+    ]
+
+    rubric = [
+        {"area": "Technical depth", "weight": "35%", "note": f"Probe {_list_to_text(matched_skills[:2], 'the strongest visible skills')}."},
+        {"area": "Learning velocity", "weight": "25%", "note": f"Test ramp-up plan for {_list_to_text(missing_skills[:2], 'new stack areas')}."},
+        {"area": "Execution clarity", "weight": "20%", "note": "Look for structured thinking, not buzzwords."},
+        {"area": "Communication", "weight": "20%", "note": "Check whether the student can explain tradeoffs clearly."},
+    ]
+
+    recommendation = "Move to interview" if fit_score >= 70 else "Interview only if the missing-skill gap can be coached quickly"
+    return {
+        "summary": f"{student.get('full_name') or 'This candidate'} is a {_confidence_label(fit_score).lower()} for {primary_role}.",
+        "fitScore": fit_score,
+        "strengths": strengths,
+        "risks": risks[:3],
+        "focusAreas": focus_areas,
+        "questions": questions,
+        "rubric": rubric,
+        "recommendation": recommendation,
+    }
+
+
+def _build_interview_kit(student: Dict[str, Any], internship: Dict[str, Any], application: Dict[str, Any]) -> Dict[str, Any]:
+    fallback = _fallback_interview_kit(student, internship, application)
+    prompt = f"""
+    You are preparing a structured interview kit for a recruiter.
+    Return ONLY a JSON object with these keys:
+    summary: string
+    fitScore: number
+    strengths: array of strings
+    risks: array of strings
+    focusAreas: array of strings
+    questions: array of objects with question, evaluateFor, signal
+    rubric: array of objects with area, weight, note
+    recommendation: string
+
+    Candidate:
+    - Name: {student.get("full_name") or "Student"}
+    - Skills: {json.dumps(normalize_skills(cast(List[str], student.get("skills") or [])))}
+    - Resume summary: {json.dumps(str((student.get("parsed_resume") or {}).get("summary") or ""))}
+    - GitHub connected: {bool(student.get("github_username"))}
+    - CGPA: {_safe_float(student.get("cgpa"))}
+
+    Internship:
+    - Title: {internship.get("title") or ""}
+    - Description: {internship.get("description") or ""}
+    - Required skills: {json.dumps(_extract_internship_skills(internship))}
+
+    Existing fit context:
+    {json.dumps(fallback)}
+
+    Make it practical for a real interviewer. Questions should separate depth from buzzwords.
+    """
+    result = _generate_structured_json(prompt, fallback)
+    result["strengths"] = normalize_skills(cast(List[str], result.get("strengths") or fallback["strengths"]))
+    result["risks"] = cast(List[str], result.get("risks") or fallback["risks"])
+    result["focusAreas"] = normalize_skills(cast(List[str], result.get("focusAreas") or fallback["focusAreas"]))
+    result["fitScore"] = int(round(_safe_float(result.get("fitScore") or fallback["fitScore"])))
+    return result
 
 
 def _fetch_internship_rows(active_only: bool = True) -> List[Dict[str, Any]]:
@@ -1161,6 +1552,139 @@ async def get_skill_gaps(user = Depends(get_current_user)):
                 "industryDemand": top_industry
             }
         }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/student-roadmap")
+async def get_student_roadmap(user=Depends(get_current_user)):
+    try:
+        role = _get_user_role(user.id)
+        if role != "student":
+            raise HTTPException(status_code=403, detail="Student roadmap is only available to students")
+
+        profile_response = (
+            supabase.table("profiles")
+            .select("id, full_name, skills, skill_vector, parsed_resume, github_username, linkedin_url, market_readiness_score, college_id, student_verification_status, cgpa")
+            .eq("id", user.id)
+            .single()
+            .execute()
+        )
+        profile = cast(Dict[str, Any], profile_response.data or {})
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
+
+        internships = _fetch_internship_rows(active_only=True)
+        college_id = profile.get("college_id")
+        if college_id:
+            internships = [row for row in internships if row.get("college_id") == college_id]
+        else:
+            internships = []
+
+        applications_response = (
+            supabase.table("applications")
+            .select("id, status, internship_id, match_score")
+            .eq("student_id", user.id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+        applications = cast(List[Dict[str, Any]], applications_response.data or [])
+        copilot = _build_student_copilot(profile, internships, applications)
+        roadmap = _build_student_roadmap(profile, copilot)
+
+        return {"success": True, "data": roadmap}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/application-pitch")
+async def generate_application_pitch(body: ApplicationPitchRequest, user=Depends(get_current_user)):
+    try:
+        role = _get_user_role(user.id)
+        if role != "student":
+            raise HTTPException(status_code=403, detail="Application pitch is only available to students")
+
+        profile_response = (
+            supabase.table("profiles")
+            .select("id, full_name, skills, skill_vector, parsed_resume, github_username, linkedin_url, market_readiness_score, cgpa")
+            .eq("id", user.id)
+            .single()
+            .execute()
+        )
+        profile = cast(Dict[str, Any], profile_response.data or {})
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
+
+        internship_response = (
+            supabase.table("internships")
+            .select("*")
+            .eq("id", body.internship_id)
+            .single()
+            .execute()
+        )
+        internship = cast(Dict[str, Any], internship_response.data or {})
+        if not internship:
+            raise HTTPException(status_code=404, detail="Internship not found")
+
+        pitch = _build_application_pitch(profile, internship)
+        return {"success": True, "data": pitch}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/interview-kit")
+async def generate_interview_kit(body: InterviewKitRequest, user=Depends(get_current_user)):
+    try:
+        role = _get_user_role(user.id)
+        if role not in {"company", "admin", "tpo"}:
+            raise HTTPException(status_code=403, detail="Interview kit is only available to recruiters")
+
+        application_response = (
+            supabase.table("applications")
+            .select("id, student_id, internship_id, status, match_score")
+            .eq("id", body.application_id)
+            .single()
+            .execute()
+        )
+        application = cast(Dict[str, Any], application_response.data or {})
+        if not application:
+            raise HTTPException(status_code=404, detail="Application not found")
+
+        internship_response = (
+            supabase.table("internships")
+            .select("*")
+            .eq("id", application.get("internship_id"))
+            .single()
+            .execute()
+        )
+        internship = cast(Dict[str, Any], internship_response.data or {})
+        if not internship:
+            raise HTTPException(status_code=404, detail="Internship not found")
+
+        if role == "company" and internship.get("company_id") != user.id:
+            raise HTTPException(status_code=403, detail="You can only review interview kits for your own internships")
+        if role == "tpo" and internship.get("college_id") != user.id:
+            raise HTTPException(status_code=403, detail="This internship is not assigned to your college")
+
+        student_response = (
+            supabase.table("profiles")
+            .select("id, full_name, skills, skill_vector, parsed_resume, github_username, linkedin_url, cgpa")
+            .eq("id", application.get("student_id"))
+            .single()
+            .execute()
+        )
+        student = cast(Dict[str, Any], student_response.data or {})
+        if not student:
+            raise HTTPException(status_code=404, detail="Student profile not found")
+
+        kit = _build_interview_kit(student, internship, application)
+        return {"success": True, "data": kit}
     except HTTPException:
         raise
     except Exception as e:
