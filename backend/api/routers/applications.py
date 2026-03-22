@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Literal, Optional, cast
 from fastapi import APIRouter, Depends, HTTPException  # type: ignore
 from pydantic import BaseModel  # type: ignore
 
-from core.ai_utils import calculate_match_score  # type: ignore
+from core.ai_utils import calculate_match_score, extract_skills_from_text, normalize_skills  # type: ignore
 from core.dependencies import get_current_user  # type: ignore
 from core.notifications import create_notification  # type: ignore
 from core.supabase_provider import supabase  # type: ignore
@@ -77,6 +77,20 @@ def _application_status_copy(
         "title": "Application updated",
         "message": f"Your application for {internship_title} is now {status}.",
     }
+
+
+def _extract_required_skills(internship_row: Dict[str, Any]) -> List[str]:
+    explicit = internship_row.get("required_skills")
+    if isinstance(explicit, list) and explicit:
+        return normalize_skills(cast(List[str], explicit))
+
+    fallback_text = "\n".join(
+        [
+            str(internship_row.get("title") or ""),
+            str(internship_row.get("description") or ""),
+        ]
+    ).strip()
+    return extract_skills_from_text(fallback_text)
 
 
 def _attach_relations(
@@ -268,11 +282,10 @@ async def apply_to_internship(
             .single()
             .execute()
         )
-        all_internships_response = (
-            supabase.table("internships").select("required_skills").execute()
-        )
+        all_internships_response = supabase.table("internships").select("*").execute()
         all_internships_skills = [
-            row.get("required_skills") or [] for row in (all_internships_response.data or [])
+            _extract_required_skills(cast(Dict[str, Any], row))
+            for row in (all_internships_response.data or [])
         ]
 
         match_score = 0.0
@@ -286,7 +299,7 @@ async def apply_to_internship(
                     student_vector=cast(List[float], student_vec),
                     internship_vector=cast(List[float], internship_vec),
                     student_skills=cast(List[str], student_skills),
-                    required_skills=cast(List[str], internship_data.get("required_skills") or []),
+                    required_skills=_extract_required_skills(cast(Dict[str, Any], internship_data)),
                     all_internships_skills=cast(List[List[str]], all_internships_skills),
                 )
 

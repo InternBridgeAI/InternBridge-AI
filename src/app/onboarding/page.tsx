@@ -137,6 +137,12 @@ export default function OnboardingPage() {
     const router = useRouter();
     const supabase = createClient();
     const MAX_UPLOAD_SIZE = 5 * 1024 * 1024;
+    const FILE_RULES: Record<string, { extensions: string[]; label: string }> = {
+        resume_url: { extensions: ['pdf', 'doc', 'docx'], label: 'Resume' },
+        student_id_url: { extensions: ['pdf', 'png', 'jpg', 'jpeg'], label: 'Student ID' },
+        college_verification_url: { extensions: ['pdf', 'png', 'jpg', 'jpeg'], label: 'Verification document' },
+        company_document_url: { extensions: ['pdf', 'png', 'jpg', 'jpeg'], label: 'Verification document' },
+    };
 
     const roleLabel = userRole === 'company'
         ? 'Company / Employer'
@@ -178,7 +184,7 @@ export default function OnboardingPage() {
 
         const fileExt = file.name.split('.').pop();
         const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-        const filePath = `${folder}/${fileName}`;
+        const filePath = `${user.id}/${folder}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
             .from(bucket)
@@ -202,6 +208,16 @@ export default function OnboardingPage() {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        const rule = FILE_RULES[field];
+        if (rule) {
+            const extension = (file.name.split('.').pop() || '').toLowerCase();
+            if (!rule.extensions.includes(extension)) {
+                toast.error(`${rule.label} must be one of: ${rule.extensions.map((item) => item.toUpperCase()).join(', ')}`);
+                e.target.value = '';
+                return;
+            }
+        }
+
         setUploadingField(field);
         try {
             const url = await uploadFile(file, bucket, folder);
@@ -211,6 +227,7 @@ export default function OnboardingPage() {
             toast.error(error.message || 'Upload failed');
         } finally {
             setUploadingField(null);
+            e.target.value = '';
         }
     };
 
@@ -1096,7 +1113,7 @@ export default function OnboardingPage() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Resume (PDF)</Label>
+                                    <Label>Resume (PDF/DOC/DOCX)</Label>
                                     <div className="flex items-center gap-3">
                                         <input
                                             type="file"
@@ -1121,7 +1138,7 @@ export default function OnboardingPage() {
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Student ID Upload</Label>
+                                    <Label>Student ID Upload (PDF/JPG/PNG)</Label>
                                     <div className="flex items-center gap-3">
                                         <input
                                             type="file"

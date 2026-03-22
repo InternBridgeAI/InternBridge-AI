@@ -78,6 +78,28 @@ def _recommend_resource(skill: str) -> Dict[str, str]:
     return {"provider": "Curated Learning Path", "level": "Beginner to Intermediate"}
 
 
+def _extract_internship_skills(row: Dict[str, Any]) -> List[str]:
+    explicit_skills = row.get("required_skills")
+    if isinstance(explicit_skills, list) and explicit_skills:
+        return normalize_skills(cast(List[str], explicit_skills))
+
+    fallback_text = "\n".join(
+        [
+            str(row.get("title") or ""),
+            str(row.get("description") or ""),
+        ]
+    ).strip()
+    return extract_skills_from_text(fallback_text)
+
+
+def _fetch_internship_rows(active_only: bool = True) -> List[Dict[str, Any]]:
+    query = supabase.table("internships").select("*")
+    if active_only:
+        query = query.eq("is_active", True).eq("is_approved", True)
+    response = query.execute()
+    return cast(List[Dict[str, Any]], response.data or [])
+
+
 def _analyze_and_store_resume(user_id: str, resume_text: str) -> Dict[str, Any]:
     parsed = parse_resume_with_gemini(resume_text)
     parsed_skills = normalize_skills(parsed.get("skills") or [])
@@ -96,16 +118,8 @@ def _analyze_and_store_resume(user_id: str, resume_text: str) -> Dict[str, Any]:
     )
     profile = profile_response.data or {}
 
-    internships_response = (
-        supabase.table("internships")
-        .select("required_skills")
-        .eq("is_active", True)
-        .eq("is_approved", True)
-        .execute()
-    )
-    all_internships_skills = [
-        row.get("required_skills") or [] for row in (internships_response.data or [])
-    ]
+    internship_rows = _fetch_internship_rows(active_only=True)
+    all_internships_skills = [_extract_internship_skills(row) for row in internship_rows]
 
     cgpa_value = _derive_cgpa(parsed, profile.get("cgpa"))
     market_readiness_score = calculate_market_readiness(
@@ -256,16 +270,10 @@ async def github_verify(body: GitHubVerifyRequest, user = Depends(get_current_us
             print(f"Database error writing to activity_logs: {db_err}")
             # Non-blocking error
 
-        internships_response = (
-            supabase.table("internships")
-            .select("required_skills")
-            .eq("is_active", True)
-            .eq("is_approved", True)
-            .execute()
-        )
+        internship_rows = _fetch_internship_rows(active_only=True)
         market_readiness_score = calculate_market_readiness(
             student_skills=normalize_skills(profile.get("skills") or []),
-            all_internships_skills=[row.get("required_skills") or [] for row in (internships_response.data or [])],
+            all_internships_skills=[_extract_internship_skills(row) for row in internship_rows],
             cgpa=_safe_float(profile.get("cgpa")),
             has_resume=bool(profile.get("parsed_resume")),
             has_github=True,
@@ -296,23 +304,14 @@ async def get_skill_gaps(user = Depends(get_current_user)):
         user_skills = normalize_skills(cast(List[str], profile.get("skills") or []))
         user_skills_set = {skill.lower() for skill in user_skills}
 
-        internships_response = (
-            supabase.table("internships")
-            .select("required_skills")
-            .eq("is_active", True)
-            .eq("is_approved", True)
-            .execute()
-        )
-        internships = cast(List[Dict[str, Any]], internships_response.data or [])
+        internships = _fetch_internship_rows(active_only=True)
 
         match_count: int = 0
         missing_map: Dict[str, int] = {}
         market_demand_map: Dict[str, int] = {}
 
         for internship in internships:
-            normalized_required_skills = normalize_skills(
-                cast(List[str], internship.get("required_skills") or [])
-            )
+            normalized_required_skills = _extract_internship_skills(internship)
             if not normalized_required_skills:
                 continue
 
@@ -351,7 +350,7 @@ async def get_skill_gaps(user = Depends(get_current_user)):
 
         score = calculate_market_readiness(
             student_skills=user_skills,
-            all_internships_skills=[row.get("required_skills") or [] for row in internships],
+            all_internships_skills=[_extract_internship_skills(row) for row in internships],
             cgpa=_safe_float(profile.get("cgpa")),
             has_resume=bool(profile.get("parsed_resume")),
             has_github=bool(profile.get("github_username")),
@@ -476,11 +475,10 @@ async def recommend_candidates(internship_id: str, user = Depends(get_current_us
         students_res = students_query.execute()
         students = students_res.data or []
 
-        all_internships_res = supabase.table("internships").select("required_skills").execute()
-        all_internships = all_internships_res.data or []
-        all_internships_skills = [i.get("required_skills") or [] for i in all_internships]
+        all_internships = _fetch_internship_rows(active_only=False)
+        all_internships_skills = [_extract_internship_skills(i) for i in all_internships]
 
-        required_skills = normalize_skills(internship.get("required_skills") or [])
+        required_skills = _extract_internship_skills(cast(Dict[str, Any], internship))
         recommendations: List[Dict[str, Any]] = []
         for student in students:
             student_skills = normalize_skills(student.get("skills") or [])

@@ -191,7 +191,7 @@ export default function ProfilePage() {
 
             const fileExt = file.name.split('.').pop();
             const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-            const filePath = `avatars/${fileName}`;
+            const filePath = `${user.id}/avatars/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
                 .from('avatars')
@@ -229,6 +229,12 @@ export default function ProfilePage() {
             return;
         }
 
+        const extension = (file.name.split('.').pop() || '').toLowerCase();
+        if (!['pdf', 'doc', 'docx'].includes(extension)) {
+            toast.error('Resume must be a PDF, DOC, or DOCX file');
+            return;
+        }
+
         setIsUploading(true);
         try {
             const supabase = createClient();
@@ -237,7 +243,7 @@ export default function ProfilePage() {
 
             const fileExt = file.name.split('.').pop();
             const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-            const filePath = `resumes/${fileName}`;
+            const filePath = `${user.id}/resumes/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
                 .from('resumes')
@@ -373,7 +379,7 @@ export default function ProfilePage() {
                             {/* Resume Upload */}
                             <div className="space-y-3 pb-6 border-b border-border/50">
                                 <Label className="text-[10px] font-black uppercase tracking-widest opacity-60 flex items-center gap-2">
-                                    <Plus size={12} /> Master Resume (PDF)
+                                    <Plus size={12} /> Master Resume (PDF/DOC/DOCX)
                                 </Label>
                                 {profile.resume_url ? (
                                     <div className="space-y-2">
