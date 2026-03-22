@@ -49,6 +49,70 @@ def _verification_base_url() -> str:
         or "https://internbridgeai.vercel.app"
     ).rstrip("/")
 
+
+def _attach_certificate_relations(certificates):
+    rows = certificates if isinstance(certificates, list) else [certificates]
+    rows = [row for row in rows if row]
+    if not rows:
+        return certificates
+
+    student_ids = sorted({row.get("student_id") for row in rows if row.get("student_id")})
+    issuer_ids = sorted({row.get("issuer_id") for row in rows if row.get("issuer_id")})
+    internship_ids = sorted({row.get("internship_id") for row in rows if row.get("internship_id")})
+
+    student_map = {}
+    issuer_map = {}
+    internship_map = {}
+
+    if student_ids:
+        student_response = (
+            supabase.table("profiles")
+            .select("id, full_name")
+            .in_("id", student_ids)
+            .execute()
+        )
+        student_map = {
+            row["id"]: {"full_name": row.get("full_name")}
+            for row in (student_response.data or [])
+        }
+
+    if issuer_ids:
+        issuer_response = (
+            supabase.table("profiles")
+            .select("id, company_name, full_name, company_logo_url")
+            .in_("id", issuer_ids)
+            .execute()
+        )
+        issuer_map = {
+            row["id"]: {
+                "company_name": row.get("company_name"),
+                "full_name": row.get("full_name"),
+                "company_logo_url": row.get("company_logo_url"),
+            }
+            for row in (issuer_response.data or [])
+        }
+
+    if internship_ids:
+        internship_response = (
+            supabase.table("internships")
+            .select("id, title")
+            .in_("id", internship_ids)
+            .execute()
+        )
+        internship_map = {
+            row["id"]: {"title": row.get("title")}
+            for row in (internship_response.data or [])
+        }
+
+    for row in rows:
+        row["student"] = student_map.get(row.get("student_id"))
+        row["issuer"] = issuer_map.get(row.get("issuer_id"))
+        row["internship"] = internship_map.get(row.get("internship_id"))
+
+    if isinstance(certificates, list):
+        return rows
+    return rows[0]
+
 @router.post("")
 async def issue_certificate(data: CertificateCreate, user=Depends(get_current_user)):
     try:
@@ -107,14 +171,16 @@ async def verify_certificate(certificate_id: str):
     try:
         response = (
             supabase.table("certificates")
-            .select("*, student:profiles!student_id(full_name), internship:internships(title), issuer:profiles!issuer_id(company_name, full_name)")
+            .select("*")
             .eq("id", certificate_id)
-            .single()
+            .limit(1)
             .execute()
         )
-        cert = response.data
+        cert_rows = response.data or []
+        cert = cert_rows[0] if cert_rows else None
         if not cert:
             raise HTTPException(status_code=404, detail="Certificate not found")
+        cert = _attach_certificate_relations(cert)
 
         expected_hash = _certificate_fingerprint(
             cert.get("id") or "",
@@ -142,11 +208,11 @@ async def get_student_certificates(user=Depends(get_current_user)):
     try:
         response = (
             supabase.table("certificates")
-            .select("*, issuer:profiles!issuer_id(company_name, company_logo_url, full_name)")
+            .select("*")
             .eq("student_id", user.id)
             .order("issued_at", desc=True)
             .execute()
         )
-        return {"success": True, "data": response.data or []}
+        return {"success": True, "data": _attach_certificate_relations(response.data or [])}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
