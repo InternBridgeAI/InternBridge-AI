@@ -100,6 +100,371 @@ def _fetch_internship_rows(active_only: bool = True) -> List[Dict[str, Any]]:
     return cast(List[Dict[str, Any]], response.data or [])
 
 
+def _rank_internships_for_student(
+    student_skills: List[str],
+    student_vector: List[float],
+    internship_rows: List[Dict[str, Any]],
+    all_internships_skills: List[List[str]],
+) -> List[Dict[str, Any]]:
+    student_skill_keys = {skill.lower() for skill in normalize_skills(student_skills)}
+    ranked: List[Dict[str, Any]] = []
+
+    for row in internship_rows:
+        required_skills = _extract_internship_skills(row)
+        matched_skills = [
+            skill for skill in required_skills if skill.lower() in student_skill_keys
+        ]
+        missing_skills = [
+            skill for skill in required_skills if skill.lower() not in student_skill_keys
+        ]
+        score = calculate_match_score(
+            student_vector=student_vector,
+            internship_vector=cast(List[float], row.get("skill_vector") or []),
+            student_skills=student_skills,
+            required_skills=required_skills,
+            all_internships_skills=all_internships_skills,
+        )
+
+        ranked.append(
+            {
+                "id": row.get("id"),
+                "title": row.get("title") or "Internship",
+                "score": round(score * 100, 2),
+                "matchedSkills": matched_skills[:3],
+                "missingSkills": missing_skills[:3],
+            }
+        )
+
+    ranked.sort(key=lambda item: cast(float, item["score"]), reverse=True)
+    return ranked
+
+
+def _build_student_copilot(profile: Dict[str, Any], internship_rows: List[Dict[str, Any]], applications: List[Dict[str, Any]]) -> Dict[str, Any]:
+    student_skills = normalize_skills(cast(List[str], profile.get("skills") or []))
+    student_vector = cast(List[float], profile.get("skill_vector") or [])
+    all_market_rows = _fetch_internship_rows(active_only=True)
+    all_internships_skills = [_extract_internship_skills(row) for row in all_market_rows]
+    ranked_matches = _rank_internships_for_student(
+        student_skills=student_skills,
+        student_vector=student_vector,
+        internship_rows=internship_rows,
+        all_internships_skills=all_internships_skills,
+    )
+
+    strength_map: Dict[str, int] = {}
+    gap_map: Dict[str, int] = {}
+    for match in ranked_matches:
+        for skill in cast(List[str], match.get("matchedSkills") or []):
+            strength_map[skill] = strength_map.get(skill, 0) + 1
+        for skill in cast(List[str], match.get("missingSkills") or []):
+            gap_map[skill] = gap_map.get(skill, 0) + 1
+
+    strengths = [
+        skill for skill, _ in sorted(strength_map.items(), key=lambda item: item[1], reverse=True)
+    ][:4]
+    top_gaps = [
+        skill for skill, _ in sorted(gap_map.items(), key=lambda item: item[1], reverse=True)
+    ][:4]
+
+    pending_count = sum(1 for app in applications if app.get("status") == "pending")
+    shortlisted_count = sum(1 for app in applications if app.get("status") == "shortlisted")
+    interview_count = sum(1 for app in applications if app.get("status") == "interview")
+    accepted_count = sum(1 for app in applications if app.get("status") == "accepted")
+    strong_match_count = sum(1 for item in ranked_matches if _safe_float(item.get("score")) >= 80)
+    ready_now_count = sum(1 for item in ranked_matches if _safe_float(item.get("score")) >= 60)
+
+    action_items: List[Dict[str, str]] = []
+    if profile.get("student_verification_status") != "verified":
+        action_items.append(
+            {
+                "title": "Complete college verification",
+                "description": "Your college needs to verify your profile before you can apply to live openings.",
+                "href": "/student/profile",
+                "priority": "high",
+            }
+        )
+    if not profile.get("parsed_resume"):
+        action_items.append(
+            {
+                "title": "Upload your resume",
+                "description": "Resume parsing improves skill extraction, market readiness, and recommendation accuracy.",
+                "href": "/student/resume",
+                "priority": "high",
+            }
+        )
+    if not profile.get("github_username"):
+        action_items.append(
+            {
+                "title": "Connect GitHub for skill proof",
+                "description": "Verified repositories increase recruiter trust and strengthen technical matching.",
+                "href": "/student/profile",
+                "priority": "medium",
+            }
+        )
+    if not profile.get("linkedin_url"):
+        action_items.append(
+            {
+                "title": "Add LinkedIn identity signal",
+                "description": "A complete public identity improves profile trust and market-readiness scoring.",
+                "href": "/student/profile",
+                "priority": "medium",
+            }
+        )
+    if top_gaps:
+        action_items.append(
+            {
+                "title": f"Close the {top_gaps[0]} gap",
+                "description": f"{top_gaps[0]} appears in a large share of your best-fit openings right now.",
+                "href": "/student/skills",
+                "priority": "medium",
+            }
+        )
+    if not applications and ranked_matches:
+        action_items.append(
+            {
+                "title": "Apply to your top matches",
+                "description": "Your profile already aligns with active openings. Converting fit into applications is the fastest win.",
+                "href": "/student/internships",
+                "priority": "high",
+            }
+        )
+    if pending_count > 0:
+        action_items.append(
+            {
+                "title": "Track application momentum",
+                "description": f"You have {pending_count} pending application{'s' if pending_count != 1 else ''}. Keep your profile fresh while recruiters review.",
+                "href": "/student/applications",
+                "priority": "low",
+            }
+        )
+
+    readiness_score = profile.get("market_readiness_score")
+    if readiness_score in (None, ""):
+        readiness_score = calculate_market_readiness(
+            student_skills=student_skills,
+            all_internships_skills=all_internships_skills,
+            cgpa=_safe_float(profile.get("cgpa")),
+            has_resume=bool(profile.get("parsed_resume")),
+            has_github=bool(profile.get("github_username")),
+            has_linkedin=bool(profile.get("linkedin_url")),
+        )
+
+    if internship_rows and ranked_matches:
+        top_titles = [cast(str, item["title"]) for item in ranked_matches[:3]]
+        summary = (
+            f"You're currently strongest for {top_titles[0]}"
+            + (f" and {top_titles[1]}" if len(top_titles) > 1 else "")
+            + (
+                f". Adding {top_gaps[0]} would unlock more of the market."
+                if top_gaps
+                else ". Your strongest signal is already aligned with live demand."
+            )
+        )
+    elif profile.get("college_id"):
+        summary = "No approved internships are live for your college right now. Keep your AI profile complete so you are ready the moment new roles open."
+    else:
+        summary = "Select your college and complete your profile to activate tailored internship recommendations."
+
+    next_milestone = min(
+        99,
+        int(_safe_float(readiness_score) + (8 if top_gaps else 4) + (5 if not profile.get("github_username") else 0)),
+    )
+
+    return {
+        "summary": summary,
+        "readinessScore": int(_safe_float(readiness_score)),
+        "nextMilestoneScore": next_milestone,
+        "readyNowCount": ready_now_count,
+        "strongMatchCount": strong_match_count,
+        "strengths": strengths,
+        "topGaps": top_gaps,
+        "topMatches": ranked_matches[:3],
+        "roleFocus": [cast(str, item["title"]) for item in ranked_matches[:3]],
+        "signals": {
+            "resume": bool(profile.get("parsed_resume")),
+            "github": bool(profile.get("github_username")),
+            "linkedin": bool(profile.get("linkedin_url")),
+            "verification": profile.get("student_verification_status") == "verified",
+        },
+        "momentum": {
+            "pendingApplications": pending_count,
+            "shortlisted": shortlisted_count,
+            "interviews": interview_count,
+            "accepted": accepted_count,
+        },
+        "actions": action_items[:4],
+    }
+
+
+def _build_company_copilot(profile: Dict[str, Any], internships: List[Dict[str, Any]], applications: List[Dict[str, Any]]) -> Dict[str, Any]:
+    internship_ids = [str(item.get("id")) for item in internships if item.get("id")]
+    internship_map = {str(item.get("id")): item for item in internships if item.get("id")}
+
+    student_ids = sorted(
+        {
+            str(app.get("student_id"))
+            for app in applications
+            if app.get("student_id")
+        }
+    )
+    student_rows: List[Dict[str, Any]] = []
+    if student_ids:
+        student_res = (
+            supabase.table("profiles")
+            .select("id, skills")
+            .in_("id", student_ids)
+            .execute()
+        )
+        student_rows = cast(List[Dict[str, Any]], student_res.data or [])
+    student_skills_map = {
+        str(row.get("id")): normalize_skills(cast(List[str], row.get("skills") or []))
+        for row in student_rows
+    }
+
+    pipeline = {
+        "pending": sum(1 for app in applications if app.get("status") == "pending"),
+        "shortlisted": sum(1 for app in applications if app.get("status") == "shortlisted"),
+        "interviews": sum(1 for app in applications if app.get("status") == "interview"),
+        "accepted": sum(1 for app in applications if app.get("status") == "accepted"),
+    }
+
+    hot_skill_map: Dict[str, int] = {}
+    supply_gap_map: Dict[str, int] = {}
+    watchlist: List[Dict[str, Any]] = []
+    strong_candidates = 0
+
+    for internship in internships:
+        internship_id = str(internship.get("id"))
+        internship_apps = [app for app in applications if str(app.get("internship_id")) == internship_id]
+        required_skills = _extract_internship_skills(internship)
+        avg_score = 0.0
+        if internship_apps:
+            avg_score = sum(_safe_float(app.get("match_score")) for app in internship_apps) / len(internship_apps)
+
+        for skill in required_skills:
+            hot_skill_map[skill] = hot_skill_map.get(skill, 0) + 1
+
+        applicant_skill_keys = {
+            skill.lower()
+            for app in internship_apps
+            for skill in student_skills_map.get(str(app.get("student_id")), [])
+        }
+        for skill in required_skills:
+            if skill.lower() not in applicant_skill_keys:
+                supply_gap_map[skill] = supply_gap_map.get(skill, 0) + 1
+
+        strong_for_role = sum(1 for app in internship_apps if _safe_float(app.get("match_score")) >= 0.75)
+        strong_candidates += strong_for_role
+
+        reason = ""
+        if not internship_apps:
+            reason = "No applicants yet. Broaden the role copy, stipend, or college targeting."
+        elif avg_score < 0.45:
+            reason = "Applicant quality is low. Refine the skill stack or improve the role narrative."
+        elif strong_for_role > 0 and pipeline["interviews"] == 0:
+            reason = "Strong candidates are available. Schedule interviews before the pipeline cools."
+        elif sum(1 for app in internship_apps if app.get("status") == "pending") >= 4:
+            reason = "You have a review backlog on this role."
+
+        if reason:
+            watchlist.append(
+                {
+                    "title": internship.get("title") or "Internship",
+                    "reason": reason,
+                    "href": f"/company/candidates?internship_id={internship_id}",
+                }
+            )
+
+    total_applications = len(applications)
+    scores = [_safe_float(app.get("match_score")) for app in applications if app.get("match_score") is not None]
+    avg_match_score = int(round((sum(scores) / len(scores)) * 100)) if scores else 0
+
+    hiring_health = 20
+    if internships:
+        hiring_health += 20
+    if profile.get("is_verified"):
+        hiring_health += 15
+    hiring_health += min(total_applications * 3, 15)
+    hiring_health += min(strong_candidates * 4, 20)
+    hiring_health += min(avg_match_score // 4, 20)
+    hiring_health = min(99, hiring_health)
+
+    urgent_actions: List[Dict[str, str]] = []
+    if not profile.get("is_verified"):
+        urgent_actions.append(
+            {
+                "title": "Finish company verification",
+                "description": "Verified partners convert better because students trust the brand and access improves.",
+                "href": "/company",
+                "priority": "high",
+            }
+        )
+    if not internships:
+        urgent_actions.append(
+            {
+                "title": "Launch your first internship",
+                "description": "The AI funnel starts only after a live internship exists in the system.",
+                "href": "/company/internships/new",
+                "priority": "high",
+            }
+        )
+    if watchlist:
+        urgent_actions.append(
+            {
+                "title": "Resolve the top hiring blocker",
+                "description": watchlist[0]["reason"],
+                "href": watchlist[0]["href"],
+                "priority": "high",
+            }
+        )
+    if pipeline["pending"] > 0:
+        urgent_actions.append(
+            {
+                "title": "Review pending applicants",
+                "description": f"You have {pipeline['pending']} application{'s' if pipeline['pending'] != 1 else ''} waiting for a decision.",
+                "href": "/company/candidates",
+                "priority": "medium",
+            }
+        )
+    if avg_match_score < 55 and internships:
+        urgent_actions.append(
+            {
+                "title": "Recalibrate role requirements",
+                "description": "Lower-fit applicants usually mean the role copy or must-have skills are too narrow for the current student market.",
+                "href": "/company/internships",
+                "priority": "medium",
+            }
+        )
+
+    hot_skills = [
+        skill for skill, _ in sorted(hot_skill_map.items(), key=lambda item: item[1], reverse=True)
+    ][:5]
+    supply_gaps = [
+        skill for skill, _ in sorted(supply_gap_map.items(), key=lambda item: item[1], reverse=True)
+    ][:5]
+
+    if not internships:
+        summary = "Your AI hiring engine is idle right now. Publish a role to start ranking candidates and learning market demand."
+    elif total_applications == 0:
+        summary = "Your roles are live, but the funnel is still cold. Tighten your pitch, stipend, or college reach to improve discovery."
+    elif strong_candidates > 0:
+        summary = f"You already have {strong_candidates} strong-fit candidate{'s' if strong_candidates != 1 else ''} in the pipeline. Fast review will improve conversion."
+    else:
+        summary = "Applications are flowing, but the fit can improve. Adjust the role narrative and required skills to sharpen your candidate mix."
+
+    return {
+        "summary": summary,
+        "hiringHealthScore": hiring_health,
+        "avgMatchScore": avg_match_score,
+        "strongCandidates": strong_candidates,
+        "pipeline": pipeline,
+        "hotSkills": hot_skills,
+        "supplyGaps": supply_gaps,
+        "watchlist": watchlist[:3],
+        "actions": urgent_actions[:4],
+    }
+
+
 def _analyze_and_store_resume(user_id: str, resume_text: str) -> Dict[str, Any]:
     parsed = parse_resume_with_gemini(resume_text)
     parsed_skills = normalize_skills(parsed.get("skills") or [])
@@ -398,6 +763,96 @@ async def get_skill_gaps(user = Depends(get_current_user)):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/student-copilot")
+async def get_student_copilot(user=Depends(get_current_user)):
+    try:
+        role = _get_user_role(user.id)
+        if role != "student":
+            raise HTTPException(status_code=403, detail="Student copilot is only available to students")
+
+        profile_response = (
+            supabase.table("profiles")
+            .select("id, full_name, skills, skill_vector, parsed_resume, github_username, linkedin_url, market_readiness_score, college_id, student_verification_status, cgpa")
+            .eq("id", user.id)
+            .single()
+            .execute()
+        )
+        profile = cast(Dict[str, Any], profile_response.data or {})
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
+
+        internships = _fetch_internship_rows(active_only=True)
+        college_id = profile.get("college_id")
+        if college_id:
+            internships = [row for row in internships if row.get("college_id") == college_id]
+        else:
+            internships = []
+
+        applications_response = (
+            supabase.table("applications")
+            .select("id, status, internship_id, match_score")
+            .eq("student_id", user.id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+        applications = cast(List[Dict[str, Any]], applications_response.data or [])
+
+        copilot = _build_student_copilot(profile, internships, applications)
+        return {"success": True, "data": copilot}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/company-copilot")
+async def get_company_copilot(user=Depends(get_current_user)):
+    try:
+        role = _get_user_role(user.id)
+        if role != "company":
+            raise HTTPException(status_code=403, detail="Company copilot is only available to company accounts")
+
+        profile_response = (
+            supabase.table("profiles")
+            .select("id, company_name, full_name, is_verified")
+            .eq("id", user.id)
+            .single()
+            .execute()
+        )
+        profile = cast(Dict[str, Any], profile_response.data or {})
+        if not profile:
+            raise HTTPException(status_code=404, detail="Company profile not found")
+
+        internships_response = (
+            supabase.table("internships")
+            .select("*")
+            .eq("company_id", user.id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+        internships = cast(List[Dict[str, Any]], internships_response.data or [])
+        internship_ids = [row.get("id") for row in internships if row.get("id")]
+
+        applications: List[Dict[str, Any]] = []
+        if internship_ids:
+            applications_response = (
+                supabase.table("applications")
+                .select("*")
+                .in_("internship_id", internship_ids)
+                .order("created_at", desc=True)
+                .execute()
+            )
+            applications = cast(List[Dict[str, Any]], applications_response.data or [])
+
+        copilot = _build_company_copilot(profile, internships, applications)
+        return {"success": True, "data": copilot}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/suggest-skills")
 async def suggest_skills(req: SuggestSkillsRequest, user = Depends(get_current_user)):

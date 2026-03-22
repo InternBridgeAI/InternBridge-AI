@@ -131,6 +131,34 @@ def _attach_relations(
             )
             internship_map = {row["id"]: row for row in (internships_response.data or [])}
 
+            company_ids: List[str] = sorted(
+                {
+                    str(row.get("company_id"))
+                    for row in internship_map.values()
+                    if row.get("company_id")
+                }
+            )
+            company_map: Dict[str, Dict] = {}
+            if company_ids:
+                companies_response = (
+                    supabase.table("profiles")
+                    .select("id, company_name, full_name")
+                    .in_("id", company_ids)
+                    .execute()
+                )
+                company_map = {
+                    row["id"]: {
+                        "company_name": row.get("company_name") or row.get("full_name"),
+                    }
+                    for row in (companies_response.data or [])
+                }
+
+            for internship in internship_map.values():
+                company = company_map.get(str(internship.get("company_id")))
+                if company:
+                    internship["company"] = company
+                    internship["profiles"] = company
+
         for application in applications:
             internship_id_val = application.get("internship_id")
             if internship_id_val is not None:
