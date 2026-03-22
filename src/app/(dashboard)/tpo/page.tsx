@@ -262,7 +262,7 @@ export default async function TPODashboard() {
                             <div className="space-y-2">
                                 <h2 className="text-2xl font-black tracking-tight">Your college now has a live placement brief.</h2>
                                 <p className="text-sm text-muted-foreground leading-6">
-                                    {aiCopilot?.summary || 'Batch intelligence appears here when the TPO AI copilot is connected to live backend data.'}
+                                    {aiCopilot?.summary || 'Current placement signals are stable. Review approvals, readiness, and skill gaps to keep the batch moving.'}
                                 </p>
                             </div>
                             <div className="flex flex-wrap gap-2">

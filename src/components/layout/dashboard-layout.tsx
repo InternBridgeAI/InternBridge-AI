@@ -1,64 +1,39 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Sidebar } from './sidebar';
 import { Navbar } from './navbar';
-import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
-import { useRouter, usePathname } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
-
+import { usePathname } from 'next/navigation';
 
 interface DashboardLayoutProps {
     children: React.ReactNode;
     role: string;
+    userId: string;
+    userName: string;
 }
 
-export function DashboardLayout({ children, role }: DashboardLayoutProps) {
+export function DashboardLayout({ children, role, userId, userName }: DashboardLayoutProps) {
     const [collapsed, setCollapsed] = useState(false);
-    const [userId, setUserId] = useState('');
-    const [userName, setUserName] = useState('');
-    const [isChecking, setIsChecking] = useState(true);
-    const router = useRouter();
+    const [mobileOpen, setMobileOpen] = useState(false);
     const pathname = usePathname();
 
     useEffect(() => {
-        const fetchUser = async () => {
-            setIsChecking(true);
-            const supabase = createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                setUserId(user.id);
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('full_name, is_onboarded')
-                    .eq('id', user.id)
-                    .single();
-
-                if (profile && profile.is_onboarded === false && !pathname.includes('/onboarding')) {
-                    router.push('/onboarding');
-                    return;
-                }
-
-                setUserName(profile?.full_name || user.email || 'User');
-            } else if (!pathname.includes('/onboarding')) {
-                router.push('/login');
-            }
-            setIsChecking(false);
-        };
-        fetchUser();
-    }, [pathname, router]);
-
-    if (isChecking) {
-        return <div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
-    }
+        setMobileOpen(false);
+    }, [pathname]);
 
     return (
         <div className="min-h-screen bg-background">
-            <Sidebar role={role} collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
-            <div className={cn('transition-all duration-300 min-h-screen flex flex-col', collapsed ? 'ml-[70px]' : 'ml-64')}>
-                <Navbar userId={userId} userName={userName} userRole={role} />
-                <main className="p-6 animate-fade-in flex-grow">
+            <Sidebar
+                role={role}
+                collapsed={collapsed}
+                mobileOpen={mobileOpen}
+                onClose={() => setMobileOpen(false)}
+                onToggle={() => setCollapsed((current) => !current)}
+            />
+            <div className={cn('min-h-screen flex flex-col transition-[margin] duration-300', collapsed ? 'md:ml-[70px]' : 'md:ml-64')}>
+                <Navbar userId={userId} userName={userName} userRole={role} onMenuClick={() => setMobileOpen(true)} />
+                <main className="flex-grow p-4 sm:p-6 animate-fade-in">
                     {children}
                 </main>
             </div>

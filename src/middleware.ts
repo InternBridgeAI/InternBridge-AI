@@ -34,9 +34,8 @@ export async function middleware(request: NextRequest) {
 
     // Public routes that don't require auth
     const publicRoutes = ['/', '/login', '/register', '/verify', '/forgot-password', '/reset-password', '/auth/callback'];
-    const isPublicRoute = publicRoutes.some(
-        (route) => pathname === route || pathname.startsWith('/api/auth')
-    );
+    const publicPrefixes = ['/api/auth', '/certificates/verify'];
+    const isPublicRoute = publicRoutes.includes(pathname) || publicPrefixes.some((prefix) => pathname.startsWith(prefix));
 
     if (isPublicRoute) return response;
 

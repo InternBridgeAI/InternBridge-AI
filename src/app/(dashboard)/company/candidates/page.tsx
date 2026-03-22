@@ -52,8 +52,9 @@ function CandidatesContent() {
             });
             if (result.success) {
                 toast.success(`Status updated to ${status}`);
-                setCandidates(candidates.map(c => c.id === appId ? { ...c, status, interview_details: interviewDetails } : c));
+                setCandidates(candidates.map(c => c.id === appId ? { ...c, status, interview_details: result.data?.interview_details || interviewDetails } : c));
                 setIsInterviewModalOpen(false);
+                setInterviewData({ date: '', time: '', link: '' });
             }
         } catch (error: any) {
             toast.error(error.message || 'Failed to update status');
@@ -61,11 +62,15 @@ function CandidatesContent() {
     };
 
     const handleScheduleInterview = () => {
-        if (!interviewData.date || !interviewData.time || !interviewData.link) {
-            toast.error('Please fill all interview details');
+        if (!interviewData.date || !interviewData.time) {
+            toast.error('Please select an interview date and time');
             return;
         }
-        updateStatus(selectedApp.id, 'interview', interviewData);
+        updateStatus(selectedApp.id, 'interview', {
+            date: interviewData.date,
+            time: interviewData.time,
+            ...(interviewData.link.trim() ? { meet_link: interviewData.link.trim() } : {}),
+        });
     };
 
     const filteredCandidates = candidates.filter(c =>
@@ -163,7 +168,19 @@ function CandidatesContent() {
                                                     {app.status}
                                                 </Badge>
                                                 {app.status === 'interview' && app.interview_details && (
-                                                    <p className="text-[9px] font-bold text-muted-foreground uppercase">{app.interview_details.date} @ {app.interview_details.time}</p>
+                                                    <div className="text-right">
+                                                        <p className="text-[9px] font-bold text-muted-foreground uppercase">{app.interview_details.date} @ {app.interview_details.time}</p>
+                                                        {(app.interview_details.meet_link || app.interview_details.link) && (
+                                                            <a
+                                                                href={app.interview_details.meet_link || app.interview_details.link}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="text-[10px] font-semibold text-primary hover:underline"
+                                                            >
+                                                                Open meeting link
+                                                            </a>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
                                         )}
@@ -210,8 +227,8 @@ function CandidatesContent() {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Meeting Link</label>
-                                <Input placeholder="Google Meet / Zoom link" className="glass" value={interviewData.link} onChange={e => setInterviewData({ ...interviewData, link: e.target.value })} />
+                                <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Meeting Link (Optional)</label>
+                                <Input placeholder="Leave blank to auto-generate a secure Jitsi room" className="glass" value={interviewData.link} onChange={e => setInterviewData({ ...interviewData, link: e.target.value })} />
                             </div>
                         </CardContent>
                         <CardFooter className="flex justify-end gap-3 pt-2">

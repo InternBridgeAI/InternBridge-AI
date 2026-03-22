@@ -1,9 +1,16 @@
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
+import { requireDashboardAccess } from '@/lib/dashboard-auth';
 
-export default function TPOLayout({
+export default async function TPOLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    return <DashboardLayout role="tpo">{children}</DashboardLayout>;
+    const access = await requireDashboardAccess('tpo');
+
+    return (
+        <DashboardLayout role="tpo" userId={access.userId} userName={access.userName}>
+            {children}
+        </DashboardLayout>
+    );
 }

@@ -1,4 +1,6 @@
-import { LogOut, ArrowLeft } from 'lucide-react';
+'use client';
+
+import { LogOut, ArrowLeft, Menu } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { getInitials } from '@/lib/utils';
@@ -10,9 +12,10 @@ interface NavbarProps {
     userId: string;
     userName: string;
     userRole: string;
+    onMenuClick?: () => void;
 }
 
-export function Navbar({ userId, userName, userRole }: NavbarProps) {
+export function Navbar({ userId, userName, userRole, onMenuClick }: NavbarProps) {
     const router = useRouter();
 
     const handleLogout = async () => {
@@ -23,13 +26,22 @@ export function Navbar({ userId, userName, userRole }: NavbarProps) {
 
     return (
         <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border">
-            <div className="flex items-center justify-between h-16 px-6">
+            <div className="flex items-center justify-between h-16 px-4 sm:px-6">
                 <div className="flex items-center gap-4 flex-1">
                     <Button
                         variant="ghost"
                         size="icon"
+                        onClick={onMenuClick}
+                        className="rounded-full h-9 w-9 text-muted-foreground hover:text-foreground md:hidden"
+                        title="Open navigation"
+                    >
+                        <Menu size={18} />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => router.back()}
-                        className="rounded-full h-9 w-9 text-muted-foreground hover:text-foreground"
+                        className="hidden rounded-full h-9 w-9 text-muted-foreground hover:text-foreground sm:inline-flex"
                         title="Go back"
                     >
                         <ArrowLeft size={18} />

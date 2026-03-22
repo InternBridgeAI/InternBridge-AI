@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 
 from fastapi import APIRouter, Depends, HTTPException  # type: ignore
@@ -159,6 +159,158 @@ async def get_activity_logs(limit: int = 50, user=Depends(get_current_user)):
             row["user"] = user_map.get(row.get("user_id"))
 
         return {"success": True, "data": logs}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/fraud-signals")
+async def get_fraud_signals(limit: int = 25, user=Depends(get_current_user)):
+    try:
+        _require_admin(user.id)
+        safe_limit = max(1, min(limit, 100))
+
+        students = (
+            supabase.table("profiles")
+            .select(
+                "id, full_name, email, skills, parsed_resume, resume_url, github_username, "
+                "linkedin_url, market_readiness_score, student_verification_status"
+            )
+            .eq("role", "student")
+            .execute()
+            .data
+            or []
+        )
+        companies = (
+            supabase.table("profiles")
+            .select("id, company_name, full_name, company_document_url, is_verified")
+            .eq("role", "company")
+            .execute()
+            .data
+            or []
+        )
+        internships = (
+            supabase.table("internships")
+            .select("id, title, description, company_id, is_active, is_approved")
+            .execute()
+            .data
+            or []
+        )
+
+        companies_by_id = {row["id"]: row for row in companies if row.get("id")}
+        internship_counts: Dict[str, int] = {}
+        for row in internships:
+            company_id = row.get("company_id")
+            if company_id:
+                internship_counts[company_id] = internship_counts.get(company_id, 0) + 1
+
+        severity_rank = {"high": 3, "medium": 2, "low": 1}
+        flags: List[Dict[str, Any]] = []
+
+        for row in students:
+            skills = row.get("skills") or []
+            claimed_skill_count = len(skills) if isinstance(skills, list) else 0
+            has_evidence = bool(row.get("parsed_resume") or row.get("resume_url") or row.get("github_username"))
+            readiness = float(row.get("market_readiness_score") or 0)
+
+            if row.get("student_verification_status") == "rejected":
+                flags.append(
+                    {
+                        "id": f"student-rejected-{row.get('id')}",
+                        "severity": "high",
+                        "type": "verification_rejected",
+                        "subject": row.get("full_name") or row.get("email") or "Student profile",
+                        "reason": "Student verification was rejected and still needs manual review or correction.",
+                        "confidence": 0.94,
+                        "href": "/admin/users",
+                    }
+                )
+            elif claimed_skill_count >= 10 and not has_evidence:
+                flags.append(
+                    {
+                        "id": f"student-evidence-{row.get('id')}",
+                        "severity": "medium",
+                        "type": "evidence_gap",
+                        "subject": row.get("full_name") or row.get("email") or "Student profile",
+                        "reason": f"{claimed_skill_count} claimed skills but no resume parse or GitHub evidence attached.",
+                        "confidence": 0.81,
+                        "href": "/admin/users",
+                    }
+                )
+            elif readiness >= 85 and not has_evidence:
+                flags.append(
+                    {
+                        "id": f"student-readiness-{row.get('id')}",
+                        "severity": "medium",
+                        "type": "readiness_outlier",
+                        "subject": row.get("full_name") or row.get("email") or "Student profile",
+                        "reason": "High market-readiness score without supporting resume or GitHub signals.",
+                        "confidence": 0.76,
+                        "href": "/admin/fraud",
+                    }
+                )
+
+        for row in companies:
+            company_name = row.get("company_name") or row.get("full_name") or "Company profile"
+            has_live_activity = internship_counts.get(row.get("id"), 0) > 0
+            document_url = row.get("company_document_url")
+
+            if not row.get("is_verified") and has_live_activity:
+                flags.append(
+                    {
+                        "id": f"company-unverified-{row.get('id')}",
+                        "severity": "high",
+                        "type": "unverified_employer",
+                        "subject": company_name,
+                        "reason": "Company has internship activity before verification was completed.",
+                        "confidence": 0.9,
+                        "href": "/admin/companies",
+                    }
+                )
+            if not row.get("is_verified") and not verify_company_document(document_url):
+                flags.append(
+                    {
+                        "id": f"company-document-{row.get('id')}",
+                        "severity": "medium",
+                        "type": "document_gap",
+                        "subject": company_name,
+                        "reason": "Verification document is missing or does not use a supported secure file format.",
+                        "confidence": 0.84,
+                        "href": "/admin/companies",
+                    }
+                )
+
+        for row in internships:
+            title = str(row.get("title") or "")
+            description = str(row.get("description") or "")
+            if not title and not description:
+                continue
+            if detect_fake_posting(title, description):
+                company_name = (
+                    companies_by_id.get(row.get("company_id"), {}).get("company_name")
+                    or "Unknown company"
+                )
+                flags.append(
+                    {
+                        "id": f"internship-risk-{row.get('id')}",
+                        "severity": "high",
+                        "type": "posting_risk",
+                        "subject": title or "Internship posting",
+                        "reason": f"Posting content for {company_name} matches known scam or low-trust language patterns.",
+                        "confidence": 0.92,
+                        "href": "/admin/internships",
+                    }
+                )
+
+        flags.sort(
+            key=lambda item: (
+                -severity_rank.get(str(item.get("severity")), 0),
+                -float(item.get("confidence") or 0),
+            )
+        )
+
+        return {"success": True, "data": flags[:safe_limit]}
     except HTTPException:
         raise
     except Exception as e:

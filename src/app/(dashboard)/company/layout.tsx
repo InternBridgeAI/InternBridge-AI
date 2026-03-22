@@ -1,9 +1,16 @@
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
+import { requireDashboardAccess } from '@/lib/dashboard-auth';
 
-export default function CompanyLayout({
+export default async function CompanyLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    return <DashboardLayout role="company">{children}</DashboardLayout>;
+    const access = await requireDashboardAccess('company');
+
+    return (
+        <DashboardLayout role="company" userId={access.userId} userName={access.userName}>
+            {children}
+        </DashboardLayout>
+    );
 }

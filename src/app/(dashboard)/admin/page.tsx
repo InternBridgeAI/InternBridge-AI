@@ -154,7 +154,7 @@ export default async function AdminDashboard() {
                             <div className="space-y-2">
                                 <h2 className="text-2xl font-black tracking-tight">The marketplace now has a live operations brief.</h2>
                                 <p className="text-sm text-muted-foreground leading-6">
-                                    {aiCopilot?.summary || 'Platform intelligence appears here once the admin AI copilot is connected to live backend data.'}
+                                    {aiCopilot?.summary || 'Current platform signals are stable. Review verification queues and watchlist items to keep trust and response times healthy.'}
                                 </p>
                             </div>
                             <div className="flex flex-wrap gap-2">

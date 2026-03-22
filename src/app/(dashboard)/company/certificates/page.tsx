@@ -177,11 +177,11 @@ export default function CertificatesPage() {
                 <CardContent className="p-8 flex flex-col md:flex-row items-center gap-8">
                     <div className="md:w-2/3 space-y-4">
                         <h3 className="text-2xl font-bold flex items-center gap-3">
-                            <ShieldCheck className="h-8 w-8 text-indigo-500" /> Tamper-Proof Verification
+                            <ShieldCheck className="h-8 w-8 text-indigo-500" /> Public Verification Record
                         </h3>
                         <p className="text-muted-foreground">
-                            Our certificates use unique digital hashes stored in our secure vault.
-                            Employers can verify the authenticity of any certificate by scanning its QR code or visiting our verification portal.
+                            Every certificate gets a unique digital fingerprint and a public verification URL.
+                            Recruiters and colleges can confirm the issued record directly against InternBridge without asking students for extra proof.
                         </p>
                         <div className="flex gap-4">
                             <div className="flex items-center gap-2 text-sm">
@@ -190,11 +190,11 @@ export default function CertificatesPage() {
                             </div>
                             <div className="flex items-center gap-2 text-sm">
                                 <CheckCircle className="h-4 w-4 text-green-500" />
-                                <span>QR Code Integrated</span>
+                                <span>Public Verify URL</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm">
                                 <CheckCircle className="h-4 w-4 text-green-500" />
-                                <span>Social Share Ready</span>
+                                <span>Integrity Checked</span>
                             </div>
                         </div>
                     </div>
