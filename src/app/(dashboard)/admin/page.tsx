@@ -40,6 +40,7 @@ export default async function AdminDashboard() {
     let pendingCompanyList: Array<{ id: string; company_name: string | null }> = [];
     let recentLogs: any[] = [];
     let aiCopilot: any = null;
+    let aiAnalytics: any = null;
 
     try {
         const headers = {
@@ -55,6 +56,7 @@ export default async function AdminDashboard() {
             pendingCompaniesListRes,
             recentLogsRes,
             aiCopilotRes,
+            aiAnalyticsRes,
         ] = await Promise.allSettled([
             supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
             supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'company'),
@@ -73,6 +75,7 @@ export default async function AdminDashboard() {
                 .order('created_at', { ascending: false })
                 .limit(5),
             fetchBackendJson('/api/ai/admin-copilot', headers),
+            fetchBackendJson('/api/ai/analytics', headers),
         ]);
 
         studentCount = studentCountRes.status === 'fulfilled' ? (studentCountRes.value.count || 0) : 0;
@@ -82,6 +85,7 @@ export default async function AdminDashboard() {
         pendingCompanyList = pendingCompaniesListRes.status === 'fulfilled' ? ((pendingCompaniesListRes.value.data as any[]) || []) : [];
         recentLogs = recentLogsRes.status === 'fulfilled' ? ((recentLogsRes.value.data as any[]) || []) : [];
         aiCopilot = aiCopilotRes.status === 'fulfilled' && aiCopilotRes.value.success ? aiCopilotRes.value.data : null;
+        aiAnalytics = aiAnalyticsRes.status === 'fulfilled' && aiAnalyticsRes.value.success ? aiAnalyticsRes.value.data : null;
     } catch (error) {
         console.error('Error fetching admin dashboard data:', error);
     }
@@ -91,6 +95,9 @@ export default async function AdminDashboard() {
     const copilotWatchlist = Array.isArray(aiCopilot?.watchlist) ? aiCopilot.watchlist : [];
     const hotSkills = Array.isArray(aiCopilot?.hotSkills) ? aiCopilot.hotSkills : [];
     const queues = aiCopilot?.queues || {};
+    const aiActionBreakdown = Array.isArray(aiAnalytics?.actionBreakdown) ? aiAnalytics.actionBreakdown : [];
+    const aiVersionBreakdown = Array.isArray(aiAnalytics?.versionBreakdown) ? aiAnalytics.versionBreakdown : [];
+    const aiRecentEvents = Array.isArray(aiAnalytics?.recentEvents) ? aiAnalytics.recentEvents : [];
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -283,15 +290,99 @@ export default async function AdminDashboard() {
                     <Card className="glass h-[400px]">
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle>Usage Growth</CardTitle>
-                                <CardDescription>New registrations vs applications</CardDescription>
+                                <CardTitle>AI Governance</CardTitle>
+                                <CardDescription>Prompt version, fallback, and runtime audit for the live AI layer</CardDescription>
                             </div>
-                            <BarChart3 className="h-5 w-5 text-muted-foreground" />
+                            <Brain className="h-5 w-5 text-muted-foreground" />
                         </CardHeader>
-                        <CardContent className="flex items-center justify-center border-dashed border-2 rounded-xl m-6 h-[280px]">
-                            <div className="text-center">
-                                <TrendingUp className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                                <p className="text-sm text-muted-foreground">No usage trend data yet</p>
+                        <CardContent className="m-6 h-[280px] rounded-xl border border-border/60 bg-muted/10 p-5">
+                            <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
+                                <div className="space-y-4">
+                                    <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                                        <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">AI Calls</p>
+                                            <p className="mt-2 text-3xl font-black tracking-tight text-primary">{aiAnalytics?.totalActions ?? 0}</p>
+                                            <p className="text-xs text-muted-foreground mt-1">last {Math.round((aiAnalytics?.windowHours ?? 168) / 24)} days</p>
+                                        </div>
+                                        <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Success Rate</p>
+                                            <p className="mt-2 text-3xl font-black tracking-tight">{aiAnalytics?.successRate ?? 0}%</p>
+                                            <p className="text-xs text-muted-foreground mt-1">audited responses</p>
+                                        </div>
+                                        <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Fallback Rate</p>
+                                            <p className="mt-2 text-3xl font-black tracking-tight">{aiAnalytics?.fallbackRate ?? 0}%</p>
+                                            <p className="text-xs text-muted-foreground mt-1">non-LLM responses</p>
+                                        </div>
+                                    </div>
+                                    <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Prompt Versions</p>
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                            {aiVersionBreakdown.length > 0 ? aiVersionBreakdown.slice(0, 4).map((item: any) => (
+                                                <Badge key={item.promptVersion} variant="outline" className="bg-background/70">
+                                                    {item.promptVersion} · {item.count}
+                                                </Badge>
+                                            )) : (
+                                                <span className="text-sm text-muted-foreground">AI prompt versions will appear after live usage.</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Most Used Actions</p>
+                                                <p className="text-sm font-semibold mt-1">Where the AI system is working hardest</p>
+                                            </div>
+                                            <BarChart3 className="h-4 w-4 text-primary" />
+                                        </div>
+                                        <div className="mt-4 space-y-3">
+                                            {aiActionBreakdown.length > 0 ? aiActionBreakdown.slice(0, 4).map((item: any) => (
+                                                <div key={item.actionKey} className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                                                    <div className="flex items-center justify-between gap-3">
+                                                        <p className="text-sm font-bold tracking-tight">{item.actionKey.replace(/_/g, ' ')}</p>
+                                                        <Badge variant="outline">{item.count}</Badge>
+                                                    </div>
+                                                    <p className="mt-2 text-xs text-muted-foreground">
+                                                        Success {item.successRate}% · Fallback {item.fallbackRate}%
+                                                    </p>
+                                                </div>
+                                            )) : (
+                                                <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-4 text-sm text-muted-foreground">
+                                                    No AI audit records yet. Run the live student and recruiter flows to populate the audit trail.
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Recent AI Events</p>
+                                                <p className="text-sm font-semibold mt-1">Latest runtime decisions</p>
+                                            </div>
+                                            <Clock className="h-4 w-4 text-primary" />
+                                        </div>
+                                        <div className="mt-4 space-y-2">
+                                            {aiRecentEvents.length > 0 ? aiRecentEvents.slice(0, 4).map((event: any) => (
+                                                <div key={event.id} className="rounded-xl border border-border/50 bg-muted/20 px-3 py-2">
+                                                    <div className="flex items-center justify-between gap-3">
+                                                        <p className="text-sm font-semibold">{event.actionKey.replace(/_/g, ' ')}</p>
+                                                        <Badge className={cn('border-none', event.usedFallback ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300')}>
+                                                            {event.usedFallback ? 'Fallback' : 'Primary'}
+                                                        </Badge>
+                                                    </div>
+                                                    <p className="mt-1 text-xs text-muted-foreground">
+                                                        {event.promptVersion} · {event.modelName} · {event.latencyMs}ms
+                                                    </p>
+                                                </div>
+                                            )) : (
+                                                <p className="text-sm text-muted-foreground">No recent AI runtime events yet.</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>

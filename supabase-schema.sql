@@ -243,6 +243,32 @@ CREATE INDEX idx_activity_logs_user ON activity_logs(user_id);
 CREATE INDEX idx_activity_logs_created ON activity_logs(created_at DESC);
 
 -- ============================================================
+-- AI ACTION LOGS
+-- ============================================================
+CREATE TABLE ai_action_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  user_role TEXT,
+  action_key TEXT NOT NULL,
+  prompt_version TEXT NOT NULL,
+  model_name TEXT NOT NULL,
+  used_fallback BOOLEAN NOT NULL DEFAULT FALSE,
+  success BOOLEAN NOT NULL DEFAULT TRUE,
+  latency_ms INTEGER NOT NULL DEFAULT 0,
+  target_type TEXT,
+  target_id TEXT,
+  request_payload JSONB NOT NULL DEFAULT '{}',
+  response_payload JSONB NOT NULL DEFAULT '{}',
+  error_message TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_ai_action_logs_created ON ai_action_logs(created_at DESC);
+CREATE INDEX idx_ai_action_logs_action_key ON ai_action_logs(action_key, created_at DESC);
+CREATE INDEX idx_ai_action_logs_prompt_version ON ai_action_logs(prompt_version, created_at DESC);
+CREATE INDEX idx_ai_action_logs_user_id ON ai_action_logs(user_id, created_at DESC);
+
+-- ============================================================
 -- NOTIFICATIONS
 -- ============================================================
 CREATE TABLE notifications (
@@ -322,6 +348,7 @@ ALTER TABLE task_submissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE certificates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE verifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_action_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE college_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE college_courses ENABLE ROW LEVEL SECURITY;
@@ -488,6 +515,16 @@ CREATE POLICY "Update verifications" ON verifications FOR UPDATE USING (true);
 -- Activity logs: users see own
 CREATE POLICY "Users see own logs" ON activity_logs FOR SELECT USING (user_id = auth.uid());
 CREATE POLICY "Insert logs" ON activity_logs FOR INSERT WITH CHECK (user_id = auth.uid());
+
+-- AI action logs: users see own, admins can review all
+CREATE POLICY "Users see own AI logs" ON ai_action_logs FOR SELECT USING (
+  user_id = auth.uid()
+  OR EXISTS (
+    SELECT 1 FROM profiles
+    WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+  )
+);
+CREATE POLICY "System inserts AI logs" ON ai_action_logs FOR INSERT WITH CHECK (true);
 
 -- Notifications: recipients manage their own inbox
 CREATE POLICY "Users view own notifications" ON notifications FOR SELECT USING (recipient_id = auth.uid());

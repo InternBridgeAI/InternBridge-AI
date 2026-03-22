@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import Link from 'next/link';
 import { Search, MapPin, Briefcase, Clock, DollarSign, Brain, Sparkles, Loader2, ShieldCheck, Target, FileText, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-client';
@@ -298,6 +299,16 @@ export default function InternshipsPage() {
                                 <div className="flex w-full gap-2">
                                     <Button
                                         size="sm"
+                                        variant="ghost"
+                                        className="flex-1"
+                                        asChild
+                                    >
+                                        <Link href={`/student/internships/${internship.id}`}>
+                                            View Details
+                                        </Link>
+                                    </Button>
+                                    <Button
+                                        size="sm"
                                         variant="outline"
                                         className="flex-1"
                                         onClick={() => generatePitch(internship)}
@@ -306,9 +317,11 @@ export default function InternshipsPage() {
                                         {pitchingId === internship.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
                                         AI Pitch
                                     </Button>
+                                </div>
+                                <div className="flex w-full gap-2 sm:w-auto">
                                     <Button
                                         size="sm"
-                                        className="flex-1"
+                                        className="flex-1 sm:min-w-[140px]"
                                         onClick={() => handleApply(internship)}
                                         disabled={matchingId === internship.id || studentVerificationStatus !== 'verified'}
                                     >

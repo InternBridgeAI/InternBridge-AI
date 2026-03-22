@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException  # type: ignore
 import os
 import requests  # type: ignore
+import time
 from core.supabase_provider import supabase  # type: ignore
 from core.dependencies import get_current_user  # type: ignore
 
@@ -8,6 +9,7 @@ import pydantic  # type: ignore
 from typing import List, Optional, Dict, Any, cast
 import json
 
+from core.ai_audit import build_ai_analytics, log_ai_action  # type: ignore
 from core.github_utils import verify_github_skills  # type: ignore
 from core.gemini_utils import parse_resume_with_gemini  # type: ignore
 from core.resume_utils import extract_text_from_resume_url, summarize_resume_source  # type: ignore
@@ -79,10 +81,64 @@ def _strip_code_fences(text: str) -> str:
     return cleaned
 
 
+def _elapsed_ms(started_at: float) -> int:
+    return max(0, int((time.perf_counter() - started_at) * 1000))
+
+
+def _with_ai_audit(payload: Dict[str, Any], *, model_name: str, used_fallback: bool) -> Dict[str, Any]:
+    enriched = dict(payload)
+    enriched["_ai_audit"] = {
+        "model_name": model_name,
+        "used_fallback": used_fallback,
+    }
+    return enriched
+
+
+def _extract_ai_audit(payload: Dict[str, Any], default_model: str) -> Dict[str, Any]:
+    audit = payload.pop("_ai_audit", None)
+    if isinstance(audit, dict):
+        return {
+            "model_name": str(audit.get("model_name") or default_model),
+            "used_fallback": bool(audit.get("used_fallback")),
+        }
+    return {"model_name": default_model, "used_fallback": False}
+
+
+def _log_ai_route(
+    *,
+    action_key: str,
+    started_at: float,
+    user_id: Optional[str],
+    user_role: Optional[str],
+    model_name: str,
+    used_fallback: bool,
+    success: bool,
+    target_type: Optional[str] = None,
+    target_id: Optional[str] = None,
+    request_payload: Optional[Dict[str, Any]] = None,
+    response_payload: Optional[Dict[str, Any]] = None,
+    error_message: Optional[str] = None,
+) -> None:
+    log_ai_action(
+        action_key=action_key,
+        user_id=user_id,
+        user_role=user_role,
+        model_name=model_name,
+        used_fallback=used_fallback,
+        success=success,
+        latency_ms=_elapsed_ms(started_at),
+        target_type=target_type,
+        target_id=target_id,
+        request_payload=request_payload,
+        response_payload=response_payload,
+        error_message=error_message,
+    )
+
+
 def _generate_structured_json(prompt: str, fallback: Dict[str, Any]) -> Dict[str, Any]:
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        return fallback
+        return _with_ai_audit(fallback, model_name="rules-fallback", used_fallback=True)
 
     url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
@@ -93,26 +149,26 @@ def _generate_structured_json(prompt: str, fallback: Dict[str, Any]) -> Dict[str
     try:
         response = requests.post(url, json=payload, timeout=45)
         if response.status_code != 200:
-            return fallback
+            return _with_ai_audit(fallback, model_name="rules-fallback", used_fallback=True)
 
         result = response.json()
         candidates = result.get("candidates") or []
         if not candidates:
-            return fallback
+            return _with_ai_audit(fallback, model_name="rules-fallback", used_fallback=True)
 
         parts = ((candidates[0].get("content") or {}).get("parts")) or []
         if not parts or not parts[0].get("text"):
-            return fallback
+            return _with_ai_audit(fallback, model_name="rules-fallback", used_fallback=True)
 
         parsed = json.loads(_strip_code_fences(parts[0]["text"]))
         if not isinstance(parsed, dict):
-            return fallback
+            return _with_ai_audit(fallback, model_name="rules-fallback", used_fallback=True)
 
         merged = dict(fallback)
         merged.update(parsed)
-        return merged
+        return _with_ai_audit(merged, model_name="gemini-1.5-flash", used_fallback=False)
     except Exception:
-        return fallback
+        return _with_ai_audit(fallback, model_name="rules-fallback", used_fallback=True)
 
 
 def _list_to_text(items: List[str], fallback: str = "your current strengths") -> str:
@@ -360,6 +416,146 @@ def _build_application_pitch(profile: Dict[str, Any], internship: Dict[str, Any]
     result = _generate_structured_json(prompt, fallback)
     result["matchedSkills"] = normalize_skills(cast(List[str], result.get("matchedSkills") or fallback["matchedSkills"]))
     result["missingSkills"] = normalize_skills(cast(List[str], result.get("missingSkills") or fallback["missingSkills"]))
+    result["fitScore"] = int(round(_safe_float(result.get("fitScore") or fallback["fitScore"])))
+    if not result.get("confidenceLabel"):
+        result["confidenceLabel"] = _confidence_label(int(result["fitScore"]))
+    return result
+
+
+def _fallback_internship_copilot(
+    profile: Dict[str, Any],
+    internship: Dict[str, Any],
+    application: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    student_skills = normalize_skills(cast(List[str], profile.get("skills") or []))
+    required_skills = _extract_internship_skills(internship)
+    student_skill_keys = {skill.lower() for skill in student_skills}
+    matched_skills = [skill for skill in required_skills if skill.lower() in student_skill_keys]
+    missing_skills = [skill for skill in required_skills if skill.lower() not in student_skill_keys]
+    fit_score = int(round(calculate_match_score(
+        student_vector=cast(List[float], profile.get("skill_vector") or generate_skills_embedding(student_skills)),
+        internship_vector=cast(List[float], internship.get("skill_vector") or generate_skills_embedding(required_skills)),
+        student_skills=student_skills,
+        required_skills=required_skills,
+        all_internships_skills=[_extract_internship_skills(row) for row in _fetch_internship_rows(active_only=True)],
+    ) * 100))
+    confidence = _confidence_label(fit_score)
+    company_name = str((internship.get("company") or {}).get("company_name") or "this company")
+    application_status = str((application or {}).get("status") or "")
+    proof_focus = matched_skills[0] if matched_skills else (student_skills[0] if student_skills else "your strongest project")
+    missing_focus = missing_skills[0] if missing_skills else ""
+
+    return {
+        "headline": f"{confidence} for {internship.get('title') or 'this role'}",
+        "summary": (
+            f"You already show {len(matched_skills)} direct overlap signal(s) for this role at {company_name}."
+            + (
+                f" Closing {missing_focus} is the fastest way to improve conversion."
+                if missing_focus
+                else " The next edge comes from stronger proof of execution and cleaner storytelling."
+            )
+        ),
+        "fitScore": fit_score,
+        "confidenceLabel": confidence,
+        "matchedSkills": matched_skills[:5],
+        "missingSkills": missing_skills[:4],
+        "whyThisFits": [
+            f"You already overlap on {_list_to_text(matched_skills[:3], 'the visible requirements')}.",
+            f"{company_name} is hiring for {internship.get('title') or 'a role'} where practical execution matters more than generic claims.",
+            (
+                f"The main stretch area is {missing_focus}, so lead with proof of execution and a fast learning plan."
+                if missing_focus
+                else "There is no major visible gap, so strong proof of work is the real differentiator."
+            ),
+        ],
+        "actionPlan": [
+            {
+                "title": "Lead with one proof project",
+                "detail": f"Open with a project that proves {proof_focus} in a real workflow, deployment, or measurable outcome.",
+            },
+            {
+                "title": "Frame your gap honestly",
+                "detail": (
+                    f"Acknowledge {missing_focus} and explain how you are closing it quickly."
+                    if missing_focus
+                    else "Use the interview to show depth and tradeoff thinking instead of listing more tools."
+                ),
+            },
+            {
+                "title": "Show execution speed",
+                "detail": "Explain how you learn fast, ship in small iterations, and communicate blockers early.",
+            },
+        ],
+        "evidenceChecklist": [
+            f"One project or resume bullet that proves {proof_focus}.",
+            "One clear outcome metric: performance, users, automation, reliability, or delivery speed.",
+            (
+                f"A short ramp-up plan for {missing_focus}."
+                if missing_focus
+                else "A concise explanation of your hardest technical decision and why you made it."
+            ),
+        ],
+        "interviewSignals": normalize_skills(matched_skills[:2] + missing_skills[:2] + student_skills[:2])[:4],
+        "applyDecision": (
+            f"Already applied. Shift focus to interview prep and proof of work around {proof_focus}."
+            if application_status
+            else (
+                f"Apply now and explicitly address {missing_focus} in your pitch."
+                if fit_score >= 55 and missing_focus
+                else (
+                    "Apply now with a strong AI pitch and one proof project."
+                    if fit_score >= 55
+                    else "Strengthen one visible project first, then apply with a sharper story."
+                )
+            )
+        ),
+        "applicationStatus": application_status or None,
+    }
+
+
+def _build_internship_copilot(
+    profile: Dict[str, Any],
+    internship: Dict[str, Any],
+    application: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    fallback = _fallback_internship_copilot(profile, internship, application)
+    prompt = f"""
+    You are an internship copilot for students.
+    Return ONLY a JSON object with these keys:
+    headline: string
+    summary: string
+    fitScore: number
+    confidenceLabel: string
+    matchedSkills: array of strings
+    missingSkills: array of strings
+    whyThisFits: array of strings
+    actionPlan: array of objects with title and detail
+    evidenceChecklist: array of strings
+    interviewSignals: array of strings
+    applyDecision: string
+    applicationStatus: string or null
+
+    Student context:
+    - Skills: {json.dumps(normalize_skills(cast(List[str], profile.get("skills") or [])))}
+    - Readiness: {_safe_float(profile.get("market_readiness_score"))}
+    - GitHub connected: {bool(profile.get("github_username"))}
+    - Resume parsed: {bool(profile.get("parsed_resume"))}
+    - Verification status: {profile.get("student_verification_status") or "unknown"}
+
+    Internship context:
+    - Title: {internship.get("title") or ""}
+    - Description: {internship.get("description") or ""}
+    - Required skills: {json.dumps(_extract_internship_skills(internship))}
+
+    Grounded baseline:
+    {json.dumps(fallback)}
+
+    Keep the advice concise, commercially realistic, and directly useful for applying.
+    """
+    result = _generate_structured_json(prompt, fallback)
+    result["matchedSkills"] = normalize_skills(cast(List[str], result.get("matchedSkills") or fallback["matchedSkills"]))
+    result["missingSkills"] = normalize_skills(cast(List[str], result.get("missingSkills") or fallback["missingSkills"]))
+    result["interviewSignals"] = normalize_skills(cast(List[str], result.get("interviewSignals") or fallback["interviewSignals"]))
     result["fitScore"] = int(round(_safe_float(result.get("fitScore") or fallback["fitScore"])))
     if not result.get("confidenceLabel"):
         result["confidenceLabel"] = _confidence_label(int(result["fitScore"]))
@@ -1335,8 +1531,24 @@ def _analyze_and_store_resume(user_id: str, resume_text: str) -> Dict[str, Any]:
 
 @router.post("/parse-resume")
 async def parse_resume(body: ResumeParseRequest, user = Depends(get_current_user)):
+    started_at = time.perf_counter()
     try:
         analysis = _analyze_and_store_resume(user.id, body.resumeText)
+        used_fallback = not bool(os.getenv("GEMINI_API_KEY"))
+        _log_ai_route(
+            action_key="resume_parse",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="gemini-1.5-flash" if not used_fallback else "heuristic-resume-parser",
+            used_fallback=used_fallback,
+            success=True,
+            request_payload={"resumeChars": len(body.resumeText or "")},
+            response_payload={
+                "parsedSkills": len(analysis["parsed_skills"]),
+                "marketReadinessScore": analysis["market_readiness_score"],
+            },
+        )
 
         return {
             "success": True, 
@@ -1347,11 +1559,23 @@ async def parse_resume(body: ResumeParseRequest, user = Depends(get_current_user
     except HTTPException:
         raise
     except Exception as e:
+        _log_ai_route(
+            action_key="resume_parse",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="gemini-1.5-flash" if os.getenv("GEMINI_API_KEY") else "heuristic-resume-parser",
+            used_fallback=not bool(os.getenv("GEMINI_API_KEY")),
+            success=False,
+            request_payload={"resumeChars": len(body.resumeText or "")},
+            error_message=str(e),
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/parse-resume-file")
 async def parse_resume_file(body: ResumeFileParseRequest, user = Depends(get_current_user)):
+    started_at = time.perf_counter()
     try:
         resume_text = extract_text_from_resume_url(body.resumeUrl)
         if not resume_text.strip():
@@ -1361,6 +1585,23 @@ async def parse_resume_file(body: ResumeFileParseRequest, user = Depends(get_cur
             )
 
         analysis = _analyze_and_store_resume(user.id, resume_text)
+        used_fallback = not bool(os.getenv("GEMINI_API_KEY"))
+        _log_ai_route(
+            action_key="resume_parse_file",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="gemini-1.5-flash" if not used_fallback else "heuristic-resume-parser",
+            used_fallback=used_fallback,
+            success=True,
+            target_type="resume",
+            target_id=body.resumeUrl,
+            request_payload={"resumeUrl": summarize_resume_source(body.resumeUrl)},
+            response_payload={
+                "parsedSkills": len(analysis["parsed_skills"]),
+                "marketReadinessScore": analysis["market_readiness_score"],
+            },
+        )
         return {
             "success": True,
             "data": analysis["parsed"],
@@ -1368,11 +1609,50 @@ async def parse_resume_file(body: ResumeFileParseRequest, user = Depends(get_cur
             "marketReadinessScore": analysis["market_readiness_score"],
             "source": summarize_resume_source(body.resumeUrl),
         }
-    except HTTPException:
+    except HTTPException as exc:
+        _log_ai_route(
+            action_key="resume_parse_file",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="gemini-1.5-flash" if os.getenv("GEMINI_API_KEY") else "heuristic-resume-parser",
+            used_fallback=not bool(os.getenv("GEMINI_API_KEY")),
+            success=False,
+            target_type="resume",
+            target_id=body.resumeUrl,
+            request_payload={"resumeUrl": summarize_resume_source(body.resumeUrl)},
+            error_message=str(exc.detail),
+        )
         raise
     except ValueError as exc:
+        _log_ai_route(
+            action_key="resume_parse_file",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="resume-text-extractor",
+            used_fallback=False,
+            success=False,
+            target_type="resume",
+            target_id=body.resumeUrl,
+            request_payload={"resumeUrl": summarize_resume_source(body.resumeUrl)},
+            error_message=str(exc),
+        )
         raise HTTPException(status_code=400, detail=str(exc))
     except Exception as e:
+        _log_ai_route(
+            action_key="resume_parse_file",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="gemini-1.5-flash" if os.getenv("GEMINI_API_KEY") else "heuristic-resume-parser",
+            used_fallback=not bool(os.getenv("GEMINI_API_KEY")),
+            success=False,
+            target_type="resume",
+            target_id=body.resumeUrl,
+            request_payload={"resumeUrl": summarize_resume_source(body.resumeUrl)},
+            error_message=str(e),
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 class GitHubVerifyRequest(pydantic.BaseModel):
@@ -1381,6 +1661,7 @@ class GitHubVerifyRequest(pydantic.BaseModel):
 
 @router.post("/github-verify")
 async def github_verify(body: GitHubVerifyRequest, user = Depends(get_current_user)):
+    started_at = time.perf_counter()
     try:
         profile_response = (
             supabase.table("profiles")
@@ -1444,14 +1725,55 @@ async def github_verify(body: GitHubVerifyRequest, user = Depends(get_current_us
         except Exception:
             pass
 
+        _log_ai_route(
+            action_key="github_verify",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="github-evidence-v2",
+            used_fallback=False,
+            success=True,
+            target_type="github_profile",
+            target_id=str(github_username),
+            request_payload={"claimedSkills": body.claimedSkills[:8]},
+            response_payload={
+                "verifiedSkills": len(verification["verifiedSkills"]),
+                "unverifiedSkills": len(verification["unverifiedSkills"]),
+                "isSuspicious": verification["isSuspicious"],
+            },
+        )
+
         return {"success": True, "data": {**verification, "marketReadinessScore": market_readiness_score}}
-    except HTTPException:
+    except HTTPException as exc:
+        _log_ai_route(
+            action_key="github_verify",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="github-evidence-v2",
+            used_fallback=False,
+            success=False,
+            request_payload={"claimedSkills": body.claimedSkills[:8]},
+            error_message=str(exc.detail),
+        )
         raise
     except Exception as e:
+        _log_ai_route(
+            action_key="github_verify",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="github-evidence-v2",
+            used_fallback=False,
+            success=False,
+            request_payload={"claimedSkills": body.claimedSkills[:8]},
+            error_message=str(e),
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/skill-gaps")
 async def get_skill_gaps(user = Depends(get_current_user)):
+    started_at = time.perf_counter()
     try:
         # Fetch user profile
         profile_response = (
@@ -1541,6 +1863,21 @@ async def get_skill_gaps(user = Depends(get_current_user)):
         except Exception:
             pass
 
+        _log_ai_route(
+            action_key="skill_gaps",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="market-readiness-v2",
+            used_fallback=False,
+            success=True,
+            response_payload={
+                "readinessScore": score,
+                "matchCount": match_count,
+                "gapCount": len(gaps_obj["missing"]),
+            },
+        )
+
         return {
             "success": True,
             "data": {
@@ -1552,14 +1889,35 @@ async def get_skill_gaps(user = Depends(get_current_user)):
                 "industryDemand": top_industry
             }
         }
-    except HTTPException:
+    except HTTPException as exc:
+        _log_ai_route(
+            action_key="skill_gaps",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="market-readiness-v2",
+            used_fallback=False,
+            success=False,
+            error_message=str(exc.detail),
+        )
         raise
     except Exception as e:
+        _log_ai_route(
+            action_key="skill_gaps",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="market-readiness-v2",
+            used_fallback=False,
+            success=False,
+            error_message=str(e),
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/student-roadmap")
 async def get_student_roadmap(user=Depends(get_current_user)):
+    started_at = time.perf_counter()
     try:
         role = _get_user_role(user.id)
         if role != "student":
@@ -1593,16 +1951,52 @@ async def get_student_roadmap(user=Depends(get_current_user)):
         applications = cast(List[Dict[str, Any]], applications_response.data or [])
         copilot = _build_student_copilot(profile, internships, applications)
         roadmap = _build_student_roadmap(profile, copilot)
+        audit = _extract_ai_audit(roadmap, "student-roadmap-rules")
+        _log_ai_route(
+            action_key="student_roadmap",
+            started_at=started_at,
+            user_id=user.id,
+            user_role=role,
+            model_name=audit["model_name"],
+            used_fallback=audit["used_fallback"],
+            success=True,
+            response_payload={
+                "roleTargets": len(roadmap.get("roleTargets") or []),
+                "prioritySkills": len(roadmap.get("prioritySkills") or []),
+                "proofProjects": len(roadmap.get("proofProjects") or []),
+            },
+        )
 
         return {"success": True, "data": roadmap}
-    except HTTPException:
+    except HTTPException as exc:
+        _log_ai_route(
+            action_key="student_roadmap",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="student-roadmap-rules",
+            used_fallback=False,
+            success=False,
+            error_message=str(exc.detail),
+        )
         raise
     except Exception as e:
+        _log_ai_route(
+            action_key="student_roadmap",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="student-roadmap-rules",
+            used_fallback=False,
+            success=False,
+            error_message=str(e),
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/application-pitch")
 async def generate_application_pitch(body: ApplicationPitchRequest, user=Depends(get_current_user)):
+    started_at = time.perf_counter()
     try:
         role = _get_user_role(user.id)
         if role != "student":
@@ -1631,15 +2025,158 @@ async def generate_application_pitch(body: ApplicationPitchRequest, user=Depends
             raise HTTPException(status_code=404, detail="Internship not found")
 
         pitch = _build_application_pitch(profile, internship)
+        audit = _extract_ai_audit(pitch, "application-pitch-rules")
+        _log_ai_route(
+            action_key="application_pitch",
+            started_at=started_at,
+            user_id=user.id,
+            user_role=role,
+            model_name=audit["model_name"],
+            used_fallback=audit["used_fallback"],
+            success=True,
+            target_type="internship",
+            target_id=str(body.internship_id),
+            request_payload={"internshipId": body.internship_id},
+            response_payload={
+                "fitScore": pitch.get("fitScore"),
+                "matchedSkills": len(pitch.get("matchedSkills") or []),
+                "missingSkills": len(pitch.get("missingSkills") or []),
+            },
+        )
         return {"success": True, "data": pitch}
-    except HTTPException:
+    except HTTPException as exc:
+        _log_ai_route(
+            action_key="application_pitch",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="application-pitch-rules",
+            used_fallback=False,
+            success=False,
+            target_type="internship",
+            target_id=str(body.internship_id),
+            request_payload={"internshipId": body.internship_id},
+            error_message=str(exc.detail),
+        )
         raise
     except Exception as e:
+        _log_ai_route(
+            action_key="application_pitch",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="application-pitch-rules",
+            used_fallback=False,
+            success=False,
+            target_type="internship",
+            target_id=str(body.internship_id),
+            request_payload={"internshipId": body.internship_id},
+            error_message=str(e),
+        )
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/internship-copilot/{internship_id}")
+async def get_internship_copilot(internship_id: str, user=Depends(get_current_user)):
+    started_at = time.perf_counter()
+    try:
+        role = _get_user_role(user.id)
+        if role != "student":
+            raise HTTPException(status_code=403, detail="Internship copilot is only available to students")
+
+        profile_response = (
+            supabase.table("profiles")
+            .select("id, full_name, skills, skill_vector, parsed_resume, github_username, linkedin_url, market_readiness_score, college_id, student_verification_status, cgpa")
+            .eq("id", user.id)
+            .single()
+            .execute()
+        )
+        profile = cast(Dict[str, Any], profile_response.data or {})
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
+
+        internship_response = (
+            supabase.table("internships")
+            .select("*")
+            .eq("id", internship_id)
+            .single()
+            .execute()
+        )
+        internship = cast(Dict[str, Any], internship_response.data or {})
+        if not internship:
+            raise HTTPException(status_code=404, detail="Internship not found")
+        if not internship.get("is_active") or not internship.get("is_approved"):
+            raise HTTPException(status_code=404, detail="Internship is not currently open")
+        if profile.get("college_id") and internship.get("college_id") != profile.get("college_id"):
+            raise HTTPException(status_code=403, detail="This internship is not available for your college")
+
+        application_response = (
+            supabase.table("applications")
+            .select("id, status, match_score")
+            .eq("student_id", user.id)
+            .eq("internship_id", internship_id)
+            .limit(1)
+            .execute()
+        )
+        application_rows = cast(List[Dict[str, Any]], application_response.data or [])
+        application = application_rows[0] if application_rows else None
+
+        copilot = _build_internship_copilot(profile, internship, application)
+        audit = _extract_ai_audit(copilot, "internship-copilot-rules")
+        _log_ai_route(
+            action_key="internship_copilot",
+            started_at=started_at,
+            user_id=user.id,
+            user_role=role,
+            model_name=audit["model_name"],
+            used_fallback=audit["used_fallback"],
+            success=True,
+            target_type="internship",
+            target_id=internship_id,
+            request_payload={"internshipId": internship_id},
+            response_payload={
+                "fitScore": copilot.get("fitScore"),
+                "matchedSkills": len(copilot.get("matchedSkills") or []),
+                "missingSkills": len(copilot.get("missingSkills") or []),
+                "applicationStatus": copilot.get("applicationStatus"),
+            },
+        )
+        return {"success": True, "data": copilot}
+    except HTTPException as exc:
+        _log_ai_route(
+            action_key="internship_copilot",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="internship-copilot-rules",
+            used_fallback=False,
+            success=False,
+            target_type="internship",
+            target_id=internship_id,
+            request_payload={"internshipId": internship_id},
+            error_message=str(exc.detail),
+        )
+        raise
+    except Exception as e:
+        _log_ai_route(
+            action_key="internship_copilot",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="internship-copilot-rules",
+            used_fallback=False,
+            success=False,
+            target_type="internship",
+            target_id=internship_id,
+            request_payload={"internshipId": internship_id},
+            error_message=str(e),
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/interview-kit")
 async def generate_interview_kit(body: InterviewKitRequest, user=Depends(get_current_user)):
+    started_at = time.perf_counter()
     try:
         role = _get_user_role(user.id)
         if role not in {"company", "admin", "tpo"}:
@@ -1684,15 +2221,60 @@ async def generate_interview_kit(body: InterviewKitRequest, user=Depends(get_cur
             raise HTTPException(status_code=404, detail="Student profile not found")
 
         kit = _build_interview_kit(student, internship, application)
+        audit = _extract_ai_audit(kit, "interview-kit-rules")
+        _log_ai_route(
+            action_key="interview_kit",
+            started_at=started_at,
+            user_id=user.id,
+            user_role=role,
+            model_name=audit["model_name"],
+            used_fallback=audit["used_fallback"],
+            success=True,
+            target_type="application",
+            target_id=str(body.application_id),
+            request_payload={"applicationId": body.application_id},
+            response_payload={
+                "fitScore": kit.get("fitScore"),
+                "questionCount": len(kit.get("questions") or []),
+                "riskCount": len(kit.get("risks") or []),
+            },
+        )
         return {"success": True, "data": kit}
-    except HTTPException:
+    except HTTPException as exc:
+        _log_ai_route(
+            action_key="interview_kit",
+            started_at=started_at,
+            user_id=user.id,
+            user_role=role if 'role' in locals() else None,
+            model_name="interview-kit-rules",
+            used_fallback=False,
+            success=False,
+            target_type="application",
+            target_id=str(body.application_id),
+            request_payload={"applicationId": body.application_id},
+            error_message=str(exc.detail),
+        )
         raise
     except Exception as e:
+        _log_ai_route(
+            action_key="interview_kit",
+            started_at=started_at,
+            user_id=user.id,
+            user_role=role if 'role' in locals() else None,
+            model_name="interview-kit-rules",
+            used_fallback=False,
+            success=False,
+            target_type="application",
+            target_id=str(body.application_id),
+            request_payload={"applicationId": body.application_id},
+            error_message=str(e),
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/student-copilot")
 async def get_student_copilot(user=Depends(get_current_user)):
+    started_at = time.perf_counter()
     try:
         role = _get_user_role(user.id)
         if role != "student":
@@ -1726,15 +2308,50 @@ async def get_student_copilot(user=Depends(get_current_user)):
         applications = cast(List[Dict[str, Any]], applications_response.data or [])
 
         copilot = _build_student_copilot(profile, internships, applications)
+        _log_ai_route(
+            action_key="student_copilot",
+            started_at=started_at,
+            user_id=user.id,
+            user_role=role,
+            model_name="hybrid-market-copilot",
+            used_fallback=False,
+            success=True,
+            response_payload={
+                "actions": len(copilot.get("actions") or []),
+                "roleFocus": len(copilot.get("roleFocus") or []),
+                "topMatches": len(copilot.get("topMatches") or []),
+            },
+        )
         return {"success": True, "data": copilot}
-    except HTTPException:
+    except HTTPException as exc:
+        _log_ai_route(
+            action_key="student_copilot",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="hybrid-market-copilot",
+            used_fallback=False,
+            success=False,
+            error_message=str(exc.detail),
+        )
         raise
     except Exception as e:
+        _log_ai_route(
+            action_key="student_copilot",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="student",
+            model_name="hybrid-market-copilot",
+            used_fallback=False,
+            success=False,
+            error_message=str(e),
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/company-copilot")
 async def get_company_copilot(user=Depends(get_current_user)):
+    started_at = time.perf_counter()
     try:
         role = _get_user_role(user.id)
         if role != "company":
@@ -1773,47 +2390,173 @@ async def get_company_copilot(user=Depends(get_current_user)):
             applications = cast(List[Dict[str, Any]], applications_response.data or [])
 
         copilot = _build_company_copilot(profile, internships, applications)
+        _log_ai_route(
+            action_key="company_copilot",
+            started_at=started_at,
+            user_id=user.id,
+            user_role=role,
+            model_name="hiring-copilot-v2",
+            used_fallback=False,
+            success=True,
+            response_payload={
+                "actions": len(copilot.get("actions") or []),
+                "watchlist": len(copilot.get("watchlist") or []),
+                "healthScore": copilot.get("hiringHealthScore"),
+            },
+        )
         return {"success": True, "data": copilot}
-    except HTTPException:
+    except HTTPException as exc:
+        _log_ai_route(
+            action_key="company_copilot",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="company",
+            model_name="hiring-copilot-v2",
+            used_fallback=False,
+            success=False,
+            error_message=str(exc.detail),
+        )
         raise
     except Exception as e:
+        _log_ai_route(
+            action_key="company_copilot",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="company",
+            model_name="hiring-copilot-v2",
+            used_fallback=False,
+            success=False,
+            error_message=str(e),
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/admin-copilot")
 async def get_admin_copilot(user=Depends(get_current_user)):
+    started_at = time.perf_counter()
     try:
         role = _get_user_role(user.id)
         if role != "admin":
             raise HTTPException(status_code=403, detail="Admin copilot is only available to admins")
 
-        return {"success": True, "data": _build_admin_copilot()}
-    except HTTPException:
+        copilot = _build_admin_copilot()
+        _log_ai_route(
+            action_key="admin_copilot",
+            started_at=started_at,
+            user_id=user.id,
+            user_role=role,
+            model_name="platform-ops-copilot",
+            used_fallback=False,
+            success=True,
+            response_payload={
+                "actions": len(copilot.get("actions") or []),
+                "watchlist": len(copilot.get("watchlist") or []),
+                "systemHealthScore": copilot.get("systemHealthScore"),
+            },
+        )
+        return {"success": True, "data": copilot}
+    except HTTPException as exc:
+        _log_ai_route(
+            action_key="admin_copilot",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="admin",
+            model_name="platform-ops-copilot",
+            used_fallback=False,
+            success=False,
+            error_message=str(exc.detail),
+        )
         raise
     except Exception as e:
+        _log_ai_route(
+            action_key="admin_copilot",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="admin",
+            model_name="platform-ops-copilot",
+            used_fallback=False,
+            success=False,
+            error_message=str(e),
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/tpo-copilot")
 async def get_tpo_copilot(user=Depends(get_current_user)):
+    started_at = time.perf_counter()
     try:
         role = _get_user_role(user.id)
         if role not in {"tpo", "college", "college_tpo"}:
             raise HTTPException(status_code=403, detail="TPO copilot is only available to college/TPO accounts")
 
-        return {"success": True, "data": _build_tpo_copilot(user.id)}
-    except HTTPException:
+        copilot = _build_tpo_copilot(user.id)
+        _log_ai_route(
+            action_key="tpo_copilot",
+            started_at=started_at,
+            user_id=user.id,
+            user_role=role,
+            model_name="placement-ops-copilot",
+            used_fallback=False,
+            success=True,
+            response_payload={
+                "actions": len(copilot.get("actions") or []),
+                "riskSkills": len(copilot.get("riskSkills") or []),
+                "placementReadiness": copilot.get("placementReadiness"),
+            },
+        )
+        return {"success": True, "data": copilot}
+    except HTTPException as exc:
+        _log_ai_route(
+            action_key="tpo_copilot",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="tpo",
+            model_name="placement-ops-copilot",
+            used_fallback=False,
+            success=False,
+            error_message=str(exc.detail),
+        )
         raise
     except Exception as e:
+        _log_ai_route(
+            action_key="tpo_copilot",
+            started_at=started_at,
+            user_id=user.id,
+            user_role="tpo",
+            model_name="placement-ops-copilot",
+            used_fallback=False,
+            success=False,
+            error_message=str(e),
+        )
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/analytics")
+async def get_ai_runtime_analytics(user=Depends(get_current_user)):
+    role = _get_user_role(user.id)
+    if role != "admin":
+        raise HTTPException(status_code=403, detail="AI analytics are only available to admins")
+    return {"success": True, "data": build_ai_analytics()}
 
 
 @router.post("/suggest-skills")
 async def suggest_skills(req: SuggestSkillsRequest, user = Depends(get_current_user)):
+    started_at = time.perf_counter()
     try:
         api_key = os.getenv("GEMINI_API_KEY")
         fallback_skills = extract_skills_from_text(f"{req.title}\n{req.description}", limit=10)
         if not api_key:
+            _log_ai_route(
+                action_key="suggest_skills",
+                started_at=started_at,
+                user_id=user.id,
+                user_role=_get_user_role(user.id),
+                model_name="rules-fallback",
+                used_fallback=True,
+                success=True,
+                request_payload={"title": req.title, "descriptionChars": len(req.description or "")},
+                response_payload={"skills": len(fallback_skills)},
+            )
             return {"success": True, "skills": fallback_skills}
 
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
@@ -1833,6 +2576,17 @@ async def suggest_skills(req: SuggestSkillsRequest, user = Depends(get_current_u
         # import requests
         response = requests.post(url, json=payload, timeout=30)
         if response.status_code != 200:
+            _log_ai_route(
+                action_key="suggest_skills",
+                started_at=started_at,
+                user_id=user.id,
+                user_role=_get_user_role(user.id),
+                model_name="rules-fallback",
+                used_fallback=True,
+                success=True,
+                request_payload={"title": req.title, "descriptionChars": len(req.description or "")},
+                response_payload={"skills": len(fallback_skills)},
+            )
             return {"success": True, "skills": fallback_skills}
             
         result = response.json()
@@ -1848,12 +2602,37 @@ async def suggest_skills(req: SuggestSkillsRequest, user = Depends(get_current_u
         skills = normalize_skills(json.loads(text))
         if not skills:
             skills = fallback_skills
+        _log_ai_route(
+            action_key="suggest_skills",
+            started_at=started_at,
+            user_id=user.id,
+            user_role=_get_user_role(user.id),
+            model_name="gemini-1.5-flash" if skills != fallback_skills else "rules-fallback",
+            used_fallback=skills == fallback_skills,
+            success=True,
+            request_payload={"title": req.title, "descriptionChars": len(req.description or "")},
+            response_payload={"skills": len(skills)},
+        )
         return {"success": True, "skills": skills}
     except Exception as e:
-        return {"success": True, "skills": extract_skills_from_text(f"{req.title}\n{req.description}", limit=10), "error": str(e)}
+        fallback_skills = extract_skills_from_text(f"{req.title}\n{req.description}", limit=10)
+        _log_ai_route(
+            action_key="suggest_skills",
+            started_at=started_at,
+            user_id=user.id,
+            user_role=_get_user_role(user.id),
+            model_name="rules-fallback",
+            used_fallback=True,
+            success=False,
+            request_payload={"title": req.title, "descriptionChars": len(req.description or "")},
+            response_payload={"skills": len(fallback_skills)},
+            error_message=str(e),
+        )
+        return {"success": True, "skills": fallback_skills, "error": str(e)}
 
 @router.get("/recommend-candidates/{internship_id}")
 async def recommend_candidates(internship_id: str, user = Depends(get_current_user)):
+    started_at = time.perf_counter()
     try:
         role = _get_user_role(user.id)
         if role not in {"company", "admin", "tpo"}:
@@ -1920,9 +2699,48 @@ async def recommend_candidates(internship_id: str, user = Depends(get_current_us
 
         recommendations.sort(key=lambda item: item["score"], reverse=True)
         top_recommendations = recommendations[:20]
+        _log_ai_route(
+            action_key="recommend_candidates",
+            started_at=started_at,
+            user_id=user.id,
+            user_role=role,
+            model_name="candidate-ranker-v2",
+            used_fallback=False,
+            success=True,
+            target_type="internship",
+            target_id=internship_id,
+            request_payload={"internshipId": internship_id},
+            response_payload={"recommendations": len(top_recommendations)},
+        )
 
         return {"success": True, "data": top_recommendations}
-    except HTTPException:
+    except HTTPException as exc:
+        _log_ai_route(
+            action_key="recommend_candidates",
+            started_at=started_at,
+            user_id=user.id,
+            user_role=role if 'role' in locals() else None,
+            model_name="candidate-ranker-v2",
+            used_fallback=False,
+            success=False,
+            target_type="internship",
+            target_id=internship_id,
+            request_payload={"internshipId": internship_id},
+            error_message=str(exc.detail),
+        )
         raise
     except Exception as e:
+        _log_ai_route(
+            action_key="recommend_candidates",
+            started_at=started_at,
+            user_id=user.id,
+            user_role=role if 'role' in locals() else None,
+            model_name="candidate-ranker-v2",
+            used_fallback=False,
+            success=False,
+            target_type="internship",
+            target_id=internship_id,
+            request_payload={"internshipId": internship_id},
+            error_message=str(e),
+        )
         raise HTTPException(status_code=500, detail=str(e))

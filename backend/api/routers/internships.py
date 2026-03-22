@@ -141,6 +141,7 @@ async def get_internship_by_id(
     user=Depends(get_current_user),
 ):
     try:
+        role = _get_user_role(user.id)
         response = (
             supabase.table("internships")
             .select("*")
@@ -153,6 +154,24 @@ async def get_internship_by_id(
             raise HTTPException(status_code=404, detail="Internship not found")
 
         internship = _attach_company_profiles([response.data])[0]
+        if role == "student":
+            profile_response = (
+                supabase.table("profiles")
+                .select("college_id")
+                .eq("id", user.id)
+                .single()
+                .execute()
+            )
+            student_college_id = (profile_response.data or {}).get("college_id")
+            if not student_college_id or internship.get("college_id") != student_college_id:
+                raise HTTPException(status_code=403, detail="This internship is not available to your college")
+            if not internship.get("is_active") or not internship.get("is_approved"):
+                raise HTTPException(status_code=404, detail="Internship not found")
+        elif role == "company" and internship.get("company_id") != user.id:
+            raise HTTPException(status_code=403, detail="This internship does not belong to your company")
+        elif role == "tpo" and internship.get("college_id") != user.id:
+            raise HTTPException(status_code=403, detail="This internship is not assigned to your college")
+
         return {"success": True, "data": internship}
     except HTTPException:
         raise
