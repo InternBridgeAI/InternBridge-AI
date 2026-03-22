@@ -3,49 +3,94 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-    Users,
+    AlertTriangle,
+    ArrowRight,
+    ArrowUpRight,
+    BarChart3,
     Briefcase,
     Building2,
-    AlertTriangle,
-    TrendingUp,
+    Brain,
     Clock,
     ShieldCheck,
-    BarChart3,
-    Search,
-    ArrowRight,
-    Sparkles
+    Sparkles,
+    Target,
+    TrendingUp,
+    Users,
 } from 'lucide-react';
 import Link from 'next/link';
+import { fetchBackendJson } from '@/lib/backend-api';
+import { cn } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+        data: { session },
+    } = await supabase.auth.getSession();
+    const user = session?.user;
+    const token = session?.access_token;
 
-    if (!user) return null;
+    if (!user || !token) return null;
 
-    // Basic counts
-    const { count: studentCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student');
-    const { count: companyCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'company');
-    const { count: internshipCount } = await supabase.from('internships').select('*', { count: 'exact', head: true });
-    const { count: pendingCompanies } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'company').eq('is_verified', false);
-    const { data: pendingCompanyList } = await supabase
-        .from('profiles')
-        .select('id, company_name')
-        .eq('role', 'company')
-        .eq('is_verified', false)
-        .order('created_at', { ascending: false })
-        .limit(3);
+    let studentCount = 0;
+    let companyCount = 0;
+    let internshipCount = 0;
+    let pendingCompanies = 0;
+    let pendingCompanyList: Array<{ id: string; company_name: string | null }> = [];
+    let recentLogs: any[] = [];
+    let aiCopilot: any = null;
+
+    try {
+        const headers = {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        };
+
+        const [
+            studentCountRes,
+            companyCountRes,
+            internshipCountRes,
+            pendingCompaniesRes,
+            pendingCompaniesListRes,
+            recentLogsRes,
+            aiCopilotRes,
+        ] = await Promise.allSettled([
+            supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
+            supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'company'),
+            supabase.from('internships').select('*', { count: 'exact', head: true }),
+            supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'company').eq('is_verified', false),
+            supabase
+                .from('profiles')
+                .select('id, company_name')
+                .eq('role', 'company')
+                .eq('is_verified', false)
+                .order('created_at', { ascending: false })
+                .limit(3),
+            supabase
+                .from('activity_logs')
+                .select('*, user:profiles!user_id(full_name, role)')
+                .order('created_at', { ascending: false })
+                .limit(5),
+            fetchBackendJson('/api/ai/admin-copilot', headers),
+        ]);
+
+        studentCount = studentCountRes.status === 'fulfilled' ? (studentCountRes.value.count || 0) : 0;
+        companyCount = companyCountRes.status === 'fulfilled' ? (companyCountRes.value.count || 0) : 0;
+        internshipCount = internshipCountRes.status === 'fulfilled' ? (internshipCountRes.value.count || 0) : 0;
+        pendingCompanies = pendingCompaniesRes.status === 'fulfilled' ? (pendingCompaniesRes.value.count || 0) : 0;
+        pendingCompanyList = pendingCompaniesListRes.status === 'fulfilled' ? ((pendingCompaniesListRes.value.data as any[]) || []) : [];
+        recentLogs = recentLogsRes.status === 'fulfilled' ? ((recentLogsRes.value.data as any[]) || []) : [];
+        aiCopilot = aiCopilotRes.status === 'fulfilled' && aiCopilotRes.value.success ? aiCopilotRes.value.data : null;
+    } catch (error) {
+        console.error('Error fetching admin dashboard data:', error);
+    }
 
     const integrityStatus = (pendingCompanies || 0) === 0 ? 'Operational' : 'Needs Review';
-
-    // Recent logs
-    const { data: recentLogs } = await supabase
-        .from('activity_logs')
-        .select('*, user:profiles!user_id(full_name, role)')
-        .order('created_at', { ascending: false })
-        .limit(5);
+    const copilotActions = Array.isArray(aiCopilot?.actions) ? aiCopilot.actions : [];
+    const copilotWatchlist = Array.isArray(aiCopilot?.watchlist) ? aiCopilot.watchlist : [];
+    const hotSkills = Array.isArray(aiCopilot?.hotSkills) ? aiCopilot.hotSkills : [];
+    const queues = aiCopilot?.queues || {};
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -54,7 +99,6 @@ export default async function AdminDashboard() {
                 <p className="text-muted-foreground mt-2">Monitor platform health, verify partners, and manage user ecosystem.</p>
             </div>
 
-            {/* Hero Stats */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="glass border-primary/10 bg-primary/5">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -100,14 +144,147 @@ export default async function AdminDashboard() {
                 </Card>
             </div>
 
+            <Card className="glass overflow-hidden border-primary/20 bg-gradient-to-br from-primary/[0.08] via-background to-blue-500/[0.08] shadow-xl shadow-primary/5">
+                <CardContent className="p-6 md:p-7 space-y-6">
+                    <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="max-w-2xl space-y-4">
+                            <Badge className="bg-primary/10 text-primary border-primary/20 font-bold uppercase tracking-[0.2em] text-[10px] px-3 py-1">
+                                <Sparkles className="mr-1.5 h-3 w-3" /> AI Platform Copilot
+                            </Badge>
+                            <div className="space-y-2">
+                                <h2 className="text-2xl font-black tracking-tight">The marketplace now has a live operations brief.</h2>
+                                <p className="text-sm text-muted-foreground leading-6">
+                                    {aiCopilot?.summary || 'Platform intelligence appears here once the admin AI copilot is connected to live backend data.'}
+                                </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {hotSkills.slice(0, 4).map((skill: string) => (
+                                    <Badge key={skill} variant="outline" className="border-primary/20 bg-background/70 text-[11px] font-semibold">
+                                        {skill}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="grid w-full gap-3 sm:grid-cols-4 lg:max-w-2xl">
+                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">System Health</p>
+                                <p className="mt-2 text-3xl font-black tracking-tight text-primary">{aiCopilot?.systemHealthScore ?? 0}%</p>
+                                <p className="text-xs text-muted-foreground mt-1">operational confidence</p>
+                            </div>
+                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Backlog</p>
+                                <p className="mt-2 text-3xl font-black tracking-tight">{aiCopilot?.approvalBacklog ?? 0}</p>
+                                <p className="text-xs text-muted-foreground mt-1">approval items open</p>
+                            </div>
+                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Avg Match</p>
+                                <p className="mt-2 text-3xl font-black tracking-tight">{aiCopilot?.avgMatchScore ?? 0}%</p>
+                                <p className="text-xs text-muted-foreground mt-1">ecosystem fit quality</p>
+                            </div>
+                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Trust Flags</p>
+                                <p className="mt-2 text-3xl font-black tracking-tight">{aiCopilot?.trustFlags ?? 0}</p>
+                                <p className="text-xs text-muted-foreground mt-1">recent review incidents</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-4 lg:grid-cols-[1.1fr_0.8fr_1fr]">
+                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+                            <div className="flex items-center justify-between gap-3 mb-4">
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Priority Actions</p>
+                                    <p className="text-sm font-semibold mt-1">What needs admin attention first</p>
+                                </div>
+                                <Target className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="space-y-3">
+                                {copilotActions.length > 0 ? copilotActions.map((action: any) => (
+                                    <Link
+                                        key={action.title}
+                                        href={action.href || '/admin'}
+                                        className="group flex items-start gap-3 rounded-2xl border border-border/60 bg-muted/20 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
+                                    >
+                                        <div className={cn(
+                                            'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl',
+                                            action.priority === 'high' ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary',
+                                        )}>
+                                            {action.priority === 'high' ? <Brain className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-bold tracking-tight">{action.title}</p>
+                                            <p className="text-xs text-muted-foreground mt-1 leading-5">{action.description}</p>
+                                        </div>
+                                    </Link>
+                                )) : (
+                                    <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-4 text-sm text-muted-foreground">
+                                        Admin actions will appear here when the platform sees queue pressure or trust alerts.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+                            <div className="flex items-center justify-between gap-3 mb-4">
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Queue Snapshot</p>
+                                    <p className="text-sm font-semibold mt-1">Where approvals are waiting</p>
+                                </div>
+                                <ShieldCheck className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="space-y-3">
+                                {[
+                                    { label: 'Companies', value: queues.companies ?? 0 },
+                                    { label: 'Students', value: queues.students ?? 0 },
+                                    { label: 'Internships', value: queues.internships ?? 0 },
+                                ].map((queue) => (
+                                    <div key={queue.label} className="flex items-center justify-between rounded-xl border border-border/50 px-3 py-2.5">
+                                        <span className="text-sm font-medium">{queue.label}</span>
+                                        <Badge className={cn('border-none', queue.value > 0 ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300')}>
+                                            {queue.value > 0 ? `${queue.value} Open` : 'Clear'}
+                                        </Badge>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+                            <div className="flex items-center justify-between gap-3 mb-4">
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Watchlist</p>
+                                    <p className="text-sm font-semibold mt-1">Platform areas that need monitoring</p>
+                                </div>
+                                <AlertTriangle className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="space-y-3">
+                                {copilotWatchlist.length > 0 ? copilotWatchlist.map((item: any) => (
+                                    <Link
+                                        key={item.title}
+                                        href={item.href || '/admin'}
+                                        className="block rounded-2xl border border-border/60 bg-muted/20 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
+                                    >
+                                        <p className="text-sm font-bold tracking-tight">{item.title}</p>
+                                        <p className="text-xs text-muted-foreground mt-1 leading-5">{item.reason}</p>
+                                    </Link>
+                                )) : (
+                                    <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-4 text-sm text-muted-foreground">
+                                        No urgent operational watchlist items right now.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
             <div className="grid gap-6 md:grid-cols-7">
-                {/* Analytics Overview */}
                 <div className="md:col-span-4 space-y-6">
                     <Card className="glass h-[400px]">
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
                                 <CardTitle>Usage Growth</CardTitle>
-                                <CardDescription>New registrations vs Applications</CardDescription>
+                                <CardDescription>New registrations vs applications</CardDescription>
                             </div>
                             <BarChart3 className="h-5 w-5 text-muted-foreground" />
                         </CardHeader>
@@ -128,7 +305,7 @@ export default async function AdminDashboard() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                {recentLogs && recentLogs.length > 0 ? (
+                                {recentLogs.length > 0 ? (
                                     recentLogs.map((log: any) => (
                                         <div key={log.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50 text-sm">
                                             <div className="flex items-center gap-3">
@@ -151,7 +328,6 @@ export default async function AdminDashboard() {
                     </Card>
                 </div>
 
-                {/* Action Sidebar */}
                 <div className="md:col-span-3 space-y-6">
                     <Card className="glass bg-orange-500/5 border-orange-500/10">
                         <CardHeader>
@@ -161,9 +337,9 @@ export default async function AdminDashboard() {
                             <CardDescription>Companies waiting for vetting</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {pendingCompanies && pendingCompanies > 0 ? (
+                            {pendingCompanies > 0 ? (
                                 <div className="p-4 rounded-xl bg-background/50 border border-border/50 space-y-3">
-                                    {pendingCompanyList?.length ? (
+                                    {pendingCompanyList.length > 0 ? (
                                         <div className="space-y-2">
                                             {pendingCompanyList.map((company) => (
                                                 <div key={company.id} className="flex items-center gap-3">
@@ -223,12 +399,14 @@ export default async function AdminDashboard() {
                     </Card>
 
                     <Card className="glass overflow-hidden border-primary/10 bg-primary/5">
-                        <div className="p-6">
-                            <h4 className="font-bold flex items-center gap-2 mb-2">
-                                <Sparkles className="h-4 w-4 text-primary" /> Platform Insight
+                        <div className="p-6 space-y-3">
+                            <h4 className="font-bold flex items-center gap-2">
+                                <Sparkles className="h-4 w-4 text-primary" /> Market Pulse
                             </h4>
-                            <p className="text-xs text-muted-foreground">
-                                Insights appear here once enough activity data is available.
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                {hotSkills.length > 0
+                                    ? `Current demand is clustering around ${hotSkills.slice(0, 3).join(', ')}. Keep approvals fast in those categories to avoid marketplace drag.`
+                                    : 'Hot-skill demand will appear here as more verified internships go live.'}
                             </p>
                         </div>
                     </Card>

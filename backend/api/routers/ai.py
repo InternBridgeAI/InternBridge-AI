@@ -465,6 +465,408 @@ def _build_company_copilot(profile: Dict[str, Any], internships: List[Dict[str, 
     }
 
 
+def _build_admin_copilot() -> Dict[str, Any]:
+    student_rows = cast(
+        List[Dict[str, Any]],
+        (
+            supabase.table("profiles")
+            .select("id, skills, student_verification_status")
+            .eq("role", "student")
+            .execute()
+        ).data
+        or [],
+    )
+    company_rows = cast(
+        List[Dict[str, Any]],
+        (
+            supabase.table("profiles")
+            .select("id, company_name, full_name, is_verified")
+            .eq("role", "company")
+            .execute()
+        ).data
+        or [],
+    )
+    internship_rows = cast(List[Dict[str, Any]], (_fetch_internship_rows(active_only=False) or []))
+    application_rows = cast(
+        List[Dict[str, Any]],
+        (supabase.table("applications").select("status, match_score").execute().data or []),
+    )
+    log_rows = cast(
+        List[Dict[str, Any]],
+        (
+            supabase.table("activity_logs")
+            .select("action")
+            .order("created_at", desc=True)
+            .limit(200)
+            .execute()
+        ).data
+        or [],
+    )
+
+    pending_companies = sum(1 for row in company_rows if row.get("is_verified") is False)
+    pending_students = sum(
+        1
+        for row in student_rows
+        if (row.get("student_verification_status") or "pending") == "pending"
+    )
+    pending_internships = sum(1 for row in internship_rows if row.get("is_approved") is False)
+    live_internships = sum(
+        1
+        for row in internship_rows
+        if row.get("is_approved") is True and row.get("is_active") is True
+    )
+    approval_backlog = pending_companies + pending_students + pending_internships
+
+    scores = [
+        _safe_float(row.get("match_score"))
+        for row in application_rows
+        if row.get("match_score") is not None
+    ]
+    avg_match_score = int(round((sum(scores) / len(scores)) * 100)) if scores else 0
+
+    trust_flags = sum(
+        1
+        for row in log_rows
+        if str(row.get("action") or "")
+        in {
+            "company_rejected",
+            "student_rejected",
+            "company_request_rejected",
+        }
+    )
+
+    hot_skill_map: Dict[str, int] = {}
+    for internship in internship_rows:
+        if not internship.get("is_approved"):
+            continue
+        for skill in _extract_internship_skills(internship):
+            hot_skill_map[skill] = hot_skill_map.get(skill, 0) + 1
+    hot_skills = [
+        skill for skill, _ in sorted(hot_skill_map.items(), key=lambda item: item[1], reverse=True)
+    ][:5]
+
+    system_health = 45
+    system_health += min(live_internships * 2, 16)
+    system_health += min(avg_match_score // 5, 18)
+    system_health += 8 if trust_flags == 0 else 0
+    system_health -= min(approval_backlog * 2, 25)
+    system_health = min(99, max(12, system_health))
+
+    actions: List[Dict[str, str]] = []
+    if pending_companies > 0:
+        actions.append(
+            {
+                "title": "Clear company verification backlog",
+                "description": f"{pending_companies} compan{'ies' if pending_companies != 1 else 'y'} are waiting for an approval decision.",
+                "href": "/admin/companies",
+                "priority": "high",
+            }
+        )
+    if pending_internships > 0:
+        actions.append(
+            {
+                "title": "Review internship approvals",
+                "description": f"{pending_internships} internship posting{'s' if pending_internships != 1 else ''} are blocked from student visibility.",
+                "href": "/admin/internships",
+                "priority": "high",
+            }
+        )
+    if pending_students > 0:
+        actions.append(
+            {
+                "title": "Reduce student verification lag",
+                "description": f"{pending_students} student profile{'s' if pending_students != 1 else ''} are still waiting on a college decision.",
+                "href": "/admin/users",
+                "priority": "medium",
+            }
+        )
+    if trust_flags > 0:
+        actions.append(
+            {
+                "title": "Investigate trust signals",
+                "description": f"{trust_flags} recent rejection or trust-related events need a platform review.",
+                "href": "/admin/fraud",
+                "priority": "medium",
+            }
+        )
+    if not actions:
+        actions.append(
+            {
+                "title": "Monitor audit health",
+                "description": "Core approvals are flowing well. Keep an eye on audit logs and fraud checks as volume grows.",
+                "href": "/admin/logs",
+                "priority": "low",
+            }
+        )
+
+    watchlist: List[Dict[str, str]] = []
+    if pending_companies > 0:
+        watchlist.append(
+            {
+                "title": "Company queue is slowing activation",
+                "reason": "Pending companies cannot fully participate in the ecosystem until verification clears.",
+                "href": "/admin/companies",
+            }
+        )
+    if pending_internships > 0:
+        watchlist.append(
+            {
+                "title": "Internship approvals are blocking supply",
+                "reason": "Unapproved internships reduce live demand and slow student/application momentum.",
+                "href": "/admin/internships",
+            }
+        )
+    if trust_flags > 0:
+        watchlist.append(
+            {
+                "title": "Trust incidents detected in recent activity",
+                "reason": "Review fraud signals and rejected verifications before they become platform reputation issues.",
+                "href": "/admin/fraud",
+            }
+        )
+
+    if approval_backlog == 0 and trust_flags == 0:
+        summary = "Platform operations look clean right now. Verification queues are controlled and trust signals are stable."
+    elif trust_flags > 0:
+        summary = "The platform is growing, but trust signals need closer review. Resolve high-risk cases quickly to keep confidence high."
+    else:
+        summary = f"The ecosystem is healthy, but {approval_backlog} approval item{'s' if approval_backlog != 1 else ''} are slowing marketplace velocity."
+
+    return {
+        "summary": summary,
+        "systemHealthScore": system_health,
+        "approvalBacklog": approval_backlog,
+        "avgMatchScore": avg_match_score,
+        "trustFlags": trust_flags,
+        "hotSkills": hot_skills,
+        "queues": {
+            "companies": pending_companies,
+            "students": pending_students,
+            "internships": pending_internships,
+        },
+        "actions": actions[:4],
+        "watchlist": watchlist[:3],
+    }
+
+
+def _build_tpo_copilot(tpo_id: str) -> Dict[str, Any]:
+    student_rows = cast(
+        List[Dict[str, Any]],
+        (
+            supabase.table("profiles")
+            .select("id, skills, market_readiness_score, student_verification_status")
+            .eq("role", "student")
+            .eq("college_id", tpo_id)
+            .execute()
+        ).data
+        or [],
+    )
+    student_ids = [str(row.get("id")) for row in student_rows if row.get("id")]
+
+    application_rows: List[Dict[str, Any]] = []
+    if student_ids:
+        application_rows = cast(
+            List[Dict[str, Any]],
+            (
+                supabase.table("applications")
+                .select("status, internship_id, student_id")
+                .in_("student_id", student_ids)
+                .execute()
+            ).data
+            or [],
+        )
+
+    internship_rows = cast(
+        List[Dict[str, Any]],
+        (
+            supabase.table("internships")
+            .select("*")
+            .eq("college_id", tpo_id)
+            .execute()
+        ).data
+        or [],
+    )
+    pending_company_requests = cast(
+        List[Dict[str, Any]],
+        (
+            supabase.table("college_company_requests")
+            .select("id, status")
+            .eq("college_id", tpo_id)
+            .eq("status", "pending")
+            .execute()
+        ).data
+        or [],
+    )
+
+    student_count = len(student_rows)
+    readiness_scores = [
+        _safe_float(row.get("market_readiness_score"))
+        for row in student_rows
+        if row.get("market_readiness_score") is not None
+    ]
+    avg_readiness = int(round(sum(readiness_scores) / len(readiness_scores))) if readiness_scores else 0
+    ready_students = sum(1 for score in readiness_scores if score >= 70)
+    pending_students = sum(
+        1
+        for row in student_rows
+        if (row.get("student_verification_status") or "pending") == "pending"
+    )
+    pending_internships = sum(1 for row in internship_rows if row.get("is_approved") is False)
+    active_pipeline = sum(
+        1 for row in application_rows if row.get("status") in {"pending", "shortlisted", "interview"}
+    )
+    placed_students = sum(1 for row in application_rows if row.get("status") == "accepted")
+
+    skill_counts: Dict[str, int] = {}
+    for student in student_rows:
+        for skill in normalize_skills(cast(List[str], student.get("skills") or [])):
+            skill_counts[skill] = skill_counts.get(skill, 0) + 1
+
+    demand_counts: Dict[str, int] = {}
+    approved_internships = [
+        row for row in internship_rows if row.get("is_approved") is True and row.get("is_active") is True
+    ]
+    for internship in approved_internships:
+        for skill in _extract_internship_skills(internship):
+            demand_counts[skill] = demand_counts.get(skill, 0) + 1
+
+    gap_scores: List[Dict[str, Any]] = []
+    total_roles = max(1, len(approved_internships))
+    total_students = max(1, student_count)
+    tracked_skills = set(demand_counts.keys()) | set(skill_counts.keys())
+    for skill in tracked_skills:
+        demand_pct = demand_counts.get(skill, 0) / total_roles
+        proficiency_pct = skill_counts.get(skill, 0) / total_students
+        gap = round((demand_pct - proficiency_pct) * 100, 1)
+        gap_scores.append(
+            {
+                "skill": skill,
+                "gap": gap,
+                "demandPct": round(demand_pct * 100),
+                "proficiencyPct": round(proficiency_pct * 100),
+            }
+        )
+
+    critical_gaps = [
+        row["skill"]
+        for row in sorted(gap_scores, key=lambda item: item["gap"], reverse=True)
+        if row["gap"] > 0
+    ][:5]
+    strengths = [
+        row["skill"]
+        for row in sorted(gap_scores, key=lambda item: item["proficiencyPct"], reverse=True)
+    ][:5]
+
+    approval_queue = pending_students + len(pending_company_requests) + pending_internships
+    placement_rate = round((placed_students / total_students) * 100, 1) if student_count > 0 else 0.0
+
+    batch_health = 30
+    batch_health += min(avg_readiness // 4, 20)
+    batch_health += min(ready_students * 3, 18)
+    batch_health += min(int(placement_rate // 4), 18)
+    batch_health -= min(approval_queue * 3, 24)
+    batch_health = min(99, max(10, batch_health))
+
+    actions: List[Dict[str, str]] = []
+    if pending_students > 0:
+        actions.append(
+            {
+                "title": "Verify pending students",
+                "description": f"{pending_students} student profile{'s' if pending_students != 1 else ''} still need approval before they can apply.",
+                "href": "/tpo/approvals",
+                "priority": "high",
+            }
+        )
+    if pending_company_requests:
+        actions.append(
+            {
+                "title": "Review company partnership requests",
+                "description": f"{len(pending_company_requests)} compan{'ies' if len(pending_company_requests) != 1 else 'y'} want access to your college talent pool.",
+                "href": "/tpo/approvals",
+                "priority": "high",
+            }
+        )
+    if pending_internships > 0:
+        actions.append(
+            {
+                "title": "Approve internship postings",
+                "description": f"{pending_internships} internship{'s' if pending_internships != 1 else ''} are waiting to go live for students.",
+                "href": "/tpo/approvals",
+                "priority": "medium",
+            }
+        )
+    if critical_gaps:
+        actions.append(
+            {
+                "title": f"Close the {critical_gaps[0]} training gap",
+                "description": f"{critical_gaps[0]} is showing stronger role demand than current student coverage.",
+                "href": "/tpo/skills",
+                "priority": "medium",
+            }
+        )
+    if not actions:
+        actions.append(
+            {
+                "title": "Maintain placement momentum",
+                "description": "Your queues are under control. Keep nudging students to improve profiles and respond quickly to new roles.",
+                "href": "/tpo/students",
+                "priority": "low",
+            }
+        )
+
+    watchlist: List[Dict[str, str]] = []
+    if critical_gaps:
+        watchlist.append(
+            {
+                "title": f"{critical_gaps[0]} demand is outrunning supply",
+                "reason": "Students need targeted upskilling in this area to improve shortlist quality and placement conversion.",
+                "href": "/tpo/skills",
+            }
+        )
+    if pending_students > 0:
+        watchlist.append(
+            {
+                "title": "Verification queue is slowing student activation",
+                "reason": "Pending student approvals block applications and reduce college response velocity.",
+                "href": "/tpo/approvals",
+            }
+        )
+    if pending_internships > 0:
+        watchlist.append(
+            {
+                "title": "Internship approval lag is reducing live demand",
+                "reason": "Students cannot see college-targeted roles until those postings are approved.",
+                "href": "/tpo/approvals",
+            }
+        )
+
+    if approval_queue == 0 and critical_gaps:
+        summary = f"Your college pipeline is active. The next lift will come from improving student readiness in {critical_gaps[0]}."
+    elif approval_queue > 0:
+        summary = f"Your placement engine is moving, but {approval_queue} approval item{'s' if approval_queue != 1 else ''} are still slowing student and company activation."
+    else:
+        summary = "Your college ecosystem is balanced right now. Focus on pushing more students from readiness into placements."
+
+    return {
+        "summary": summary,
+        "batchHealthScore": batch_health,
+        "avgReadiness": avg_readiness,
+        "readyStudents": ready_students,
+        "placementRate": placement_rate,
+        "approvalQueue": approval_queue,
+        "activePipeline": active_pipeline,
+        "strengths": strengths,
+        "criticalGaps": critical_gaps,
+        "queues": {
+            "students": pending_students,
+            "companies": len(pending_company_requests),
+            "internships": pending_internships,
+        },
+        "actions": actions[:4],
+        "watchlist": watchlist[:3],
+    }
+
+
 def _analyze_and_store_resume(user_id: str, resume_text: str) -> Dict[str, Any]:
     parsed = parse_resume_with_gemini(resume_text)
     parsed_skills = normalize_skills(parsed.get("skills") or [])
@@ -848,6 +1250,34 @@ async def get_company_copilot(user=Depends(get_current_user)):
 
         copilot = _build_company_copilot(profile, internships, applications)
         return {"success": True, "data": copilot}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/admin-copilot")
+async def get_admin_copilot(user=Depends(get_current_user)):
+    try:
+        role = _get_user_role(user.id)
+        if role != "admin":
+            raise HTTPException(status_code=403, detail="Admin copilot is only available to admins")
+
+        return {"success": True, "data": _build_admin_copilot()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/tpo-copilot")
+async def get_tpo_copilot(user=Depends(get_current_user)):
+    try:
+        role = _get_user_role(user.id)
+        if role not in {"tpo", "college", "college_tpo"}:
+            raise HTTPException(status_code=403, detail="TPO copilot is only available to college/TPO accounts")
+
+        return {"success": True, "data": _build_tpo_copilot(user.id)}
     except HTTPException:
         raise
     except Exception as e:
