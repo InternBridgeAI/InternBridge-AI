@@ -92,27 +92,27 @@ export function Sidebar({ role, collapsed = false, mobileOpen = false, onClose, 
                 <button
                     type="button"
                     aria-label="Close navigation"
-                    className="fixed inset-0 z-30 bg-background/80 backdrop-blur-sm md:hidden"
+                    className="fixed inset-0 z-30 bg-black/20 md:hidden"
                     onClick={onClose}
                 />
             )}
 
             <aside
                 className={cn(
-                    'fixed left-0 top-0 z-40 h-screen border-r border-border bg-background transition-all duration-300 flex flex-col',
+                    'fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-border bg-card transition-all duration-300',
                     mobileOpen ? 'translate-x-0' : '-translate-x-full',
                     'w-72 md:translate-x-0',
                     collapsed ? 'md:w-[70px]' : 'md:w-64'
                 )}
             >
                 <div className="flex items-center gap-3 px-4 h-16 border-b border-border">
-                    <div className="w-9 h-9 rounded-lg gradient-brand flex items-center justify-center flex-shrink-0">
-                        <Zap className="text-white" size={20} />
+                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-primary/15 bg-primary/10">
+                        <Zap className="text-primary" size={18} />
                     </div>
                     {!collapsed && (
                         <div className="overflow-hidden">
-                            <h1 className="text-base font-bold text-foreground truncate">InternBridge</h1>
-                            <p className="text-[10px] text-primary font-medium uppercase tracking-wider">
+                            <h1 className="truncate text-base font-semibold text-foreground">InternBridge</h1>
+                            <p className="text-xs text-muted-foreground">
                                 {roleLabels[role]}
                             </p>
                         </div>
@@ -136,14 +136,14 @@ export function Sidebar({ role, collapsed = false, mobileOpen = false, onClose, 
                                 href={item.href}
                                 onClick={onClose}
                                 className={cn(
-                                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                                    'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200',
                                     isActive
-                                        ? 'bg-primary/10 text-primary shadow-sm'
+                                        ? 'border border-primary/15 bg-primary/10 text-foreground'
                                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                                 )}
                                 title={collapsed ? item.label : undefined}
                             >
-                                <span className={cn(isActive && 'text-primary')}>{item.icon}</span>
+                                <span className={cn(isActive ? 'text-primary' : 'text-muted-foreground')}>{item.icon}</span>
                                 {!collapsed && <span>{item.label}</span>}
                             </Link>
                         );
@@ -152,7 +152,7 @@ export function Sidebar({ role, collapsed = false, mobileOpen = false, onClose, 
 
                 <button
                     onClick={onToggle}
-                    className="hidden md:flex items-center justify-center h-12 border-t border-border text-muted-foreground hover:bg-muted transition-colors"
+                    className="hidden h-12 items-center justify-center border-t border-border text-muted-foreground transition-colors hover:bg-muted md:flex"
                 >
                     <ChevronLeft className={cn('transition-transform duration-300', collapsed && 'rotate-180')} size={18} />
                 </button>

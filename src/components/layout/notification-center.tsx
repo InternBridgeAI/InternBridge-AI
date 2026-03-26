@@ -215,7 +215,7 @@ export function NotificationCenter({ userId }: NotificationCenterProps) {
             <Button
                 variant="ghost"
                 size="icon"
-                className="relative rounded-full h-9 w-9 text-muted-foreground hover:text-foreground"
+                className="relative h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
                 onClick={() => setOpen((prev) => !prev)}
                 title="Notifications"
             >
@@ -228,7 +228,7 @@ export function NotificationCenter({ userId }: NotificationCenterProps) {
             </Button>
 
             {open && (
-                <div className="absolute right-0 top-12 z-50 w-[360px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-border bg-background/95 shadow-2xl backdrop-blur-xl">
+                <div className="absolute right-0 top-12 z-50 w-[360px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-border bg-card shadow-[0_12px_32px_-20px_rgba(15,23,42,0.28)]">
                     <div className="flex items-center justify-between border-b border-border px-4 py-3">
                         <div>
                             <p className="text-sm font-semibold">Notifications</p>
@@ -265,13 +265,13 @@ export function NotificationCenter({ userId }: NotificationCenterProps) {
                                     <button
                                         key={notification.id}
                                         className={cn(
-                                            'flex w-full items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors hover:bg-muted/50',
-                                            !notification.is_read && 'bg-primary/5'
+                                            'flex w-full items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors hover:bg-muted/40',
+                                            !notification.is_read && 'bg-primary/[0.04]'
                                         )}
                                         onClick={() => handleNotificationClick(notification)}
                                     >
                                         <div className={cn(
-                                            'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
+                                            'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
                                             notification.type.includes('rejected')
                                                 ? 'bg-red-500/10 text-red-500'
                                                 : notification.type.includes('verified') || notification.type.includes('approved')

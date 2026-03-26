@@ -108,11 +108,11 @@ export default async function CompanyDashboard() {
     const pipeline = aiCopilot?.pipeline || {};
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Company Dashboard</h1>
-                    <p className="text-muted-foreground mt-2">Welcome back, {profile?.company_name || 'Partner'}. Manage your internship ecosystem.</p>
+                    <h1 className="text-3xl font-semibold tracking-tight">Company overview</h1>
+                    <p className="mt-2 text-sm text-muted-foreground">Track hiring activity, review candidates, and keep your internship pipeline moving.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <Button variant="outline" asChild>
@@ -155,8 +155,8 @@ export default async function CompanyDashboard() {
                         <TrendingUp className="h-4 w-4 text-green-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{aiCopilot?.avgMatchScore ?? avgMatchScore ?? 'N/A'}{(aiCopilot?.avgMatchScore ?? avgMatchScore) !== null ? '%' : ''}</div>
-                        <p className="text-xs text-muted-foreground mt-1 text-green-500 font-medium font-bold uppercase tracking-tighter">
+                        <div className="text-2xl font-semibold">{aiCopilot?.avgMatchScore ?? avgMatchScore ?? 'N/A'}{(aiCopilot?.avgMatchScore ?? avgMatchScore) !== null ? '%' : ''}</div>
+                        <p className="mt-1 text-xs text-muted-foreground">
                             {(aiCopilot?.avgMatchScore ?? avgMatchScore) !== null ? 'From recent applicants' : 'No applicants yet'}
                         </p>
                     </CardContent>
@@ -173,22 +173,22 @@ export default async function CompanyDashboard() {
                 </Card>
             </div>
 
-            <Card className="glass overflow-hidden border-primary/20 bg-gradient-to-br from-primary/[0.08] via-background to-blue-500/[0.08] shadow-xl shadow-primary/5">
+            <Card className="glass overflow-hidden border-primary/20 bg-card">
                 <CardContent className="p-6 md:p-7 space-y-6">
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                         <div className="max-w-2xl space-y-4">
-                            <Badge className="bg-primary/10 text-primary border-primary/20 font-bold uppercase tracking-[0.2em] text-[10px] px-3 py-1">
+                            <Badge variant="outline" className="px-3 py-1">
                                 <Sparkles className="mr-1.5 h-3 w-3" /> AI Hiring Copilot
                             </Badge>
                             <div className="space-y-2">
-                                <h2 className="text-2xl font-black tracking-tight">Your talent pipeline now has operating guidance.</h2>
+                                <h2 className="text-2xl font-semibold tracking-tight">Your talent pipeline now has operating guidance.</h2>
                                 <p className="text-sm text-muted-foreground leading-6">
                                     {aiCopilot?.summary || 'We are translating applicant quality, hiring velocity, and demand signals into clear recruiting actions.'}
                                 </p>
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 {hotSkills.slice(0, 4).map((skill: string) => (
-                                    <Badge key={skill} variant="outline" className="border-primary/20 bg-background/70 text-[11px] font-semibold">
+                                    <Badge key={skill} variant="outline" className="border-primary/20 bg-background text-[11px] font-semibold">
                                         {skill}
                                     </Badge>
                                 ))}
@@ -201,29 +201,29 @@ export default async function CompanyDashboard() {
                         </div>
 
                         <div className="grid w-full gap-3 sm:grid-cols-3 lg:max-w-md">
-                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Hiring Health</p>
-                                <p className="mt-2 text-3xl font-black tracking-tight text-primary">{aiCopilot?.hiringHealthScore ?? 0}%</p>
+                            <div className="rounded-2xl border border-border/60 bg-background p-4">
+                                <p className="text-xs font-medium text-muted-foreground">Hiring Health</p>
+                                <p className="mt-2 text-3xl font-semibold tracking-tight text-primary">{aiCopilot?.hiringHealthScore ?? 0}%</p>
                                 <p className="text-xs text-muted-foreground mt-1">overall recruiting momentum</p>
                             </div>
-                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Strong Candidates</p>
-                                <p className="mt-2 text-3xl font-black tracking-tight">{aiCopilot?.strongCandidates ?? 0}</p>
+                            <div className="rounded-2xl border border-border/60 bg-background p-4">
+                                <p className="text-xs font-medium text-muted-foreground">Strong Candidates</p>
+                                <p className="mt-2 text-3xl font-semibold tracking-tight">{aiCopilot?.strongCandidates ?? 0}</p>
                                 <p className="text-xs text-muted-foreground mt-1">high-fit profiles in funnel</p>
                             </div>
-                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Watchlist</p>
-                                <p className="mt-2 text-3xl font-black tracking-tight">{watchlist.length}</p>
+                            <div className="rounded-2xl border border-border/60 bg-background p-4">
+                                <p className="text-xs font-medium text-muted-foreground">Watchlist</p>
+                                <p className="mt-2 text-3xl font-semibold tracking-tight">{watchlist.length}</p>
                                 <p className="text-xs text-muted-foreground mt-1">roles needing attention</p>
                             </div>
                         </div>
                     </div>
 
                     <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr_1fr]">
-                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+                        <div className="rounded-2xl border border-border/60 bg-background p-5">
                             <div className="flex items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Priority Actions</p>
+                                    <p className="text-xs font-medium text-muted-foreground">Priority Actions</p>
                                     <p className="text-sm font-semibold mt-1">The highest-leverage recruiting moves right now</p>
                                 </div>
                                 <Target className="h-4 w-4 text-primary" />
@@ -233,7 +233,7 @@ export default async function CompanyDashboard() {
                                     <Link
                                         key={action.title}
                                         href={action.href || '/company/candidates'}
-                                        className="group flex items-start gap-3 rounded-2xl border border-border/60 bg-muted/20 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
+                                        className="group flex items-start gap-3 rounded-2xl border border-border/60 bg-muted/40 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
                                     >
                                         <div className={cn(
                                             'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl',
@@ -242,7 +242,7 @@ export default async function CompanyDashboard() {
                                             {action.priority === 'high' ? <Brain className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="text-sm font-bold tracking-tight">{action.title}</p>
+                                            <p className="text-sm font-semibold tracking-tight">{action.title}</p>
                                             <p className="text-xs text-muted-foreground mt-1 leading-5">{action.description}</p>
                                         </div>
                                     </Link>
@@ -254,10 +254,10 @@ export default async function CompanyDashboard() {
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+                        <div className="rounded-2xl border border-border/60 bg-background p-5">
                             <div className="flex items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Pipeline Snapshot</p>
+                                    <p className="text-xs font-medium text-muted-foreground">Pipeline Snapshot</p>
                                     <p className="text-sm font-semibold mt-1">Where candidates are sitting now</p>
                                 </div>
                                 <Users className="h-4 w-4 text-primary" />
@@ -269,9 +269,9 @@ export default async function CompanyDashboard() {
                                     { label: 'Interviews', value: pipeline.interviews ?? 0 },
                                     { label: 'Accepted', value: pipeline.accepted ?? 0 },
                                 ].map((metric) => (
-                                    <div key={metric.label} className="rounded-xl border border-border/50 bg-muted/20 p-3">
-                                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">{metric.label}</p>
-                                        <p className="mt-2 text-2xl font-black tracking-tight">{metric.value}</p>
+                                    <div key={metric.label} className="rounded-xl border border-border/50 bg-muted/40 p-3">
+                                        <p className="text-xs font-medium text-muted-foreground">{metric.label}</p>
+                                        <p className="mt-2 text-2xl font-semibold tracking-tight">{metric.value}</p>
                                     </div>
                                 ))}
                             </div>
@@ -282,10 +282,10 @@ export default async function CompanyDashboard() {
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+                        <div className="rounded-2xl border border-border/60 bg-background p-5">
                             <div className="flex items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Role Watchlist</p>
+                                    <p className="text-xs font-medium text-muted-foreground">Role Watchlist</p>
                                     <p className="text-sm font-semibold mt-1">Openings that need a faster decision</p>
                                 </div>
                                 <CheckCircle className="h-4 w-4 text-primary" />
@@ -295,9 +295,9 @@ export default async function CompanyDashboard() {
                                     <Link
                                         key={item.title}
                                         href={item.href || '/company/candidates'}
-                                        className="block rounded-2xl border border-border/60 bg-muted/20 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
+                                        className="block rounded-2xl border border-border/60 bg-muted/40 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
                                     >
-                                        <p className="text-sm font-bold tracking-tight">{item.title}</p>
+                                        <p className="text-sm font-semibold tracking-tight">{item.title}</p>
                                         <p className="text-xs text-muted-foreground mt-1 leading-5">{item.reason}</p>
                                     </Link>
                                 )) : (
@@ -320,7 +320,7 @@ export default async function CompanyDashboard() {
                                 <p className="text-sm text-muted-foreground">Top-ranked candidates waiting for review</p>
                             </div>
                             <Button variant="ghost" size="sm" asChild>
-                                <Link href="/company/candidates" className="text-xs font-bold uppercase tracking-widest flex items-center gap-1">
+                                <Link href="/company/candidates" className="flex items-center gap-1 text-sm font-medium">
                                     View All <Search className="h-3 w-3 ml-1" />
                                 </Link>
                             </Button>
@@ -336,15 +336,15 @@ export default async function CompanyDashboard() {
                                                 </div>
                                                 <div>
                                                     <p className="font-bold text-sm tracking-tight">{app.student?.full_name}</p>
-                                                    <p className="text-[10px] text-muted-foreground font-semibold uppercase">{app.internship?.title}</p>
+                                                    <p className="text-xs text-muted-foreground">{app.internship?.title}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-6">
                                                 <div className="text-right hidden sm:block">
-                                                    <p className="text-[10px] font-black uppercase text-primary tracking-tighter">AI FIT</p>
-                                                    <p className="text-sm font-black">{((app.match_score || 0) * 100).toFixed(0)}%</p>
+                                                    <p className="text-xs font-medium text-muted-foreground">Match score</p>
+                                                    <p className="text-sm font-semibold">{((app.match_score || 0) * 100).toFixed(0)}%</p>
                                                 </div>
-                                                <Button size="sm" asChild className="h-8 rounded-lg text-[10px] font-black uppercase tracking-widest px-4">
+                                                <Button size="sm" asChild className="h-8 rounded-lg px-4">
                                                     <Link href={`/company/candidates?internship_id=${app.internship_id}`}>Review</Link>
                                                 </Button>
                                             </div>
@@ -353,7 +353,7 @@ export default async function CompanyDashboard() {
                                 ) : (
                                     <div className="text-center py-12 text-muted-foreground border-dashed border-2 rounded-2xl bg-muted/5">
                                         <Briefcase className="h-8 w-8 mx-auto mb-2 opacity-20" />
-                                        <p className="text-sm font-bold uppercase tracking-widest opacity-40">No applicants yet</p>
+                                        <p className="text-sm font-medium opacity-40">No applicants yet</p>
                                     </div>
                                 )}
                             </div>
@@ -373,8 +373,8 @@ export default async function CompanyDashboard() {
                                             <div className="flex items-center gap-3">
                                                 <CheckCircle className="h-4 w-4 text-green-500" />
                                                 <div>
-                                                    <p className="text-sm font-bold">{app.student?.full_name}</p>
-                                                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">{app.internship?.title}</p>
+                                                    <p className="text-sm font-semibold">{app.student?.full_name}</p>
+                                                    <p className="text-xs text-muted-foreground">{app.internship?.title}</p>
                                                 </div>
                                             </div>
                                             <Badge variant="success" className="text-[9px] h-5 px-2">Verified Hire</Badge>
@@ -384,13 +384,13 @@ export default async function CompanyDashboard() {
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-10 border border-dashed rounded-2xl bg-muted/5">
                                     <Award className="h-8 w-8 text-muted-foreground opacity-20 mb-3" />
-                                    <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-1">No Verification History</p>
+                                    <p className="mb-1 text-sm font-medium text-muted-foreground">No verification history yet</p>
                                     <p className="text-[10px] text-muted-foreground opacity-60">Success stories will appear here.</p>
                                 </div>
                             )}
 
                             {pastHires.length === 0 && (
-                                <div className="mt-6 pt-6 border-t border-border text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                <div className="mt-6 border-t border-border pt-6 text-center text-sm text-muted-foreground">
                                     No challenge history yet
                                 </div>
                             )}
@@ -399,25 +399,22 @@ export default async function CompanyDashboard() {
                 </div>
 
                 <div className="md:col-span-3 space-y-6">
-                    <Card className="glass overflow-hidden border-primary/20 bg-primary/5 relative">
-                        <div className="absolute top-0 right-0 p-4 opacity-5 rotate-12">
-                            <Search size={80} />
-                        </div>
-                        <div className="p-6 space-y-4 relative z-10">
-                            <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground mb-4 shadow-lg shadow-primary/20">
+                    <Card className="glass">
+                        <CardContent className="space-y-4 p-6">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                                 <Users className="h-5 w-5" />
                             </div>
-                            <h3 className="text-lg font-black tracking-tight">AI Recruiter Copilot</h3>
-                            <p className="text-xs text-muted-foreground font-medium leading-relaxed">Search candidates by live fit, close backlog faster, and use AI-ranked recommendations before the market moves.</p>
-                            <Button className="w-full font-black uppercase text-[10px] tracking-widest h-10 rounded-xl shadow-lg hover:shadow-primary/10 transition-all" asChild>
-                                <Link href="/company/candidates">Enter Discovery Mode</Link>
+                            <h3 className="text-lg font-semibold tracking-tight">Recruiter tools</h3>
+                            <p className="text-sm text-muted-foreground leading-6">Review candidate fit, move faster on shortlists, and keep response times healthy across open roles.</p>
+                            <Button className="w-full" asChild>
+                                <Link href="/company/candidates">Open candidate review</Link>
                             </Button>
-                        </div>
+                        </CardContent>
                     </Card>
 
                     <Card className="glass h-[350px]">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-muted-foreground">
+                            <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                                 <TrendingUp className="h-3 w-3" /> Candidate Ranking Analysis
                             </CardTitle>
                         </CardHeader>
@@ -428,34 +425,31 @@ export default async function CompanyDashboard() {
 
                     <Card className="glass">
                         <CardHeader>
-                            <CardTitle className="text-[10px] font-black uppercase tracking-widest">Navigation</CardTitle>
+                            <CardTitle className="text-sm font-medium">Navigation</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-1.5 p-3">
-                            <Button variant="ghost" size="sm" className="w-full justify-start gap-3 h-8 text-[10px] font-bold uppercase tracking-tight" asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-full justify-start gap-3 text-sm" asChild>
                                 <Link href="/company/internships"><Briefcase className="h-3.5 w-3.5 opacity-70" /> My Internships</Link>
                             </Button>
-                            <Button variant="ghost" size="sm" className="w-full justify-start gap-3 h-8 text-[10px] font-bold uppercase tracking-tight" asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-full justify-start gap-3 text-sm" asChild>
                                 <Link href="/company/tasks"><TrendingUp className="h-3.5 w-3.5 opacity-70" /> Micro-Tasks</Link>
                             </Button>
-                            <Button variant="ghost" size="sm" className="w-full justify-start gap-3 h-8 text-[10px] font-bold uppercase tracking-tight" asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-full justify-start gap-3 text-sm" asChild>
                                 <Link href="/company/certificates"><Award className="h-3.5 w-3.5 opacity-70" /> Certificates</Link>
                             </Button>
                         </CardContent>
                     </Card>
 
-                    <Card className="glass border-green-500/20 bg-green-500/5 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-2 text-green-500/10 rotate-45">
-                            <CheckCircle size={40} />
-                        </div>
+                    <Card className="glass">
                         <CardContent className="p-4 flex items-center gap-3">
                             <div className="p-2 rounded-lg bg-green-500/10 text-green-500">
                                 <CheckCircle className="h-4 w-4" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-black uppercase tracking-wide text-green-500">
+                                <p className="text-sm font-medium text-foreground">
                                     {profile?.is_verified ? 'Verified Partner' : 'Verification Pending'}
                                 </p>
-                                <p className="text-[9px] text-muted-foreground font-bold">
+                                <p className="text-xs text-muted-foreground">
                                     {profile?.is_verified ? 'Company profile approved' : 'Complete verification to unlock benefits'}
                                 </p>
                             </div>

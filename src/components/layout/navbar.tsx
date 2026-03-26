@@ -25,7 +25,7 @@ export function Navbar({ userId, userName, userRole, onMenuClick }: NavbarProps)
     };
 
     return (
-        <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border">
+        <header className="sticky top-0 z-30 border-b border-border bg-background/95">
             <div className="flex items-center justify-between h-16 px-4 sm:px-6">
                 <div className="flex items-center gap-4 flex-1">
                     <Button
@@ -48,7 +48,7 @@ export function Navbar({ userId, userName, userRole, onMenuClick }: NavbarProps)
                     </Button>
 
                     <div className="hidden md:flex items-center gap-3">
-                        <div className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+                        <div className="rounded-md border border-border bg-muted px-2.5 py-1 text-xs font-medium capitalize text-foreground">
                             {userRole}
                         </div>
                         <p className="text-sm text-muted-foreground">
@@ -60,8 +60,8 @@ export function Navbar({ userId, userName, userRole, onMenuClick }: NavbarProps)
                 <div className="flex items-center gap-2 sm:gap-4 ml-4">
                     <NotificationCenter userId={userId} />
                     <ThemeToggle />
-                    <div className="flex items-center gap-3 pr-2 border-r border-border">
-                        <div className="w-8 h-8 rounded-full gradient-brand flex items-center justify-center text-white text-xs font-bold">
+                    <div className="flex items-center gap-3 border-r border-border pr-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-primary/15 bg-primary/10 text-xs font-semibold text-primary">
                             {getInitials(userName || 'U')}
                         </div>
                         <div className="hidden lg:block">
@@ -72,7 +72,7 @@ export function Navbar({ userId, userName, userRole, onMenuClick }: NavbarProps)
 
                     <button
                         onClick={handleLogout}
-                        className="p-2 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                        className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                         title="Sign out"
                     >
                         <LogOut size={18} />

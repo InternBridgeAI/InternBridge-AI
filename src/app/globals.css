@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -25,7 +23,7 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
-    --radius: 0.75rem;
+    --radius: 1rem;
     --chart-1: 221.2 83.2% 53.3%;
     --chart-2: 142.1 70.6% 45.3%;
     --chart-3: 24.6 95% 53.1%;
@@ -69,11 +67,11 @@
 
 @layer utilities {
   .glass {
-    @apply bg-background/70 backdrop-blur-xl border border-border/50 shadow-xl;
+    @apply bg-card border border-border shadow-[0_1px_2px_rgba(15,23,42,0.06),0_20px_40px_-32px_rgba(15,23,42,0.18)];
   }
 
   .glass-dark {
-    @apply bg-card/70 backdrop-blur-xl border border-white/10 shadow-xl;
+    @apply bg-card border border-border shadow-[0_1px_2px_rgba(2,6,23,0.35),0_20px_40px_-32px_rgba(2,6,23,0.45)];
   }
 
   .gradient-brand {
@@ -85,11 +83,11 @@
   }
 
   .hover-lift {
-    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl;
+    @apply transition-colors duration-200 hover:border-primary/20 hover:shadow-sm;
   }
 
   .card-hover {
-    @apply transition-all duration-300 hover:shadow-lg hover:border-brand-200;
+    @apply transition-colors duration-200 hover:border-primary/20 hover:shadow-sm;
   }
 }
 

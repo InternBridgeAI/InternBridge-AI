@@ -100,14 +100,14 @@ export default async function AdminDashboard() {
     const aiRecentEvents = Array.isArray(aiAnalytics?.recentEvents) ? aiAnalytics.recentEvents : [];
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold">System Administration</h1>
-                <p className="text-muted-foreground mt-2">Monitor platform health, verify partners, and manage user ecosystem.</p>
+                <h1 className="text-3xl font-semibold tracking-tight">Admin overview</h1>
+                <p className="mt-2 text-sm text-muted-foreground">Monitor platform health, review trust queues, and keep operations running smoothly.</p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="glass border-primary/10 bg-primary/5">
+                <Card className="glass">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium">Total Users</CardTitle>
                         <Users className="h-4 w-4 text-primary" />
@@ -127,7 +127,7 @@ export default async function AdminDashboard() {
                         <p className="text-xs text-muted-foreground mt-1">Across all categories</p>
                     </CardContent>
                 </Card>
-                <Card className="glass border-orange-500/10 bg-orange-500/5">
+                <Card className="glass">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium">Pending Verifications</CardTitle>
                         <Clock className="h-4 w-4 text-orange-500" />
@@ -151,22 +151,22 @@ export default async function AdminDashboard() {
                 </Card>
             </div>
 
-            <Card className="glass overflow-hidden border-primary/20 bg-gradient-to-br from-primary/[0.08] via-background to-blue-500/[0.08] shadow-xl shadow-primary/5">
+            <Card className="glass overflow-hidden border-primary/20 bg-card">
                 <CardContent className="p-6 md:p-7 space-y-6">
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                         <div className="max-w-2xl space-y-4">
-                            <Badge className="bg-primary/10 text-primary border-primary/20 font-bold uppercase tracking-[0.2em] text-[10px] px-3 py-1">
+                            <Badge variant="outline" className="px-3 py-1">
                                 <Sparkles className="mr-1.5 h-3 w-3" /> AI Platform Copilot
                             </Badge>
                             <div className="space-y-2">
-                                <h2 className="text-2xl font-black tracking-tight">The marketplace now has a live operations brief.</h2>
+                                <h2 className="text-2xl font-semibold tracking-tight">The marketplace now has a live operations brief.</h2>
                                 <p className="text-sm text-muted-foreground leading-6">
                                     {aiCopilot?.summary || 'Current platform signals are stable. Review verification queues and watchlist items to keep trust and response times healthy.'}
                                 </p>
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 {hotSkills.slice(0, 4).map((skill: string) => (
-                                    <Badge key={skill} variant="outline" className="border-primary/20 bg-background/70 text-[11px] font-semibold">
+                                    <Badge key={skill} variant="outline" className="border-primary/20 bg-background text-[11px] font-semibold">
                                         {skill}
                                     </Badge>
                                 ))}
@@ -174,34 +174,34 @@ export default async function AdminDashboard() {
                         </div>
 
                         <div className="grid w-full gap-3 sm:grid-cols-4 lg:max-w-2xl">
-                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">System Health</p>
-                                <p className="mt-2 text-3xl font-black tracking-tight text-primary">{aiCopilot?.systemHealthScore ?? 0}%</p>
+                            <div className="rounded-2xl border border-border/60 bg-background p-4">
+                                <p className="text-xs font-medium text-muted-foreground">System Health</p>
+                                <p className="mt-2 text-3xl font-semibold tracking-tight text-primary">{aiCopilot?.systemHealthScore ?? 0}%</p>
                                 <p className="text-xs text-muted-foreground mt-1">operational confidence</p>
                             </div>
-                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Backlog</p>
-                                <p className="mt-2 text-3xl font-black tracking-tight">{aiCopilot?.approvalBacklog ?? 0}</p>
+                            <div className="rounded-2xl border border-border/60 bg-background p-4">
+                                <p className="text-xs font-medium text-muted-foreground">Backlog</p>
+                                <p className="mt-2 text-3xl font-semibold tracking-tight">{aiCopilot?.approvalBacklog ?? 0}</p>
                                 <p className="text-xs text-muted-foreground mt-1">approval items open</p>
                             </div>
-                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Avg Match</p>
-                                <p className="mt-2 text-3xl font-black tracking-tight">{aiCopilot?.avgMatchScore ?? 0}%</p>
+                            <div className="rounded-2xl border border-border/60 bg-background p-4">
+                                <p className="text-xs font-medium text-muted-foreground">Avg Match</p>
+                                <p className="mt-2 text-3xl font-semibold tracking-tight">{aiCopilot?.avgMatchScore ?? 0}%</p>
                                 <p className="text-xs text-muted-foreground mt-1">ecosystem fit quality</p>
                             </div>
-                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Trust Flags</p>
-                                <p className="mt-2 text-3xl font-black tracking-tight">{aiCopilot?.trustFlags ?? 0}</p>
+                            <div className="rounded-2xl border border-border/60 bg-background p-4">
+                                <p className="text-xs font-medium text-muted-foreground">Trust Flags</p>
+                                <p className="mt-2 text-3xl font-semibold tracking-tight">{aiCopilot?.trustFlags ?? 0}</p>
                                 <p className="text-xs text-muted-foreground mt-1">recent review incidents</p>
                             </div>
                         </div>
                     </div>
 
                     <div className="grid gap-4 lg:grid-cols-[1.1fr_0.8fr_1fr]">
-                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+                        <div className="rounded-2xl border border-border/60 bg-background p-5">
                             <div className="flex items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Priority Actions</p>
+                                    <p className="text-xs font-medium text-muted-foreground">Priority Actions</p>
                                     <p className="text-sm font-semibold mt-1">What needs admin attention first</p>
                                 </div>
                                 <Target className="h-4 w-4 text-primary" />
@@ -211,7 +211,7 @@ export default async function AdminDashboard() {
                                     <Link
                                         key={action.title}
                                         href={action.href || '/admin'}
-                                        className="group flex items-start gap-3 rounded-2xl border border-border/60 bg-muted/20 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
+                                        className="group flex items-start gap-3 rounded-2xl border border-border/60 bg-muted/40 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
                                     >
                                         <div className={cn(
                                             'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl',
@@ -220,7 +220,7 @@ export default async function AdminDashboard() {
                                             {action.priority === 'high' ? <Brain className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="text-sm font-bold tracking-tight">{action.title}</p>
+                                            <p className="text-sm font-semibold tracking-tight">{action.title}</p>
                                             <p className="text-xs text-muted-foreground mt-1 leading-5">{action.description}</p>
                                         </div>
                                     </Link>
@@ -232,10 +232,10 @@ export default async function AdminDashboard() {
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+                        <div className="rounded-2xl border border-border/60 bg-background p-5">
                             <div className="flex items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Queue Snapshot</p>
+                                    <p className="text-xs font-medium text-muted-foreground">Queue Snapshot</p>
                                     <p className="text-sm font-semibold mt-1">Where approvals are waiting</p>
                                 </div>
                                 <ShieldCheck className="h-4 w-4 text-primary" />
@@ -256,10 +256,10 @@ export default async function AdminDashboard() {
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+                        <div className="rounded-2xl border border-border/60 bg-background p-5">
                             <div className="flex items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Watchlist</p>
+                                    <p className="text-xs font-medium text-muted-foreground">Watchlist</p>
                                     <p className="text-sm font-semibold mt-1">Platform areas that need monitoring</p>
                                 </div>
                                 <AlertTriangle className="h-4 w-4 text-primary" />
@@ -269,9 +269,9 @@ export default async function AdminDashboard() {
                                     <Link
                                         key={item.title}
                                         href={item.href || '/admin'}
-                                        className="block rounded-2xl border border-border/60 bg-muted/20 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
+                                        className="block rounded-2xl border border-border/60 bg-muted/40 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
                                     >
-                                        <p className="text-sm font-bold tracking-tight">{item.title}</p>
+                                        <p className="text-sm font-semibold tracking-tight">{item.title}</p>
                                         <p className="text-xs text-muted-foreground mt-1 leading-5">{item.reason}</p>
                                     </Link>
                                 )) : (
@@ -299,27 +299,27 @@ export default async function AdminDashboard() {
                             <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
                                 <div className="space-y-4">
                                     <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-                                        <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">AI Calls</p>
-                                            <p className="mt-2 text-3xl font-black tracking-tight text-primary">{aiAnalytics?.totalActions ?? 0}</p>
+                                        <div className="rounded-2xl border border-border/60 bg-background p-4">
+                                            <p className="text-xs font-medium text-muted-foreground">AI Calls</p>
+                                            <p className="mt-2 text-3xl font-semibold tracking-tight text-primary">{aiAnalytics?.totalActions ?? 0}</p>
                                             <p className="text-xs text-muted-foreground mt-1">last {Math.round((aiAnalytics?.windowHours ?? 168) / 24)} days</p>
                                         </div>
-                                        <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Success Rate</p>
-                                            <p className="mt-2 text-3xl font-black tracking-tight">{aiAnalytics?.successRate ?? 0}%</p>
+                                        <div className="rounded-2xl border border-border/60 bg-background p-4">
+                                            <p className="text-xs font-medium text-muted-foreground">Success Rate</p>
+                                            <p className="mt-2 text-3xl font-semibold tracking-tight">{aiAnalytics?.successRate ?? 0}%</p>
                                             <p className="text-xs text-muted-foreground mt-1">audited responses</p>
                                         </div>
-                                        <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Fallback Rate</p>
-                                            <p className="mt-2 text-3xl font-black tracking-tight">{aiAnalytics?.fallbackRate ?? 0}%</p>
+                                        <div className="rounded-2xl border border-border/60 bg-background p-4">
+                                            <p className="text-xs font-medium text-muted-foreground">Fallback Rate</p>
+                                            <p className="mt-2 text-3xl font-semibold tracking-tight">{aiAnalytics?.fallbackRate ?? 0}%</p>
                                             <p className="text-xs text-muted-foreground mt-1">non-LLM responses</p>
                                         </div>
                                     </div>
-                                    <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Prompt Versions</p>
+                                    <div className="rounded-2xl border border-border/60 bg-background p-4">
+                                        <p className="text-xs font-medium text-muted-foreground">Prompt Versions</p>
                                         <div className="mt-3 flex flex-wrap gap-2">
                                             {aiVersionBreakdown.length > 0 ? aiVersionBreakdown.slice(0, 4).map((item: any) => (
-                                                <Badge key={item.promptVersion} variant="outline" className="bg-background/70">
+                                                <Badge key={item.promptVersion} variant="outline" className="bg-background">
                                                     {item.promptVersion} · {item.count}
                                                 </Badge>
                                             )) : (
@@ -330,19 +330,19 @@ export default async function AdminDashboard() {
                                 </div>
 
                                 <div className="space-y-4">
-                                    <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                    <div className="rounded-2xl border border-border/60 bg-background p-4">
                                         <div className="flex items-center justify-between gap-3">
                                             <div>
-                                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Most Used Actions</p>
+                                                <p className="text-xs font-medium text-muted-foreground">Most Used Actions</p>
                                                 <p className="text-sm font-semibold mt-1">Where the AI system is working hardest</p>
                                             </div>
                                             <BarChart3 className="h-4 w-4 text-primary" />
                                         </div>
                                         <div className="mt-4 space-y-3">
                                             {aiActionBreakdown.length > 0 ? aiActionBreakdown.slice(0, 4).map((item: any) => (
-                                                <div key={item.actionKey} className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                                                <div key={item.actionKey} className="rounded-xl border border-border/50 bg-muted/40 p-3">
                                                     <div className="flex items-center justify-between gap-3">
-                                                        <p className="text-sm font-bold tracking-tight">{item.actionKey.replace(/_/g, ' ')}</p>
+                                                        <p className="text-sm font-semibold tracking-tight">{item.actionKey.replace(/_/g, ' ')}</p>
                                                         <Badge variant="outline">{item.count}</Badge>
                                                     </div>
                                                     <p className="mt-2 text-xs text-muted-foreground">
@@ -356,17 +356,17 @@ export default async function AdminDashboard() {
                                             )}
                                         </div>
                                     </div>
-                                    <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                    <div className="rounded-2xl border border-border/60 bg-background p-4">
                                         <div className="flex items-center justify-between gap-3">
                                             <div>
-                                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Recent AI Events</p>
+                                                <p className="text-xs font-medium text-muted-foreground">Recent AI Events</p>
                                                 <p className="text-sm font-semibold mt-1">Latest runtime decisions</p>
                                             </div>
                                             <Clock className="h-4 w-4 text-primary" />
                                         </div>
                                         <div className="mt-4 space-y-2">
                                             {aiRecentEvents.length > 0 ? aiRecentEvents.slice(0, 4).map((event: any) => (
-                                                <div key={event.id} className="rounded-xl border border-border/50 bg-muted/20 px-3 py-2">
+                                                <div key={event.id} className="rounded-xl border border-border/50 bg-muted/40 px-3 py-2">
                                                     <div className="flex items-center justify-between gap-3">
                                                         <p className="text-sm font-semibold">{event.actionKey.replace(/_/g, ' ')}</p>
                                                         <Badge className={cn('border-none', event.usedFallback ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300')}>
@@ -404,7 +404,7 @@ export default async function AdminDashboard() {
                                                     {log.user?.full_name?.[0] || 'U'}
                                                 </div>
                                                 <div>
-                                                    <p className="font-medium">{log.user?.full_name} <span className="text-[10px] text-muted-foreground uppercase">({log.action})</span></p>
+                                                    <p className="font-medium">{log.user?.full_name} <span className="text-xs text-muted-foreground capitalize">({log.action})</span></p>
                                                     <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString()}</p>
                                                 </div>
                                             </div>
@@ -420,10 +420,10 @@ export default async function AdminDashboard() {
                 </div>
 
                 <div className="md:col-span-3 space-y-6">
-                    <Card className="glass bg-orange-500/5 border-orange-500/10">
+                    <Card className="glass">
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-orange-500">
-                                <AlertTriangle className="h-5 w-5" /> Verification Queue
+                            <CardTitle className="flex items-center gap-2">
+                                <AlertTriangle className="h-5 w-5 text-primary" /> Verification Queue
                             </CardTitle>
                             <CardDescription>Companies waiting for vetting</CardDescription>
                         </CardHeader>
@@ -435,22 +435,22 @@ export default async function AdminDashboard() {
                                             {pendingCompanyList.map((company) => (
                                                 <div key={company.id} className="flex items-center gap-3">
                                                     <Building2 className="h-5 w-5 text-muted-foreground" />
-                                                    <p className="text-sm font-bold">{company.company_name || 'Company pending verification'}</p>
+                                                    <p className="text-sm font-semibold">{company.company_name || 'Company pending verification'}</p>
                                                 </div>
                                             ))}
                                         </div>
                                     ) : (
                                         <div className="flex items-center gap-3">
                                             <Building2 className="h-5 w-5 text-muted-foreground" />
-                                            <p className="text-sm font-bold">Companies awaiting verification</p>
+                                            <p className="text-sm font-semibold">Companies awaiting verification</p>
                                         </div>
                                     )}
-                                    <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" size="sm" asChild>
+                                    <Button className="w-full" size="sm" asChild>
                                         <Link href="/admin/companies">Review {pendingCompanies} Pending</Link>
                                     </Button>
                                 </div>
                             ) : (
-                                <div className="text-xs text-muted-foreground font-bold uppercase tracking-widest text-center py-6 border border-dashed rounded-xl">
+                                <div className="rounded-xl border border-dashed py-6 text-center text-sm text-muted-foreground">
                                     No pending companies
                                 </div>
                             )}
@@ -489,12 +489,12 @@ export default async function AdminDashboard() {
                         </CardContent>
                     </Card>
 
-                    <Card className="glass overflow-hidden border-primary/10 bg-primary/5">
+                    <Card className="glass">
                         <div className="p-6 space-y-3">
-                            <h4 className="font-bold flex items-center gap-2">
+                            <h4 className="flex items-center gap-2 text-base font-semibold">
                                 <Sparkles className="h-4 w-4 text-primary" /> Market Pulse
                             </h4>
-                            <p className="text-xs text-muted-foreground leading-relaxed">
+                            <p className="text-sm text-muted-foreground leading-6">
                                 {hotSkills.length > 0
                                     ? `Current demand is clustering around ${hotSkills.slice(0, 3).join(', ')}. Keep approvals fast in those categories to avoid marketplace drag.`
                                     : 'Hot-skill demand will appear here as more verified internships go live.'}

@@ -23,7 +23,7 @@ export function DashboardLayout({ children, role, userId, userName }: DashboardL
     }, [pathname]);
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-muted/30">
             <Sidebar
                 role={role}
                 collapsed={collapsed}
@@ -31,9 +31,9 @@ export function DashboardLayout({ children, role, userId, userName }: DashboardL
                 onClose={() => setMobileOpen(false)}
                 onToggle={() => setCollapsed((current) => !current)}
             />
-            <div className={cn('min-h-screen flex flex-col transition-[margin] duration-300', collapsed ? 'md:ml-[70px]' : 'md:ml-64')}>
+            <div className={cn('min-h-screen flex flex-col transition-[margin] duration-300', collapsed ? 'md:ml-[72px]' : 'md:ml-64')}>
                 <Navbar userId={userId} userName={userName} userRole={role} onMenuClick={() => setMobileOpen(true)} />
-                <main className="flex-grow p-4 sm:p-6 animate-fade-in">
+                <main className="flex-grow p-4 sm:p-6 lg:p-8">
                     {children}
                 </main>
             </div>

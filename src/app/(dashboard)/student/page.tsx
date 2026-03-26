@@ -160,50 +160,50 @@ export default async function StudentDashboard() {
     const copilotGaps = Array.isArray(aiCopilot?.topGaps) ? aiCopilot.topGaps : finalMissingSkills;
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-black tracking-tighter uppercase italic">Welcome back, {profile?.full_name?.split(' ')[0] || 'Student'} 👋</h1>
-                <p className="text-muted-foreground mt-2 font-medium">Your professional ecosystem is now AI-active.</p>
+                <h1 className="text-3xl font-semibold tracking-tight">Welcome back, {profile?.full_name?.split(' ')[0] || 'Student'}</h1>
+                <p className="mt-2 text-sm text-muted-foreground">Here is your current progress across profile quality, opportunities, and applications.</p>
                 {connectedCollege && (
-                    <p className="text-xs text-muted-foreground mt-1 font-semibold uppercase tracking-widest">
-                        Connected College: {connectedCollege}
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Connected college: {connectedCollege}
                     </p>
                 )}
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="glass shadow-sm border-primary/20 bg-primary/5">
+                <Card className="glass">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-widest opacity-70">Market Readiness</CardTitle>
+                        <CardTitle className="text-xs font-medium text-muted-foreground">Market Readiness</CardTitle>
                         <Brain className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-black text-primary tracking-tighter">
+                        <div className="text-2xl font-semibold text-primary tracking-tighter">
                             {marketReadinessScore !== null ? `${marketReadinessScore}%` : 'N/A'}
                         </div>
-                        <p className="text-[10px] text-muted-foreground mt-1 font-bold uppercase">
+                        <p className="mt-1 text-xs text-muted-foreground">
                             {marketReadinessScore !== null ? 'Based on profile + resume' : 'No score yet'}
                         </p>
                     </CardContent>
                 </Card>
                 <Card className="glass shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-widest opacity-70">Applications</CardTitle>
+                        <CardTitle className="text-xs font-medium text-muted-foreground">Applications</CardTitle>
                         <Briefcase className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-black tracking-tighter">{applications?.length || 0}</div>
-                        <p className="text-[10px] text-muted-foreground mt-1 font-bold uppercase">Active submissions</p>
+                        <div className="text-2xl font-semibold tracking-tighter">{applications?.length || 0}</div>
+                        <p className="mt-1 text-xs text-muted-foreground">Active submissions</p>
                     </CardContent>
                 </Card>
                 <Card className="glass shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-widest opacity-70">Ecosystem Sync</CardTitle>
+                        <CardTitle className="text-xs font-medium text-muted-foreground">Ecosystem Sync</CardTitle>
                         <CheckCircle className="h-4 w-4 text-green-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-black tracking-tighter">{profileCompleteness}%</div>
-                        <p className="text-[10px] text-muted-foreground mt-1 font-bold uppercase">Profile Integrity</p>
+                        <div className="text-2xl font-semibold tracking-tighter">{profileCompleteness}%</div>
+                        <p className="mt-1 text-xs text-muted-foreground">Profile integrity</p>
                     </CardContent>
                 </Card>
                 <Card className="glass shadow-sm overflow-hidden relative">
@@ -211,7 +211,7 @@ export default async function StudentDashboard() {
                         <LinkIcon size={40} />
                     </div>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-widest opacity-70">Connected Ecosystem</CardTitle>
+                        <CardTitle className="text-xs font-medium text-muted-foreground">Connected Ecosystem</CardTitle>
                         <div className="flex gap-2">
                             {profile?.github_username && <Github className="h-3 w-3 text-purple-500" />}
                             {profile?.linkedin_url && <Linkedin className="h-3 w-3 text-blue-500" />}
@@ -221,13 +221,13 @@ export default async function StudentDashboard() {
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
                                 <span className={cn('h-2 w-2 rounded-full', (profile?.github_username && profile?.linkedin_url) ? 'bg-green-500' : 'bg-yellow-500')} />
-                                <div className="text-sm font-black tracking-tight uppercase">
+                                <div className="text-sm font-semibold tracking-tight">
                                     {profile?.github_username ? `@${profile.github_username}` : 'GitHub Pending'}
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className={cn('h-2 w-2 rounded-full', profile?.linkedin_url ? 'bg-green-500' : 'bg-red-500/20')} />
-                                <div className="text-[10px] font-bold opacity-70 truncate">
+                                <div className="truncate text-xs text-muted-foreground">
                                     {profile?.linkedin_url ? 'LinkedIn Connected' : 'LinkedIn Missing'}
                                 </div>
                             </div>
@@ -236,22 +236,22 @@ export default async function StudentDashboard() {
                 </Card>
             </div>
 
-            <Card className="glass overflow-hidden border-primary/20 bg-gradient-to-br from-primary/[0.08] via-background to-blue-500/[0.08] shadow-xl shadow-primary/5">
+            <Card className="glass overflow-hidden border-primary/20 bg-card">
                 <CardContent className="p-6 md:p-7 space-y-6">
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                         <div className="max-w-2xl space-y-4">
-                            <Badge className="bg-primary/10 text-primary border-primary/20 font-bold uppercase tracking-[0.2em] text-[10px] px-3 py-1">
+                            <Badge variant="outline" className="px-3 py-1">
                                 <Sparkles className="mr-1.5 h-3 w-3" /> AI Career Copilot
                             </Badge>
                             <div className="space-y-2">
-                                <h2 className="text-2xl font-black tracking-tight">Your next best moves are now prioritized.</h2>
+                                <h2 className="text-2xl font-semibold tracking-tight">Your next best moves are now prioritized.</h2>
                                 <p className="text-sm text-muted-foreground leading-6">
                                     {aiCopilot?.summary || 'We are translating your resume, verified skills, and live openings into an action plan you can trust.'}
                                 </p>
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 {(aiCopilot?.roleFocus || []).slice(0, 3).map((role: string) => (
-                                    <Badge key={role} variant="outline" className="border-primary/20 bg-background/70 text-[11px] font-semibold">
+                                    <Badge key={role} variant="outline" className="border-primary/20 bg-background text-[11px] font-semibold">
                                         {role}
                                     </Badge>
                                 ))}
@@ -264,29 +264,29 @@ export default async function StudentDashboard() {
                         </div>
 
                         <div className="grid w-full gap-3 sm:grid-cols-3 lg:max-w-md">
-                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Ready Now</p>
-                                <p className="mt-2 text-3xl font-black tracking-tight text-primary">{aiCopilot?.readyNowCount ?? 0}</p>
+                            <div className="rounded-2xl border border-border/60 bg-background p-4">
+                                <p className="text-xs font-medium text-muted-foreground">Ready Now</p>
+                                <p className="mt-2 text-3xl font-semibold tracking-tight text-primary">{aiCopilot?.readyNowCount ?? 0}</p>
                                 <p className="text-xs text-muted-foreground mt-1">roles inside your college network</p>
                             </div>
-                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Strong Matches</p>
-                                <p className="mt-2 text-3xl font-black tracking-tight">{aiCopilot?.strongMatchCount ?? 0}</p>
+                            <div className="rounded-2xl border border-border/60 bg-background p-4">
+                                <p className="text-xs font-medium text-muted-foreground">Strong Matches</p>
+                                <p className="mt-2 text-3xl font-semibold tracking-tight">{aiCopilot?.strongMatchCount ?? 0}</p>
                                 <p className="text-xs text-muted-foreground mt-1">roles with clear overlap</p>
                             </div>
-                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Next Milestone</p>
-                                <p className="mt-2 text-3xl font-black tracking-tight">{aiCopilot?.nextMilestoneScore ?? marketReadinessScore ?? 0}%</p>
+                            <div className="rounded-2xl border border-border/60 bg-background p-4">
+                                <p className="text-xs font-medium text-muted-foreground">Next Milestone</p>
+                                <p className="mt-2 text-3xl font-semibold tracking-tight">{aiCopilot?.nextMilestoneScore ?? marketReadinessScore ?? 0}%</p>
                                 <p className="text-xs text-muted-foreground mt-1">possible after your next upgrade</p>
                             </div>
                         </div>
                     </div>
 
                     <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr_0.9fr]">
-                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+                        <div className="rounded-2xl border border-border/60 bg-background p-5">
                             <div className="flex items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Priority Actions</p>
+                                    <p className="text-xs font-medium text-muted-foreground">Priority Actions</p>
                                     <p className="text-sm font-semibold mt-1">What to do next for the biggest outcome lift</p>
                                 </div>
                                 <Target className="h-4 w-4 text-primary" />
@@ -296,7 +296,7 @@ export default async function StudentDashboard() {
                                     <Link
                                         key={action.title}
                                         href={action.href || '/student/profile'}
-                                        className="group flex items-start gap-3 rounded-2xl border border-border/60 bg-muted/20 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
+                                        className="group flex items-start gap-3 rounded-2xl border border-border/60 bg-muted/40 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
                                     >
                                         <div className={cn(
                                             'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl',
@@ -305,7 +305,7 @@ export default async function StudentDashboard() {
                                             {action.priority === 'high' ? <Rocket className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="text-sm font-bold tracking-tight">{action.title}</p>
+                                            <p className="text-sm font-semibold tracking-tight">{action.title}</p>
                                             <p className="text-xs text-muted-foreground mt-1 leading-5">{action.description}</p>
                                         </div>
                                     </Link>
@@ -317,10 +317,10 @@ export default async function StudentDashboard() {
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+                        <div className="rounded-2xl border border-border/60 bg-background p-5">
                             <div className="flex items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Signal Quality</p>
+                                    <p className="text-xs font-medium text-muted-foreground">Signal Quality</p>
                                     <p className="text-sm font-semibold mt-1">Trust signals recruiters care about</p>
                                 </div>
                                 <ShieldCheck className="h-4 w-4 text-primary" />
@@ -342,10 +342,10 @@ export default async function StudentDashboard() {
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+                        <div className="rounded-2xl border border-border/60 bg-background p-5">
                             <div className="flex items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Momentum</p>
+                                    <p className="text-xs font-medium text-muted-foreground">Momentum</p>
                                     <p className="text-sm font-semibold mt-1">Pipeline health this week</p>
                                 </div>
                                 <Briefcase className="h-4 w-4 text-primary" />
@@ -357,9 +357,9 @@ export default async function StudentDashboard() {
                                     { label: 'Interviews', value: copilotMomentum.interviews ?? 0 },
                                     { label: 'Accepted', value: copilotMomentum.accepted ?? completedApps.length },
                                 ].map((metric) => (
-                                    <div key={metric.label} className="rounded-xl border border-border/50 bg-muted/20 p-3">
-                                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">{metric.label}</p>
-                                        <p className="mt-2 text-2xl font-black tracking-tight">{metric.value}</p>
+                                    <div key={metric.label} className="rounded-xl border border-border/50 bg-muted/40 p-3">
+                                        <p className="text-xs font-medium text-muted-foreground">{metric.label}</p>
+                                        <p className="mt-2 text-2xl font-semibold tracking-tight">{metric.value}</p>
                                     </div>
                                 ))}
                             </div>
@@ -411,14 +411,14 @@ export default async function StudentDashboard() {
                                                         {(internship.insight.matchedSkills.length > 0 ? internship.insight.matchedSkills : internship.required_skills || [])
                                                             .slice(0, 3)
                                                             .map((skill: string) => (
-                                                                <Badge key={skill} variant="outline" className="bg-background/80">
+                                                                <Badge key={skill} variant="outline" className="bg-background">
                                                                     {skill}
                                                                 </Badge>
                                                             ))}
                                                     </div>
 
-                                                    <div className="space-y-2 rounded-2xl border border-border/50 bg-muted/20 p-3">
-                                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Why this fits</p>
+                                                    <div className="space-y-2 rounded-2xl border border-border/50 bg-muted/40 p-3">
+                                                        <p className="text-xs font-medium text-muted-foreground">Why this fits</p>
                                                         <p className="text-sm font-medium">{internship.insight.summary}</p>
                                                         <p className="text-xs text-muted-foreground">{internship.insight.gapSummary}</p>
                                                     </div>
@@ -444,23 +444,23 @@ export default async function StudentDashboard() {
                         <CardContent>
                             <div className="space-y-6">
                                 <div>
-                                    <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+                                    <h4 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
                                         <Briefcase size={14} /> Internship History
                                     </h4>
                                     {completedApps && completedApps.length > 0 ? (
                                         <div className="space-y-3">
                                             {completedApps.map((app: any) => (
-                                                <div key={app.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-green-500/5">
+                                                <div key={app.id} className="flex items-center justify-between rounded-lg border border-border/50 bg-background p-3">
                                                     <div>
-                                                        <p className="font-bold text-sm">{app.internship?.title}</p>
-                                                        <p className="text-[10px] text-muted-foreground font-semibold uppercase">{app.internship?.profiles?.company_name} • Completed</p>
+                                                        <p className="text-sm font-semibold">{app.internship?.title}</p>
+                                                        <p className="text-xs text-muted-foreground">{app.internship?.profiles?.company_name} • Completed</p>
                                                     </div>
                                                     <Badge variant="success" className="text-[10px]">Verified Hire</Badge>
                                                 </div>
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="p-4 rounded-lg bg-muted/20 border border-dashed border-border flex flex-col items-center justify-center text-center">
+                                        <div className="p-4 rounded-lg bg-muted/40 border border-dashed border-border flex flex-col items-center justify-center text-center">
                                             <p className="text-[11px] text-muted-foreground font-medium">No completed internships yet.</p>
                                             <p className="text-[10px] text-muted-foreground mt-1">Apply to internships to build your history.</p>
                                         </div>
@@ -468,16 +468,16 @@ export default async function StudentDashboard() {
                                 </div>
 
                                 <div>
-                                    <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+                                    <h4 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
                                         <CheckCircle size={14} /> Challenges
                                     </h4>
                                     {tasks && tasks.length > 0 ? (
                                         <div className="space-y-3">
                                             {tasks.slice(0, 3).map((task: any) => (
-                                                <div key={task.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-primary/5">
+                                                <div key={task.id} className="flex items-center justify-between rounded-lg border border-border/50 bg-background p-3">
                                                     <div>
-                                                        <p className="font-bold text-sm">{task.title}</p>
-                                                        <p className="text-[10px] text-muted-foreground font-semibold uppercase">
+                                                        <p className="text-sm font-semibold">{task.title}</p>
+                                                        <p className="text-xs text-muted-foreground">
                                                             {task.company?.company_name || 'Company Challenge'}
                                                         </p>
                                                     </div>
@@ -486,13 +486,13 @@ export default async function StudentDashboard() {
                                             ))}
                                             <Link
                                                 href="/student/tasks"
-                                                className="text-[10px] text-primary font-bold uppercase mt-1 inline-flex items-center gap-1 hover:underline"
+                                                className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
                                             >
                                                 View all challenges
                                             </Link>
                                         </div>
                                     ) : (
-                                        <div className="p-4 rounded-lg bg-muted/20 border border-dashed border-border flex flex-col items-center justify-center text-center">
+                                        <div className="p-4 rounded-lg bg-muted/40 border border-dashed border-border flex flex-col items-center justify-center text-center">
                                             <p className="text-[11px] text-muted-foreground font-medium">No challenges available yet.</p>
                                         </div>
                                     )}
@@ -536,7 +536,7 @@ export default async function StudentDashboard() {
                 </div>
 
                 <div className="md:col-span-3 space-y-6">
-                    <Card className="glass bg-primary/5 border-primary/10">
+                    <Card className="glass">
                         <CardHeader>
                             <CardTitle>Skill Gap Analysis</CardTitle>
                         </CardHeader>
@@ -546,18 +546,20 @@ export default async function StudentDashboard() {
                             </div>
 
                             <div className="space-y-4">
-                                <p className="text-[10px] font-black uppercase tracking-widest opacity-70 border-b pb-1 border-primary/20">Critical Gaps</p>
+                                <p className="text-xs font-medium text-muted-foreground border-b pb-1 border-primary/20">Critical Gaps</p>
                                 <div className="flex flex-wrap gap-2">
                                     {finalMissingSkills.length > 0 ? (
                                         finalMissingSkills.map((skill: string) => (
-                                            <Badge key={skill} variant="outline" className="text-destructive border-destructive/20 text-[10px] uppercase font-bold">{skill}</Badge>
+                                            <Badge key={skill} variant="outline" className="border-destructive/20 text-destructive">
+                                                {skill}
+                                            </Badge>
                                         ))
                                     ) : (
-                                        <p className="text-xs text-muted-foreground italic">AI Audit: 100% Alignment with current market trends.</p>
+                                        <p className="text-xs text-muted-foreground">Your current skill profile aligns well with active demand.</p>
                                     )}
                                 </div>
                             </div>
-                            <Link href="/student/skills" className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'w-full mt-4 flex items-center justify-center font-bold uppercase tracking-wider text-[10px]')}>
+                            <Link href="/student/skills" className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'mt-4 flex w-full items-center justify-center')}>
                                 View Learning Roadmap
                             </Link>
                         </CardContent>
@@ -568,52 +570,64 @@ export default async function StudentDashboard() {
                             <CardTitle>Professional Audit</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className={cn('flex items-center gap-3 p-3 rounded-lg border', profile?.github_username ? 'bg-purple-500/5 border-purple-500/20' : 'bg-muted/50 border-border/50')}>
-                                <Github className={cn('h-6 w-6', profile?.github_username ? 'text-purple-500' : 'text-muted-foreground')} />
-                                <div>
-                                    <p className="text-xs font-bold italic">GitHub</p>
-                                    <p className="text-[9px] text-muted-foreground uppercase font-semibold">
-                                        {profile?.github_username ? 'Verified & Synced' : 'Action Required'}
+                            <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-background p-3">
+                                <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg', profile?.github_username ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground')}>
+                                    <Github className="h-5 w-5" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-sm font-medium">GitHub</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {profile?.github_username ? 'Connected and synced for verification' : 'Connect your profile to strengthen technical trust signals'}
                                     </p>
                                 </div>
-                                {profile?.github_username && <CheckCircle className="ml-auto h-4 w-4 text-green-500" />}
+                                <Badge variant={profile?.github_username ? 'success' : 'outline'}>
+                                    {profile?.github_username ? 'Connected' : 'Missing'}
+                                </Badge>
                             </div>
-                            <div className={cn('flex items-center gap-3 p-3 rounded-lg border', profile?.linkedin_url ? 'bg-blue-500/5 border-blue-500/20' : 'bg-muted/50 border-border/50')}>
-                                <Linkedin className={cn('h-6 w-6', profile?.linkedin_url ? 'text-blue-500' : 'text-muted-foreground')} />
-                                <div>
-                                    <p className="text-xs font-bold italic">LinkedIn</p>
-                                    <p className="text-[9px] text-muted-foreground uppercase font-semibold">
-                                        {profile?.linkedin_url ? 'Identity Linked' : 'Analysis Missing'}
+                            <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-background p-3">
+                                <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg', profile?.linkedin_url ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground')}>
+                                    <Linkedin className="h-5 w-5" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-sm font-medium">LinkedIn</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {profile?.linkedin_url ? 'Identity profile linked successfully' : 'Add your public profile to improve recruiter confidence'}
                                     </p>
                                 </div>
-                                {profile?.linkedin_url && <CheckCircle className="ml-auto h-4 w-4 text-green-500" />}
+                                <Badge variant={profile?.linkedin_url ? 'success' : 'outline'}>
+                                    {profile?.linkedin_url ? 'Connected' : 'Missing'}
+                                </Badge>
                             </div>
-                            <Link href="/student/profile" className={cn(buttonVariants({ variant: (profile?.github_username && profile?.linkedin_url) ? 'secondary' : 'default', size: 'sm' }), 'w-full font-bold uppercase text-[10px] tracking-widest')}>
+                            <Link href="/student/profile" className={cn(buttonVariants({ variant: (profile?.github_username && profile?.linkedin_url) ? 'secondary' : 'default', size: 'sm' }), 'w-full')}>
                                 {(profile?.github_username && profile?.linkedin_url) ? 'Manage Connections' : 'Complete AI Audit'}
                             </Link>
                         </CardContent>
                     </Card>
 
-                    <Card className="glass overflow-hidden">
-                        <div className="bg-gradient-to-br from-primary/90 to-blue-600 p-6 text-primary-foreground relative">
-                            <div className="absolute top-0 right-0 p-4 opacity-10">
-                                <GraduationCap size={80} />
+                    <Card className="glass">
+                        <CardContent className="space-y-4 p-6">
+                            <div className="flex items-start gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                    <GraduationCap className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-semibold">Challenges</h3>
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        Complete company tasks to build proof of work and improve hiring visibility.
+                                    </p>
+                                </div>
                             </div>
-                            <h3 className="font-black text-lg flex items-center gap-2 italic">
-                                <GraduationCap className="h-5 w-5" /> CHALLENGES
-                            </h3>
-                            <p className="text-xs opacity-90 mt-2 font-medium leading-relaxed">Complete tasks from top companies and get directly hired.</p>
-                            <Link href="/student/tasks" className={cn(buttonVariants({ variant: 'default', size: 'sm' }), 'w-full mt-4 bg-white text-primary hover:bg-white/90 border-none font-black uppercase text-[10px] tracking-widest')}>
+                            <Link href="/student/tasks" className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'w-full')}>
                                 Explore Tasks
                             </Link>
-                        </div>
+                        </CardContent>
                     </Card>
 
                     <Card className="glass border-dashed border-border/70 bg-muted/10">
                         <CardContent className="p-5 space-y-3">
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <CircleAlert className="h-4 w-4 text-primary" />
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em]">AI Trust Note</p>
+                                <p className="text-sm font-medium">How recommendations are generated</p>
                             </div>
                             <p className="text-sm leading-6 text-muted-foreground">
                                 Every recommendation shown here is tied to your live skill graph, verified identity signals, and openings approved for your college. That keeps the dashboard useful, explainable, and recruiter-ready.
