@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Sidebar } from './sidebar';
-import { Navbar } from './navbar';
-import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { Navbar } from './navbar';
+import { Sidebar } from './sidebar';
 
 interface DashboardLayoutProps {
     children: React.ReactNode;
@@ -23,7 +23,7 @@ export function DashboardLayout({ children, role, userId, userName }: DashboardL
     }, [pathname]);
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-muted/40">
             <Sidebar
                 role={role}
                 collapsed={collapsed}
@@ -31,10 +31,12 @@ export function DashboardLayout({ children, role, userId, userName }: DashboardL
                 onClose={() => setMobileOpen(false)}
                 onToggle={() => setCollapsed((current) => !current)}
             />
-            <div className={cn('min-h-screen flex flex-col transition-[margin] duration-300', collapsed ? 'md:ml-[70px]' : 'md:ml-64')}>
+            <div className={cn('min-h-screen flex flex-col transition-[margin] duration-200', collapsed ? 'md:ml-[84px]' : 'md:ml-[272px]')}>
                 <Navbar userId={userId} userName={userName} userRole={role} onMenuClick={() => setMobileOpen(true)} />
-                <main className="flex-grow p-4 sm:p-6 animate-fade-in">
-                    {children}
+                <main className="flex-1 px-4 pb-8 pt-4 sm:px-6 lg:px-8">
+                    <div className="mx-auto w-full max-w-[1400px] space-y-6">
+                        {children}
+                    </div>
                 </main>
             </div>
         </div>

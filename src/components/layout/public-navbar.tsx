@@ -1,110 +1,99 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Zap, Menu, X, ArrowRight } from 'lucide-react';
+import { Menu, X, Zap } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 export function PublicNavbar() {
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     useEffect(() => {
-        const handleScroll = () => {
-            setScrolled(window.scrollY > 20);
-        };
+        const handleScroll = () => setScrolled(window.scrollY > 12);
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
     const navLinks = [
         { label: 'Features', href: '#features' },
-        { label: 'How it Works', href: '#how-it-works' },
-        { label: 'For You', href: '#roles' },
+        { label: 'How it works', href: '#how-it-works' },
+        { label: 'Roles', href: '#roles' },
     ];
 
     return (
         <nav
             className={cn(
-                'fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-6',
-                scrolled
-                    ? 'h-16 bg-background/80 backdrop-blur-md border-b border-border shadow-sm py-2'
-                    : 'h-20 bg-transparent py-4'
+                'fixed left-0 right-0 top-0 z-50 border-b border-transparent bg-background/95 transition-colors duration-200',
+                scrolled && 'border-border shadow-sm backdrop-blur-sm'
             )}
         >
-            <div className="max-w-7xl mx-auto h-full flex items-center justify-between">
-                {/* Logo */}
-                <Link href="/" className="flex items-center gap-2.5 group">
-                    <div className="w-9 h-9 rounded-lg gradient-brand flex items-center justify-center text-white shadow-md shadow-primary/20 group-hover:scale-105 transition-transform duration-300">
-                        <Zap size={20} />
+            <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-6">
+                <Link href="/" className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                        <Zap size={18} />
                     </div>
-                    <span className="text-lg font-bold text-foreground tracking-tight">InternBridge AI</span>
+                    <div>
+                        <span className="block text-base font-semibold tracking-tight text-foreground">InternBridge</span>
+                        <span className="block text-xs text-muted-foreground">AI internship platform</span>
+                    </div>
                 </Link>
 
-                {/* Desktop Links */}
-                <div className="hidden md:flex items-center gap-7">
+                <div className="hidden items-center gap-8 md:flex">
                     {navLinks.map((link) => (
                         <Link
                             key={link.label}
                             href={link.href}
-                            className="text-xs font-semibold text-muted-foreground hover:text-primary transition-colors uppercase tracking-wider h-full flex items-center"
+                            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                         >
                             {link.label}
                         </Link>
                     ))}
                 </div>
 
-                {/* Actions */}
                 <div className="flex items-center gap-3">
                     <ThemeToggle />
 
-                    <div className="hidden sm:flex items-center gap-3 ml-1">
+                    <div className="hidden items-center gap-3 sm:flex">
                         <Link href="/login">
-                            <Button variant="ghost" className="text-xs font-bold uppercase tracking-wider">
-                                Sign In
-                            </Button>
+                            <Button variant="ghost">Sign in</Button>
                         </Link>
                         <Link href="/register">
-                            <Button className="text-xs font-bold uppercase tracking-wider px-5 h-9 group">
-                                Get Started
-                                <ArrowRight size={14} className="ml-2 group-hover:translate-x-1 transition-transform" />
-                            </Button>
+                            <Button>Get started</Button>
                         </Link>
                     </div>
 
-                    {/* Mobile Toggle */}
                     <button
-                        className="md:hidden p-2 text-muted-foreground hover:bg-muted rounded-lg transition-colors"
-                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted md:hidden"
+                        onClick={() => setMobileMenuOpen((open) => !open)}
+                        aria-label="Toggle navigation"
                     >
-                        {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                        {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
                     </button>
                 </div>
             </div>
 
-            {/* Mobile Menu */}
             {mobileMenuOpen && (
-                <div className="absolute top-full left-0 right-0 bg-background border-b border-border p-6 shadow-xl md:hidden animate-in slide-in-from-top-4 duration-200">
+                <div className="border-t border-border bg-background px-6 py-5 shadow-sm md:hidden">
                     <div className="flex flex-col gap-4">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.label}
                                 href={link.href}
-                                className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                                className="text-sm font-medium text-foreground"
                                 onClick={() => setMobileMenuOpen(false)}
                             >
                                 {link.label}
                             </Link>
                         ))}
-                        <hr className="border-border" />
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3 pt-2">
                             <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                                <Button variant="secondary" className="w-full">Sign In</Button>
+                                <Button variant="outline" className="w-full">Sign in</Button>
                             </Link>
                             <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
-                                <Button className="w-full">Get Started</Button>
+                                <Button className="w-full">Get started</Button>
                             </Link>
                         </div>
                     </div>

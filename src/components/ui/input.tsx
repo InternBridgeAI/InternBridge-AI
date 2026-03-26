@@ -11,9 +11,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     ({ className, type, label, error, icon, id, ...props }, ref) => {
         const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
         return (
-            <div className="space-y-1.5">
+            <div className="space-y-2">
                 {label && (
-                    <label htmlFor={inputId} className="text-sm font-medium text-foreground">
+                    <label htmlFor={inputId} className="text-sm font-semibold text-foreground">
                         {label}
                     </label>
                 )}
@@ -27,19 +27,19 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                         type={type}
                         id={inputId}
                         className={cn(
-                            'flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium transition-all duration-200',
-                            'placeholder:text-muted-foreground/50',
-                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                            'flex h-11 w-full rounded-xl border border-input bg-card px-3 py-2 text-sm text-foreground shadow-sm ring-offset-background transition-colors duration-200',
+                            'placeholder:text-muted-foreground/70',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary',
                             'disabled:cursor-not-allowed disabled:opacity-50',
                             icon && 'pl-10',
-                            error && 'border-destructive focus-visible:ring-destructive/50',
+                            error && 'border-destructive focus-visible:ring-destructive/20',
                             className
                         )}
                         ref={ref}
                         {...props}
                     />
                 </div>
-                {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+                {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
             </div>
         );
     }

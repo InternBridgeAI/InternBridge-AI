@@ -2,31 +2,31 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { Loader2, Building2, GraduationCap, School } from 'lucide-react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { GraduationCap, Building2, School, Loader2 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 import { apiFetch } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 
 const ROLE_OPTIONS = [
     {
         value: 'student',
         label: 'Student',
-        description: 'Apply to internships and build your profile.',
+        description: 'Apply to internships, build your profile, and track your readiness.',
         icon: GraduationCap,
     },
     {
         value: 'company',
         label: 'Company',
-        description: 'Post internships and hire verified talent.',
+        description: 'Post internships, review candidates, and manage hiring decisions.',
         icon: Building2,
     },
     {
         value: 'tpo',
         label: 'College / TPO',
-        description: 'Manage campus placement workflows.',
+        description: 'Manage placements, approvals, and student readiness at scale.',
         icon: School,
     },
 ];
@@ -98,50 +98,58 @@ export default function SelectRolePage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="flex min-h-screen items-center justify-center bg-muted/30">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
-            <Card className="w-full max-w-lg shadow-2xl glass border-primary/20">
-                <CardHeader className="text-center space-y-3">
-                    <CardTitle className="text-2xl font-black">Select Your Role</CardTitle>
-                    <CardDescription>Choose how you&apos;ll use InternBridge AI.</CardDescription>
+        <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4 sm:p-6">
+            <Card className="w-full max-w-3xl">
+                <CardHeader className="space-y-3 text-center">
+                    <CardTitle className="text-3xl font-semibold tracking-tight">Choose your workspace</CardTitle>
+                    <CardDescription>
+                        Pick the role that matches how you will use InternBridge. You can continue onboarding right after this step.
+                    </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    {ROLE_OPTIONS.map((option) => {
-                        const Icon = option.icon;
-                        const isActive = selectedRole === option.value;
-                        return (
-                            <button
-                                key={option.value}
-                                type="button"
-                                onClick={() => setSelectedRole(option.value)}
-                                className={cn(
-                                    'w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all',
-                                    isActive ? 'border-primary bg-primary/10 shadow-sm' : 'border-border bg-background hover:border-primary/40'
-                                )}
-                            >
-                                <div className={cn(
-                                    'h-10 w-10 rounded-lg flex items-center justify-center',
-                                    isActive ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                                )}>
-                                    <Icon size={20} />
-                                </div>
-                                <div>
-                                    <p className="font-semibold">{option.label}</p>
-                                    <p className="text-xs text-muted-foreground">{option.description}</p>
-                                </div>
-                            </button>
-                        );
-                    })}
 
-                    <Button className="w-full font-bold uppercase tracking-widest" onClick={handleContinue} loading={isSaving}>
-                        Continue
-                    </Button>
+                <CardContent className="space-y-6">
+                    <div className="grid gap-4 md:grid-cols-3">
+                        {ROLE_OPTIONS.map((option) => {
+                            const Icon = option.icon;
+                            const isActive = selectedRole === option.value;
+                            return (
+                                <button
+                                    key={option.value}
+                                    type="button"
+                                    onClick={() => setSelectedRole(option.value)}
+                                    className={cn(
+                                        'rounded-2xl border bg-background p-5 text-left transition-colors',
+                                        isActive ? 'border-primary bg-primary/5 shadow-sm' : 'border-border hover:border-primary/25 hover:bg-muted/40'
+                                    )}
+                                >
+                                    <div className={cn(
+                                        'flex h-11 w-11 items-center justify-center rounded-xl',
+                                        isActive ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                                    )}>
+                                        <Icon size={20} />
+                                    </div>
+                                    <h3 className="mt-4 text-lg font-semibold tracking-tight text-foreground">{option.label}</h3>
+                                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{option.description}</p>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div className="flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-sm text-muted-foreground">
+                            You can refine your details in the next onboarding step.
+                        </p>
+                        <Button onClick={handleContinue} loading={isSaving} className="min-w-[180px]">
+                            Continue
+                        </Button>
+                    </div>
                 </CardContent>
             </Card>
         </div>

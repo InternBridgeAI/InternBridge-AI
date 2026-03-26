@@ -1,11 +1,11 @@
 'use client';
 
-import { LogOut, ArrowLeft, Menu } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { ArrowLeft, LogOut, Menu } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { getInitials } from '@/lib/utils';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { createClient } from '@/lib/supabase/client';
+import { getInitials } from '@/lib/utils';
 import { NotificationCenter } from './notification-center';
 
 interface NavbarProps {
@@ -25,54 +25,56 @@ export function Navbar({ userId, userName, userRole, onMenuClick }: NavbarProps)
     };
 
     return (
-        <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border">
-            <div className="flex items-center justify-between h-16 px-4 sm:px-6">
-                <div className="flex items-center gap-4 flex-1">
+        <header className="sticky top-0 z-30 border-b border-border bg-background">
+            <div className="mx-auto flex h-[72px] w-full max-w-[1400px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
                     <Button
                         variant="ghost"
                         size="icon"
                         onClick={onMenuClick}
-                        className="rounded-full h-9 w-9 text-muted-foreground hover:text-foreground md:hidden"
+                        className="md:hidden"
                         title="Open navigation"
                     >
                         <Menu size={18} />
                     </Button>
+
                     <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => router.back()}
-                        className="hidden rounded-full h-9 w-9 text-muted-foreground hover:text-foreground sm:inline-flex"
+                        className="hidden sm:inline-flex"
                         title="Go back"
                     >
                         <ArrowLeft size={18} />
                     </Button>
 
-                    <div className="hidden md:flex items-center gap-3">
-                        <div className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+                    <div className="hidden min-w-0 items-center gap-3 md:flex">
+                        <div className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold capitalize text-foreground">
                             {userRole}
                         </div>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="truncate text-sm text-muted-foreground">
                             Focused workspace for your daily actions.
                         </p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 sm:gap-4 ml-4">
+                <div className="flex items-center gap-2 sm:gap-3">
                     <NotificationCenter userId={userId} />
                     <ThemeToggle />
-                    <div className="flex items-center gap-3 pr-2 border-r border-border">
-                        <div className="w-8 h-8 rounded-full gradient-brand flex items-center justify-center text-white text-xs font-bold">
+
+                    <div className="hidden items-center gap-3 border-l border-border pl-3 sm:flex">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                             {getInitials(userName || 'U')}
                         </div>
                         <div className="hidden lg:block">
-                            <p className="text-sm font-medium text-foreground leading-tight">{userName || 'User'}</p>
-                            <p className="text-[11px] text-muted-foreground capitalize">{userRole}</p>
+                            <p className="text-sm font-semibold text-foreground">{userName || 'User'}</p>
+                            <p className="text-xs capitalize text-muted-foreground">{userRole}</p>
                         </div>
                     </div>
 
                     <button
                         onClick={handleLogout}
-                        className="p-2 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                        className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                         title="Sign out"
                     >
                         <LogOut size={18} />

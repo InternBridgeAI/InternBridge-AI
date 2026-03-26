@@ -160,25 +160,25 @@ export default async function StudentDashboard() {
     const copilotGaps = Array.isArray(aiCopilot?.topGaps) ? aiCopilot.topGaps : finalMissingSkills;
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            <div>
-                <h1 className="text-3xl font-black tracking-tighter uppercase italic">Welcome back, {profile?.full_name?.split(' ')[0] || 'Student'} 👋</h1>
-                <p className="text-muted-foreground mt-2 font-medium">Your professional ecosystem is now AI-active.</p>
+        <div className="space-y-6">
+            <div className="space-y-2">
+                <h1 className="text-3xl font-semibold tracking-tight">Welcome back, {profile?.full_name?.split(' ')[0] || 'Student'}</h1>
+                <p className="text-sm leading-6 text-muted-foreground">Your profile, matching signals, and applications are all in one place.</p>
                 {connectedCollege && (
-                    <p className="text-xs text-muted-foreground mt-1 font-semibold uppercase tracking-widest">
+                    <p className="text-sm text-muted-foreground">
                         Connected College: {connectedCollege}
                     </p>
                 )}
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="glass shadow-sm border-primary/20 bg-primary/5">
+                <Card className="glass">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-widest opacity-70">Market Readiness</CardTitle>
+                        <CardTitle className="text-[10px] font-semibold uppercase tracking-widest opacity-70">Market Readiness</CardTitle>
                         <Brain className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-black text-primary tracking-tighter">
+                        <div className="text-2xl font-semibold text-primary tracking-tighter">
                             {marketReadinessScore !== null ? `${marketReadinessScore}%` : 'N/A'}
                         </div>
                         <p className="text-[10px] text-muted-foreground mt-1 font-bold uppercase">
@@ -186,32 +186,32 @@ export default async function StudentDashboard() {
                         </p>
                     </CardContent>
                 </Card>
-                <Card className="glass shadow-sm">
+                <Card className="glass">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-widest opacity-70">Applications</CardTitle>
+                        <CardTitle className="text-[10px] font-semibold uppercase tracking-widest opacity-70">Applications</CardTitle>
                         <Briefcase className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-black tracking-tighter">{applications?.length || 0}</div>
+                        <div className="text-2xl font-semibold tracking-tighter">{applications?.length || 0}</div>
                         <p className="text-[10px] text-muted-foreground mt-1 font-bold uppercase">Active submissions</p>
                     </CardContent>
                 </Card>
-                <Card className="glass shadow-sm">
+                <Card className="glass">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-widest opacity-70">Ecosystem Sync</CardTitle>
+                        <CardTitle className="text-[10px] font-semibold uppercase tracking-widest opacity-70">Ecosystem Sync</CardTitle>
                         <CheckCircle className="h-4 w-4 text-green-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-black tracking-tighter">{profileCompleteness}%</div>
+                        <div className="text-2xl font-semibold tracking-tighter">{profileCompleteness}%</div>
                         <p className="text-[10px] text-muted-foreground mt-1 font-bold uppercase">Profile Integrity</p>
                     </CardContent>
                 </Card>
-                <Card className="glass shadow-sm overflow-hidden relative">
+                <Card className="glass overflow-hidden relative">
                     <div className="absolute top-0 right-0 p-2 opacity-10">
                         <LinkIcon size={40} />
                     </div>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-widest opacity-70">Connected Ecosystem</CardTitle>
+                        <CardTitle className="text-[10px] font-semibold uppercase tracking-widest opacity-70">Connected Ecosystem</CardTitle>
                         <div className="flex gap-2">
                             {profile?.github_username && <Github className="h-3 w-3 text-purple-500" />}
                             {profile?.linkedin_url && <Linkedin className="h-3 w-3 text-blue-500" />}
@@ -221,7 +221,7 @@ export default async function StudentDashboard() {
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
                                 <span className={cn('h-2 w-2 rounded-full', (profile?.github_username && profile?.linkedin_url) ? 'bg-green-500' : 'bg-yellow-500')} />
-                                <div className="text-sm font-black tracking-tight uppercase">
+                                <div className="text-sm font-semibold tracking-tight uppercase">
                                     {profile?.github_username ? `@${profile.github_username}` : 'GitHub Pending'}
                                 </div>
                             </div>
@@ -236,15 +236,15 @@ export default async function StudentDashboard() {
                 </Card>
             </div>
 
-            <Card className="glass overflow-hidden border-primary/20 bg-gradient-to-br from-primary/[0.08] via-background to-blue-500/[0.08] shadow-xl shadow-primary/5">
+            <Card className="glass overflow-hidden border-primary/20 bg-card">
                 <CardContent className="p-6 md:p-7 space-y-6">
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                         <div className="max-w-2xl space-y-4">
-                            <Badge className="bg-primary/10 text-primary border-primary/20 font-bold uppercase tracking-[0.2em] text-[10px] px-3 py-1">
+                            <Badge variant="outline" className="px-3 py-1">
                                 <Sparkles className="mr-1.5 h-3 w-3" /> AI Career Copilot
                             </Badge>
                             <div className="space-y-2">
-                                <h2 className="text-2xl font-black tracking-tight">Your next best moves are now prioritized.</h2>
+                                <h2 className="text-2xl font-semibold tracking-tight">Your next best moves are now prioritized.</h2>
                                 <p className="text-sm text-muted-foreground leading-6">
                                     {aiCopilot?.summary || 'We are translating your resume, verified skills, and live openings into an action plan you can trust.'}
                                 </p>
@@ -264,29 +264,29 @@ export default async function StudentDashboard() {
                         </div>
 
                         <div className="grid w-full gap-3 sm:grid-cols-3 lg:max-w-md">
-                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Ready Now</p>
-                                <p className="mt-2 text-3xl font-black tracking-tight text-primary">{aiCopilot?.readyNowCount ?? 0}</p>
+                            <div className="rounded-2xl border border-border/60 bg-background p-4">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Ready Now</p>
+                                <p className="mt-2 text-3xl font-semibold tracking-tight text-primary">{aiCopilot?.readyNowCount ?? 0}</p>
                                 <p className="text-xs text-muted-foreground mt-1">roles inside your college network</p>
                             </div>
-                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Strong Matches</p>
-                                <p className="mt-2 text-3xl font-black tracking-tight">{aiCopilot?.strongMatchCount ?? 0}</p>
+                            <div className="rounded-2xl border border-border/60 bg-background p-4">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Strong Matches</p>
+                                <p className="mt-2 text-3xl font-semibold tracking-tight">{aiCopilot?.strongMatchCount ?? 0}</p>
                                 <p className="text-xs text-muted-foreground mt-1">roles with clear overlap</p>
                             </div>
-                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Next Milestone</p>
-                                <p className="mt-2 text-3xl font-black tracking-tight">{aiCopilot?.nextMilestoneScore ?? marketReadinessScore ?? 0}%</p>
+                            <div className="rounded-2xl border border-border/60 bg-background p-4">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Next Milestone</p>
+                                <p className="mt-2 text-3xl font-semibold tracking-tight">{aiCopilot?.nextMilestoneScore ?? marketReadinessScore ?? 0}%</p>
                                 <p className="text-xs text-muted-foreground mt-1">possible after your next upgrade</p>
                             </div>
                         </div>
                     </div>
 
                     <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr_0.9fr]">
-                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+                        <div className="rounded-2xl border border-border/60 bg-background p-5">
                             <div className="flex items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Priority Actions</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Priority Actions</p>
                                     <p className="text-sm font-semibold mt-1">What to do next for the biggest outcome lift</p>
                                 </div>
                                 <Target className="h-4 w-4 text-primary" />
@@ -296,7 +296,7 @@ export default async function StudentDashboard() {
                                     <Link
                                         key={action.title}
                                         href={action.href || '/student/profile'}
-                                        className="group flex items-start gap-3 rounded-2xl border border-border/60 bg-muted/20 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
+                                        className="group flex items-start gap-3 rounded-2xl border border-border/60 bg-muted/40 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
                                     >
                                         <div className={cn(
                                             'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl',
@@ -317,10 +317,10 @@ export default async function StudentDashboard() {
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+                        <div className="rounded-2xl border border-border/60 bg-background p-5">
                             <div className="flex items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Signal Quality</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Signal Quality</p>
                                     <p className="text-sm font-semibold mt-1">Trust signals recruiters care about</p>
                                 </div>
                                 <ShieldCheck className="h-4 w-4 text-primary" />
@@ -342,10 +342,10 @@ export default async function StudentDashboard() {
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
+                        <div className="rounded-2xl border border-border/60 bg-background p-5">
                             <div className="flex items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Momentum</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Momentum</p>
                                     <p className="text-sm font-semibold mt-1">Pipeline health this week</p>
                                 </div>
                                 <Briefcase className="h-4 w-4 text-primary" />
@@ -357,9 +357,9 @@ export default async function StudentDashboard() {
                                     { label: 'Interviews', value: copilotMomentum.interviews ?? 0 },
                                     { label: 'Accepted', value: copilotMomentum.accepted ?? completedApps.length },
                                 ].map((metric) => (
-                                    <div key={metric.label} className="rounded-xl border border-border/50 bg-muted/20 p-3">
-                                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">{metric.label}</p>
-                                        <p className="mt-2 text-2xl font-black tracking-tight">{metric.value}</p>
+                                    <div key={metric.label} className="rounded-xl border border-border/50 bg-muted/40 p-3">
+                                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{metric.label}</p>
+                                        <p className="mt-2 text-2xl font-semibold tracking-tight">{metric.value}</p>
                                     </div>
                                 ))}
                             </div>
@@ -411,14 +411,14 @@ export default async function StudentDashboard() {
                                                         {(internship.insight.matchedSkills.length > 0 ? internship.insight.matchedSkills : internship.required_skills || [])
                                                             .slice(0, 3)
                                                             .map((skill: string) => (
-                                                                <Badge key={skill} variant="outline" className="bg-background/80">
+                                                                <Badge key={skill} variant="outline" className="bg-background">
                                                                     {skill}
                                                                 </Badge>
                                                             ))}
                                                     </div>
 
-                                                    <div className="space-y-2 rounded-2xl border border-border/50 bg-muted/20 p-3">
-                                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Why this fits</p>
+                                                    <div className="space-y-2 rounded-2xl border border-border/50 bg-muted/40 p-3">
+                                                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Why this fits</p>
                                                         <p className="text-sm font-medium">{internship.insight.summary}</p>
                                                         <p className="text-xs text-muted-foreground">{internship.insight.gapSummary}</p>
                                                     </div>
@@ -460,7 +460,7 @@ export default async function StudentDashboard() {
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="p-4 rounded-lg bg-muted/20 border border-dashed border-border flex flex-col items-center justify-center text-center">
+                                        <div className="p-4 rounded-lg bg-muted/40 border border-dashed border-border flex flex-col items-center justify-center text-center">
                                             <p className="text-[11px] text-muted-foreground font-medium">No completed internships yet.</p>
                                             <p className="text-[10px] text-muted-foreground mt-1">Apply to internships to build your history.</p>
                                         </div>
@@ -492,7 +492,7 @@ export default async function StudentDashboard() {
                                             </Link>
                                         </div>
                                     ) : (
-                                        <div className="p-4 rounded-lg bg-muted/20 border border-dashed border-border flex flex-col items-center justify-center text-center">
+                                        <div className="p-4 rounded-lg bg-muted/40 border border-dashed border-border flex flex-col items-center justify-center text-center">
                                             <p className="text-[11px] text-muted-foreground font-medium">No challenges available yet.</p>
                                         </div>
                                     )}
@@ -546,7 +546,7 @@ export default async function StudentDashboard() {
                             </div>
 
                             <div className="space-y-4">
-                                <p className="text-[10px] font-black uppercase tracking-widest opacity-70 border-b pb-1 border-primary/20">Critical Gaps</p>
+                                <p className="text-[10px] font-semibold uppercase tracking-widest opacity-70 border-b pb-1 border-primary/20">Critical Gaps</p>
                                 <div className="flex flex-wrap gap-2">
                                     {finalMissingSkills.length > 0 ? (
                                         finalMissingSkills.map((skill: string) => (
@@ -599,11 +599,11 @@ export default async function StudentDashboard() {
                             <div className="absolute top-0 right-0 p-4 opacity-10">
                                 <GraduationCap size={80} />
                             </div>
-                            <h3 className="font-black text-lg flex items-center gap-2 italic">
+                            <h3 className="font-semibold text-lg flex items-center gap-2 italic">
                                 <GraduationCap className="h-5 w-5" /> CHALLENGES
                             </h3>
                             <p className="text-xs opacity-90 mt-2 font-medium leading-relaxed">Complete tasks from top companies and get directly hired.</p>
-                            <Link href="/student/tasks" className={cn(buttonVariants({ variant: 'default', size: 'sm' }), 'w-full mt-4 bg-white text-primary hover:bg-white/90 border-none font-black uppercase text-[10px] tracking-widest')}>
+                            <Link href="/student/tasks" className={cn(buttonVariants({ variant: 'default', size: 'sm' }), 'w-full mt-4 bg-white text-primary hover:bg-white/90 border-none font-semibold uppercase text-[10px] tracking-widest')}>
                                 Explore Tasks
                             </Link>
                         </div>
@@ -613,7 +613,7 @@ export default async function StudentDashboard() {
                         <CardContent className="p-5 space-y-3">
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <CircleAlert className="h-4 w-4 text-primary" />
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em]">AI Trust Note</p>
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.18em]">AI Trust Note</p>
                             </div>
                             <p className="text-sm leading-6 text-muted-foreground">
                                 Every recommendation shown here is tied to your live skill graph, verified identity signals, and openings approved for your college. That keeps the dashboard useful, explainable, and recruiter-ready.

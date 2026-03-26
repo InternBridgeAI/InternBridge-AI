@@ -537,8 +537,8 @@ export default function OnboardingPage() {
 
     if (isLoading) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-background px-6 py-10 sm:px-8 lg:px-20">
-                <Card className="w-full max-w-md border-border/70 bg-card/95 shadow-xl">
+            <div className="flex min-h-screen items-center justify-center bg-muted/30 px-6 py-10 sm:px-8 lg:px-20">
+                <Card className="w-full max-w-md">
                     <CardContent className="flex items-center gap-3 p-6 text-sm text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin text-primary" />
                         Preparing your profile form...
@@ -549,41 +549,40 @@ export default function OnboardingPage() {
     }
 
     return (
-        <div className="h-screen bg-background">
-            <div className="mx-auto grid h-full w-full max-w-[1700px] lg:grid-cols-2">
-                <aside className="gradient-brand relative hidden h-screen items-center justify-center overflow-hidden p-10 lg:flex">
-                    <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-40" />
-                    <div className="pointer-events-none absolute -left-24 top-12 h-72 w-72 rounded-full bg-white/12 blur-3xl" />
-                    <div className="pointer-events-none absolute -right-24 bottom-12 h-72 w-72 rounded-full bg-cyan-300/15 blur-3xl" />
-                    <div className="relative z-10 w-full max-w-xl space-y-8">
-                        <div className="space-y-3 text-center text-white">
-                            <p className="text-sm font-medium uppercase tracking-[0.2em] text-white/80">InternBridge</p>
-                            <h1 className="text-4xl font-semibold tracking-tight">Complete Your Profile</h1>
-                            <p className="text-base leading-7 text-white/80">
+        <div className="min-h-screen bg-muted/30">
+            <div className="grid min-h-screen w-full lg:grid-cols-[0.96fr_1.04fr]">
+                <aside className="relative hidden h-screen border-r border-border bg-card lg:sticky lg:top-0 lg:flex lg:items-center lg:justify-center">
+                    <div className="w-full max-w-xl space-y-8 px-10">
+                        <div className="space-y-3">
+                            <Badge variant="outline" className="w-fit">
+                                {roleLabel}
+                            </Badge>
+                            <h1 className="text-4xl font-semibold tracking-tight text-foreground">Complete your profile</h1>
+                            <p className="text-base leading-7 text-muted-foreground">
                                 Fill your profile once and unlock personalized internships, matching, and verification.
                             </p>
                         </div>
-                        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+                        <div className="rounded-[28px] border border-border bg-muted/40 p-8">
                             <Image
                                 src={onboardingIllustrationSrc}
                                 alt={onboardingIllustrationAlt}
                                 width={620}
                                 height={480}
                                 priority
-                                className="mx-auto h-auto w-full max-w-lg"
+                                className="mx-auto h-auto w-full max-w-lg object-contain"
                             />
                         </div>
-                        <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center text-sm text-white/85">
+                        <p className="rounded-2xl border border-border bg-background px-4 py-3 text-sm text-muted-foreground">
                             {locationSummary}
                         </p>
                     </div>
                 </aside>
 
-                <main className="h-screen overflow-y-auto">
-                    <div className="mx-auto flex min-h-full w-full max-w-3xl items-center px-4 py-8 sm:px-6 lg:px-10">
-                        <Card className="w-full border-border/70 bg-background/95 shadow-2xl backdrop-blur-sm">
+                <main className="min-h-screen overflow-y-auto">
+                    <div className="mx-auto flex min-h-screen w-full max-w-3xl items-center px-4 py-8 sm:px-6 lg:px-10">
+                        <Card className="w-full">
                             <CardHeader className="space-y-3 pb-4">
-                                <Badge variant="secondary" className="w-fit border border-primary/20 bg-primary/10 text-primary">
+                                <Badge variant="outline" className="w-fit">
                                     {roleLabel}
                                 </Badge>
                                 <CardTitle className="text-3xl font-semibold tracking-tight text-foreground">
@@ -592,7 +591,7 @@ export default function OnboardingPage() {
                                 <CardDescription className="text-sm leading-6 text-muted-foreground">
                                     {roleSectionDescription}
                                 </CardDescription>
-                                <div className="space-y-3 rounded-2xl border border-border/70 bg-background p-4 lg:hidden">
+                                <div className="space-y-3 rounded-2xl border border-border bg-muted/30 p-4 lg:hidden">
                                     <Image
                                         src={onboardingIllustrationSrc}
                                         alt={onboardingIllustrationAlt}
@@ -605,10 +604,10 @@ export default function OnboardingPage() {
                             </CardHeader>
                             <CardContent className="pt-0">
                                 <form onSubmit={handleSave} className="space-y-8">
-                            <section className="space-y-6 rounded-2xl border border-border/70 bg-background p-5 sm:p-6">
+                            <section className="space-y-6 rounded-2xl border border-border bg-muted/20 p-5 sm:p-6">
                                 <div className="space-y-2">
                                     <Label>Joining as</Label>
-                                    <div className="flex h-11 w-full items-center rounded-md border border-input bg-white px-3 text-sm font-medium">
+                                    <div className="flex h-11 w-full items-center rounded-xl border border-input bg-card px-3 text-sm font-medium">
                                         {roleLabel}
                                     </div>
                 </div>
@@ -622,7 +621,7 @@ export default function OnboardingPage() {
                                     <div className="space-y-2">
                                         <Label className="text-xs text-muted-foreground">Country</Label>
                                         <select
-                                            className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                                            className="h-11 w-full rounded-xl border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                                             value={selectedCountry}
                                             onChange={(e) => {
                                                 setSelectedCountry(e.target.value);
@@ -644,7 +643,7 @@ export default function OnboardingPage() {
                                     <div className="space-y-2">
                                         <Label className="text-xs text-muted-foreground">State</Label>
                                         <select
-                                            className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                                            className="h-11 w-full rounded-xl border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
                                             value={selectedState}
                                             onChange={(e) => {
                                                 setSelectedState(e.target.value);
@@ -666,7 +665,7 @@ export default function OnboardingPage() {
                                     <div className="space-y-2">
                                         <Label className="text-xs text-muted-foreground">City</Label>
                                         <select
-                                            className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                                            className="h-11 w-full rounded-xl border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
                                             value={selectedCity}
                                             onChange={(e) => {
                                                 setSelectedCity(e.target.value);
@@ -688,7 +687,7 @@ export default function OnboardingPage() {
                         </section>
 
                         {userRole === 'student' && (
-                            <section className="space-y-6 rounded-2xl border border-border/70 bg-background p-5 sm:p-6">
+                            <section className="space-y-6 rounded-2xl border border-border bg-muted/20 p-5 sm:p-6">
                                 <div className="space-y-2">
                                     <h2 className="text-xl font-semibold tracking-tight text-foreground">Student Details</h2>
                                     <p className="text-sm text-muted-foreground">
@@ -701,7 +700,7 @@ export default function OnboardingPage() {
                                     <div className="relative">
                                         <GraduationCap className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground transition-all group-focus-within:text-primary" />
                                         <select
-                                            className="w-full h-10 pl-8 pr-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
+                                            className="w-full h-10 pl-8 pr-3 py-2 rounded-xl border border-input bg-card text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
                                             value={formData.college_id}
                                             onChange={(e) => {
                                                 const college = colleges.find(c => c.id === e.target.value);
@@ -751,7 +750,7 @@ export default function OnboardingPage() {
                                         {formData.college_id !== 'other' ? (
                                             <>
                                                 <select
-                                                    className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none disabled:opacity-60"
+                                                    className="w-full h-10 px-3 py-2 rounded-xl border border-input bg-card text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none disabled:opacity-60"
                                                     value={formData.course_id}
                                                     onChange={(e) => {
                                                         const selected = availableCourses.find((c) => c.id === e.target.value);
@@ -797,7 +796,7 @@ export default function OnboardingPage() {
                                             <div className="mt-2 space-y-1">
                                                 <span className="text-[10px] uppercase font-bold opacity-50">Course Duration (Years)</span>
                                                 <select
-                                                    className="w-full h-9 px-3 py-1 rounded-md border border-input bg-background/50 text-xs focus:ring-1 focus:ring-primary outline-none"
+                                                    className="w-full h-9 px-3 py-1 rounded-xl border border-input bg-card/50 text-xs focus:ring-1 focus:ring-primary outline-none"
                                                     value={String(selectedCourseDuration || 4)}
                                                     onChange={(e) => {
                                                         const duration = parseInt(e.target.value, 10);
@@ -821,7 +820,7 @@ export default function OnboardingPage() {
                                     <div className="space-y-2">
                                         <Label>Year of Study</Label>
                                         <select
-                                            className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none disabled:opacity-60"
+                                            className="w-full h-10 px-3 py-2 rounded-xl border border-input bg-card text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none disabled:opacity-60"
                                             value={formData.year_of_study}
                                             onChange={(e) => setFormData({ ...formData, year_of_study: e.target.value })}
                                             disabled={!formData.college_id || (formData.college_id !== 'other' && availableCourses.length > 0 && !formData.course_id)}
@@ -856,7 +855,7 @@ export default function OnboardingPage() {
                                 <div className="space-y-2">
                                     <Label>Gender</Label>
                                     <select
-                                        className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
+                                        className="w-full h-10 px-3 py-2 rounded-xl border border-input bg-card text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
                                         value={formData.gender}
                                         onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                                         required
@@ -874,7 +873,7 @@ export default function OnboardingPage() {
                                 <div className="space-y-2">
                                     <Label>Preferred Roles</Label>
                                     <div className="relative">
-                                        <div className="flex flex-wrap gap-2 p-2 min-h-10 items-center border border-input rounded-md bg-background focus-within:ring-1 focus-within:ring-primary">
+                                        <div className="flex flex-wrap gap-2 p-2 min-h-10 items-center border border-input rounded-xl bg-card focus-within:ring-1 focus-within:ring-primary">
                                             {parseCommaList(formData.preferred_roles).map((role) => (
                                                 <Badge key={role} variant="secondary" className="flex items-center gap-1 bg-primary/10 text-primary hover:bg-primary/20">
                                                     {role}
@@ -959,7 +958,7 @@ export default function OnboardingPage() {
                                 <div className="space-y-2">
                                     <Label>Skills</Label>
                                     <div className="relative">
-                                        <div className="flex flex-wrap gap-2 p-2 min-h-10 items-center border border-input rounded-md bg-background focus-within:ring-1 focus-within:ring-primary">
+                                        <div className="flex flex-wrap gap-2 p-2 min-h-10 items-center border border-input rounded-xl bg-card focus-within:ring-1 focus-within:ring-primary">
                                             {parseCommaList(formData.skills).map((skill) => (
                                                 <Badge key={skill} variant="secondary" className="flex items-center gap-1 bg-primary/10 text-primary hover:bg-primary/20">
                                                     {skill}
@@ -1041,7 +1040,7 @@ export default function OnboardingPage() {
                                 <div className="space-y-2">
                                     <Label>GitHub (Recommended)</Label>
                                     {formData.github_username ? (
-                                        <div className="flex items-center justify-between p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                                        <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20">
                                             <div className="flex items-center gap-2">
                                                 <div className="h-6 w-6 rounded-full bg-green-500/10 flex items-center justify-center">
                                                     <CheckCircle className="h-3 w-3 text-green-500" />
@@ -1167,7 +1166,7 @@ export default function OnboardingPage() {
                         )}
 
                         {userRole === 'tpo' && (
-                            <section className="space-y-6 rounded-2xl border border-border/70 bg-background p-5 sm:p-6">
+                            <section className="space-y-6 rounded-2xl border border-border bg-muted/20 p-5 sm:p-6">
                                 <div className="space-y-2">
                                     <h2 className="text-xl font-semibold tracking-tight text-foreground">College Details</h2>
                                     <p className="text-sm text-muted-foreground">
@@ -1196,7 +1195,7 @@ export default function OnboardingPage() {
                                             />
                                         </div>
                                         <select
-                                            className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
+                                            className="w-full h-10 px-3 py-2 rounded-xl border border-input bg-card text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
                                             value={newCourseDuration}
                                             onChange={(e) => setNewCourseDuration(e.target.value)}
                                         >
@@ -1288,7 +1287,7 @@ export default function OnboardingPage() {
                         )}
 
                         {userRole === 'company' && (
-                            <section className="space-y-6 rounded-2xl border border-border/70 bg-background p-5 sm:p-6">
+                            <section className="space-y-6 rounded-2xl border border-border bg-muted/20 p-5 sm:p-6">
                                 <div className="space-y-2">
                                     <h2 className="text-xl font-semibold tracking-tight text-foreground">Company Details</h2>
                                     <p className="text-sm text-muted-foreground">

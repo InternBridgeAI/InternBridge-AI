@@ -228,7 +228,7 @@ export function NotificationCenter({ userId }: NotificationCenterProps) {
             </Button>
 
             {open && (
-                <div className="absolute right-0 top-12 z-50 w-[360px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-border bg-background/95 shadow-2xl backdrop-blur-xl">
+                <div className="absolute right-0 top-12 z-50 w-[360px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-border bg-background shadow-xl">
                     <div className="flex items-center justify-between border-b border-border px-4 py-3">
                         <div>
                             <p className="text-sm font-semibold">Notifications</p>
