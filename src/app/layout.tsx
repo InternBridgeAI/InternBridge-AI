@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
 import React from 'react';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'sonner';
+
+const inter = Inter({ subsets: ['latin'] });
 
 const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ||
@@ -26,7 +29,7 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <body className="min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-primary/30">
+            <body className={`${inter.className} min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-primary/30`}>
                 <ThemeProvider
                     attribute="class"
                     defaultTheme="system"

@@ -194,11 +194,11 @@ export default async function TPODashboard() {
     const queues = aiCopilot?.queues || {};
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-semibold tracking-tight">Placement office portal</h1>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">Track approvals, readiness, and placement outcomes with a simpler day-to-day workspace.</p>
+                    <h1 className="text-3xl font-bold">Placement Office Portal</h1>
+                    <p className="text-muted-foreground mt-2">Monitor student progress, analyze skill gaps, and track placement performance.</p>
                 </div>
                 <Button variant="outline" asChild>
                     <Link href="/tpo/reports">
@@ -208,7 +208,7 @@ export default async function TPODashboard() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="glass">
+                <Card className="glass border-primary/20 bg-primary/5">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium">Total Students</CardTitle>
                         <Users className="h-4 w-4 text-primary" />
@@ -252,15 +252,15 @@ export default async function TPODashboard() {
                 </Card>
             </div>
 
-            <Card className="glass overflow-hidden border-primary/20 bg-card">
+            <Card className="glass overflow-hidden border-primary/20 bg-gradient-to-br from-primary/[0.08] via-background to-blue-500/[0.08] shadow-xl shadow-primary/5">
                 <CardContent className="p-6 md:p-7 space-y-6">
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                         <div className="max-w-2xl space-y-4">
-                            <Badge variant="outline" className="px-3 py-1">
+                            <Badge className="bg-primary/10 text-primary border-primary/20 font-bold uppercase tracking-[0.2em] text-[10px] px-3 py-1">
                                 <Sparkles className="mr-1.5 h-3 w-3" /> AI Batch Copilot
                             </Badge>
                             <div className="space-y-2">
-                                <h2 className="text-2xl font-semibold tracking-tight">Your college now has a live placement brief.</h2>
+                                <h2 className="text-2xl font-black tracking-tight">Your college now has a live placement brief.</h2>
                                 <p className="text-sm text-muted-foreground leading-6">
                                     {aiCopilot?.summary || 'Current placement signals are stable. Review approvals, readiness, and skill gaps to keep the batch moving.'}
                                 </p>
@@ -280,34 +280,34 @@ export default async function TPODashboard() {
                         </div>
 
                         <div className="grid w-full gap-3 sm:grid-cols-4 lg:max-w-2xl">
-                            <div className="rounded-2xl border border-border/60 bg-background p-4">
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Batch Health</p>
-                                <p className="mt-2 text-3xl font-semibold tracking-tight text-primary">{aiCopilot?.batchHealthScore ?? 0}%</p>
+                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Batch Health</p>
+                                <p className="mt-2 text-3xl font-black tracking-tight text-primary">{aiCopilot?.batchHealthScore ?? 0}%</p>
                                 <p className="text-xs text-muted-foreground mt-1">placement readiness</p>
                             </div>
-                            <div className="rounded-2xl border border-border/60 bg-background p-4">
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Ready Students</p>
-                                <p className="mt-2 text-3xl font-semibold tracking-tight">{aiCopilot?.readyStudents ?? 0}</p>
+                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Ready Students</p>
+                                <p className="mt-2 text-3xl font-black tracking-tight">{aiCopilot?.readyStudents ?? 0}</p>
                                 <p className="text-xs text-muted-foreground mt-1">70%+ readiness</p>
                             </div>
-                            <div className="rounded-2xl border border-border/60 bg-background p-4">
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Approval Queue</p>
-                                <p className="mt-2 text-3xl font-semibold tracking-tight">{aiCopilot?.approvalQueue ?? 0}</p>
+                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Approval Queue</p>
+                                <p className="mt-2 text-3xl font-black tracking-tight">{aiCopilot?.approvalQueue ?? 0}</p>
                                 <p className="text-xs text-muted-foreground mt-1">items blocking flow</p>
                             </div>
-                            <div className="rounded-2xl border border-border/60 bg-background p-4">
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Placement Rate</p>
-                                <p className="mt-2 text-3xl font-semibold tracking-tight">{aiCopilot?.placementRate ?? 0}%</p>
+                            <div className="rounded-2xl border border-border/60 bg-background/80 p-4">
+                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Placement Rate</p>
+                                <p className="mt-2 text-3xl font-black tracking-tight">{aiCopilot?.placementRate ?? 0}%</p>
                                 <p className="text-xs text-muted-foreground mt-1">accepted applications</p>
                             </div>
                         </div>
                     </div>
 
                     <div className="grid gap-4 lg:grid-cols-[1.1fr_0.8fr_1fr]">
-                        <div className="rounded-2xl border border-border/60 bg-background p-5">
+                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
                             <div className="flex items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Priority Actions</p>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Priority Actions</p>
                                     <p className="text-sm font-semibold mt-1">What will move student outcomes fastest</p>
                                 </div>
                                 <Target className="h-4 w-4 text-primary" />
@@ -317,7 +317,7 @@ export default async function TPODashboard() {
                                     <Link
                                         key={action.title}
                                         href={action.href || '/tpo'}
-                                        className="group flex items-start gap-3 rounded-2xl border border-border/60 bg-muted/40 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
+                                        className="group flex items-start gap-3 rounded-2xl border border-border/60 bg-muted/20 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
                                     >
                                         <div className={cn(
                                             'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl',
@@ -338,10 +338,10 @@ export default async function TPODashboard() {
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border border-border/60 bg-background p-5">
+                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
                             <div className="flex items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Queue Snapshot</p>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Queue Snapshot</p>
                                     <p className="text-sm font-semibold mt-1">Approvals affecting your batch</p>
                                 </div>
                                 <ShieldCheck className="h-4 w-4 text-primary" />
@@ -367,10 +367,10 @@ export default async function TPODashboard() {
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border border-border/60 bg-background p-5">
+                        <div className="rounded-2xl border border-border/60 bg-background/80 p-5">
                             <div className="flex items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Watchlist</p>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">Watchlist</p>
                                     <p className="text-sm font-semibold mt-1">Signals to monitor this week</p>
                                 </div>
                                 <TrendingUp className="h-4 w-4 text-primary" />
@@ -380,7 +380,7 @@ export default async function TPODashboard() {
                                     <Link
                                         key={item.title}
                                         href={item.href || '/tpo'}
-                                        className="block rounded-2xl border border-border/60 bg-muted/40 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
+                                        className="block rounded-2xl border border-border/60 bg-muted/20 p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
                                     >
                                         <p className="text-sm font-bold tracking-tight">{item.title}</p>
                                         <p className="text-xs text-muted-foreground mt-1 leading-5">{item.reason}</p>
