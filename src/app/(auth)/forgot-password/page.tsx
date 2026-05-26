@@ -26,16 +26,15 @@ export default function ForgotPasswordPage() {
         setError('');
 
         const supabase = createClient();
-        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email);
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+        });
 
         if (resetError) {
             setError(resetError.message);
         } else {
             setSuccess(true);
-            toast.success('Password reset code sent to your email!');
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('pending_reset_email', email);
-            }
+            toast.success('Password reset link sent to your email!');
         }
         setLoading(false);
     };
@@ -65,7 +64,7 @@ export default function ForgotPasswordPage() {
             <div className="flex-1 flex items-center justify-center p-8 bg-background">
                 <div className="w-full max-w-md">
                     <h1 className="text-2xl font-bold text-foreground mb-2">Reset Password</h1>
-                    <p className="text-muted-foreground mb-8">Enter your email to receive a reset code</p>
+                    <p className="text-muted-foreground mb-8">Enter your email to receive a reset link</p>
 
                     {error && (
                         <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
@@ -76,14 +75,8 @@ export default function ForgotPasswordPage() {
                     {success ? (
                         <div className="text-center space-y-4">
                             <div className="p-4 bg-green-500/10 text-green-600 rounded-lg border border-green-500/20">
-                                Check your email for the 6-digit reset code.
+                                Check your email for the password reset link.
                             </div>
-                            <Button
-                                className="w-full"
-                                onClick={() => router.push(`/reset-password?email=${encodeURIComponent(email)}`)}
-                            >
-                                Enter Reset Code
-                            </Button>
                             <Button
                                 variant="outline"
                                 className="w-full"
@@ -104,7 +97,7 @@ export default function ForgotPasswordPage() {
                                 required
                             />
                             <Button type="submit" className="w-full" loading={loading}>
-                                Send Reset Code
+                                Send Reset Link
                             </Button>
                         </form>
                     )}

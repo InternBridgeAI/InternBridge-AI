@@ -92,7 +92,7 @@ export function Footer() {
                     </p>
                     <div className="flex items-center gap-6">
                         <p className="text-[11px] text-muted-foreground opacity-60">
-                            Made with ❤️ by Piyush Lomte
+                            Made with ❤️ by Pranali Chipade & Piyush Lomte
                         </p>
                     </div>
                 </div>

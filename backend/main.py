@@ -1,6 +1,6 @@
 from fastapi import FastAPI  # type: ignore
 from fastapi.middleware.cors import CORSMiddleware  # type: ignore
-from api.routers import auth, internships, applications, ai, tasks, analytics, admin, tpo, tracking, certificates, partnerships  # type: ignore
+from api.routers import auth, internships, applications, ai, tasks, analytics, admin, tpo, tracking, certificates  # type: ignore
 
 app = FastAPI(
     title="InternBridge AI Backend",
@@ -33,7 +33,6 @@ app.include_router(ai.router, prefix="/api/ai", tags=["AI"])
 app.include_router(tpo.router, prefix="/api/tpo", tags=["TPO"])
 app.include_router(tracking.router, prefix="/api/tracking", tags=["Tracking"])
 app.include_router(certificates.router, prefix="/api/certificates", tags=["Certificates"])
-app.include_router(partnerships.router, prefix="/api/partnerships", tags=["Partnerships"])
 
 @app.get("/health")
 def health_check():

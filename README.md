@@ -78,7 +78,7 @@ To combat "resume padding", the platform implements:
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-username/InternBridge-AI.git
+   git clone https://github.com/piyushlomte/InternBridge-AI.git
    cd InternBridge-AI
    ```
 
@@ -106,15 +106,6 @@ To combat "resume padding", the platform implements:
    GITHUB_TOKEN=...
    ```
 
-5. **Database Setup (Supabase)**:
-   - For a brand‑new project: run `supabase-schema.sql` and then `supabase-migration-v4.sql` in the Supabase SQL Editor.
-   - For an existing project: run `supabase-migration-v2.sql`, `supabase-migration-v3.sql`, and `supabase-migration-v4.sql` to align missing columns used by onboarding and dashboards.
-   - After any schema changes, reload the PostgREST schema cache (Settings → API → Reload schema cache).
-
-6. **Storage Buckets (Supabase)**:
-   - Ensure a public `resumes` bucket exists (used for student resume uploads).
-   - Create a public `verification-documents` bucket for student IDs, company verification docs, and college verification files.
-
 ---
 
 ## 🔒 Security Architecture
@@ -126,3 +117,4 @@ To combat "resume padding", the platform implements:
 
 ## 📄 License
 Distributed under the MIT License. See `LICENSE` for more information.
+
