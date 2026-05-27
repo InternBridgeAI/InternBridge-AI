@@ -67,11 +67,11 @@
 
 @layer utilities {
   .glass {
-    @apply bg-card border border-border shadow-[0_1px_2px_rgba(15,23,42,0.06),0_20px_40px_-32px_rgba(15,23,42,0.18)];
+    @apply bg-card border border-slate-100/70 dark:border-slate-800/40 shadow-[0_8px_30px_rgba(0,0,0,0.02),0_1px_2px_rgba(0,0,0,0.01)] rounded-[20px] transition-all duration-300;
   }
 
   .glass-dark {
-    @apply bg-card border border-border shadow-[0_1px_2px_rgba(2,6,23,0.35),0_20px_40px_-32px_rgba(2,6,23,0.45)];
+    @apply bg-card border border-slate-800/50 shadow-[0_8px_30px_rgba(0,0,0,0.2),0_1px_2px_rgba(0,0,0,0.15)] rounded-[20px] transition-all duration-300;
   }
 
   .gradient-brand {
@@ -83,11 +83,11 @@
   }
 
   .hover-lift {
-    @apply transition-colors duration-200 hover:border-primary/20 hover:shadow-sm;
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_-15px_rgba(99,102,241,0.08)] hover:border-brand-300/40;
   }
 
   .card-hover {
-    @apply transition-colors duration-200 hover:border-primary/20 hover:shadow-sm;
+    @apply transition-all duration-300 hover:shadow-[0_12px_24px_rgba(0,0,0,0.03)] hover:border-primary/20;
   }
 }
 

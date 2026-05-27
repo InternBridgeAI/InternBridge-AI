@@ -603,106 +603,118 @@ export default function ProfilePage() {
 
                 {/* Right: Personal Details & Skills */}
                 <div className="md:col-span-2 space-y-6">
-                    <Card className="glass">
-                        <CardHeader>
-                            <CardTitle>Personal Information</CardTitle>
+                    <Card className="glass border-none shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-lg font-bold">Personal Information</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <form onSubmit={handleSave} className="space-y-4">
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="name">Full Name</Label>
-                                        <Input
-                                            id="name"
-                                            value={profile.full_name || ''}
-                                            onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="cgpa">CGPA / Percentage</Label>
-                                        <Input
-                                            id="cgpa"
-                                            type="number"
-                                            step="0.01"
-                                            value={profile.cgpa || ''}
-                                            onChange={(e) => setProfile({ ...profile, cgpa: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="skills">Skills</Label>
-                                    <div className="relative">
-                                        <div className="flex flex-wrap gap-2 p-2 min-h-10 items-center border border-input rounded-md bg-background focus-within:ring-1 focus-within:ring-primary">
-                                            {(profile.skills || []).map((skill: string) => (
-                                                <Badge key={skill} variant="secondary" className="flex items-center gap-1 bg-primary/10 text-primary hover:bg-primary/20">
-                                                    {skill}
-                                                    <X
-                                                        className="h-3 w-3 cursor-pointer opacity-50 hover:opacity-100"
-                                                        onClick={() => setProfile({ ...profile, skills: (profile.skills || []).filter((s: string) => s !== skill) })}
-                                                    />
-                                                </Badge>
-                                            ))}
-                                            <input
-                                                id="skills"
-                                                type="text"
-                                                className="flex-1 bg-transparent outline-none min-w-[140px] text-sm"
-                                                placeholder={(profile.skills || []).length ? 'Add another skill...' : 'React, Python, SQL...'}
-                                                value={skillDraft}
-                                                onChange={(e) => {
-                                                    const value = e.target.value;
-                                                    setSkillDraft(value);
-                                                    setIsSkillsOpen(true);
-                                                    if (value.endsWith(',')) {
-                                                        const newSkill = value.slice(0, -1).trim();
-                                                        if (newSkill && !(profile.skills || []).includes(newSkill)) {
-                                                            setProfile({ ...profile, skills: [...(profile.skills || []), newSkill] });
-                                                        }
-                                                        setSkillDraft('');
-                                                    }
-                                                }}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        e.preventDefault();
-                                                        const newSkill = skillDraft.trim();
-                                                        if (newSkill && !(profile.skills || []).includes(newSkill)) {
-                                                            setProfile({ ...profile, skills: [...(profile.skills || []), newSkill] });
-                                                        }
-                                                        setSkillDraft('');
-                                                        setIsSkillsOpen(false);
-                                                    } else if (e.key === 'Backspace' && !skillDraft && (profile.skills || []).length > 0) {
-                                                        setProfile({ ...profile, skills: (profile.skills || []).slice(0, -1) });
-                                                    }
-                                                }}
-                                                onFocus={() => setIsSkillsOpen(true)}
-                                                onBlur={() => setTimeout(() => setIsSkillsOpen(false), 150)}
+                            <form onSubmit={handleSave} className="space-y-8">
+                                {/* Section 1: Basic Profile */}
+                                <div className="space-y-4">
+                                    <p className="text-[10px] font-bold text-primary uppercase tracking-widest border-b pb-1.5 border-primary/10">Profile Details</p>
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="name" className="text-xs font-semibold">Full Name</Label>
+                                            <Input
+                                                id="name"
+                                                value={profile.full_name || ''}
+                                                onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                                                className="bg-slate-50/30 dark:bg-slate-900/20 border-slate-200/60 dark:border-slate-800/40 rounded-xl"
                                             />
                                         </div>
-
-                                        {isSkillsOpen && (
-                                            <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-md shadow-md max-h-48 overflow-y-auto">
-                                                {COMMON_SKILLS
-                                                    .filter(s => s.toLowerCase().includes(skillDraft.toLowerCase()) && !(profile.skills || []).includes(s))
-                                                    .map((skill) => (
-                                                        <div
-                                                            key={skill}
-                                                            className="px-3 py-2 text-sm cursor-pointer hover:bg-muted text-popover-foreground"
-                                                            onMouseDown={(e) => {
-                                                                e.preventDefault();
-                                                                if (!(profile.skills || []).includes(skill)) {
-                                                                    setProfile({ ...profile, skills: [...(profile.skills || []), skill] });
-                                                                }
-                                                                setSkillDraft('');
-                                                                setIsSkillsOpen(false);
-                                                            }}
-                                                        >
-                                                            {skill}
-                                                        </div>
-                                                    ))}
-                                                {skillDraft && !COMMON_SKILLS.some(s => s.toLowerCase() === skillDraft.trim().toLowerCase()) && (
-                                                    <div
-                                                        className="px-3 py-2 text-sm cursor-pointer hover:bg-muted text-primary font-medium"
-                                                        onMouseDown={(e) => {
+                                        <div className="space-y-2">
+                                            <Label htmlFor="gender" className="text-xs font-semibold">Gender</Label>
+                                            <select
+                                                id="gender"
+                                                className="w-full h-10 px-3 py-2 rounded-xl border border-slate-200/60 dark:border-slate-800/40 bg-slate-50/30 dark:bg-slate-900/20 text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none font-medium"
+                                                value={profile.gender || ''}
+                                                onChange={(e) => setProfile({ ...profile, gender: e.target.value })}
+                                            >
+                                                <option value="">Select gender</option>
+                                                <option value="female">Female</option>
+                                                <option value="male">Male</option>
+                                                <option value="non_binary">Non-binary</option>
+                                                <option value="prefer_not_to_say">Prefer not to say</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+ 
+                                {/* Section 2: Academics */}
+                                <div className="space-y-4">
+                                    <p className="text-[10px] font-bold text-primary uppercase tracking-widest border-b pb-1.5 border-primary/10">Academic Info</p>
+                                    <div className="grid gap-4 sm:grid-cols-3">
+                                        <div className="space-y-2 sm:col-span-1">
+                                            <Label htmlFor="university" className="text-xs font-semibold">University / College</Label>
+                                            <Input
+                                                id="university"
+                                                placeholder="S B Jain Institute..."
+                                                value={profile.university || ''}
+                                                onChange={(e) => setProfile({ ...profile, university: e.target.value })}
+                                                className="bg-slate-50/30 dark:bg-slate-900/20 border-slate-200/60 dark:border-slate-800/40 rounded-xl"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="expected_graduation" className="text-xs font-semibold">Graduation Year</Label>
+                                            <Input
+                                                id="expected_graduation"
+                                                type="number"
+                                                placeholder="2027"
+                                                value={profile.expected_graduation || ''}
+                                                onChange={(e) => setProfile({ ...profile, expected_graduation: e.target.value })}
+                                                className="bg-slate-50/30 dark:bg-slate-900/20 border-slate-200/60 dark:border-slate-800/40 rounded-xl"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="cgpa" className="text-xs font-semibold">CGPA / Percentage</Label>
+                                            <Input
+                                                id="cgpa"
+                                                type="number"
+                                                step="0.01"
+                                                value={profile.cgpa || ''}
+                                                onChange={(e) => setProfile({ ...profile, cgpa: e.target.value })}
+                                                className="bg-slate-50/30 dark:bg-slate-900/20 border-slate-200/60 dark:border-slate-800/40 rounded-xl"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+ 
+                                {/* Section 3: Skills & Focus */}
+                                <div className="space-y-4">
+                                    <p className="text-[10px] font-bold text-primary uppercase tracking-widest border-b pb-1.5 border-primary/10">Professional Focus</p>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="skills" className="text-xs font-semibold">Skills</Label>
+                                        <div className="relative">
+                                            <div className="flex flex-wrap gap-2 p-2.5 min-h-11 items-center border border-slate-200/60 dark:border-slate-800/40 rounded-xl bg-slate-50/30 dark:bg-slate-900/20 focus-within:ring-2 focus-within:ring-primary/20">
+                                                {(profile.skills || []).map((skill: string) => (
+                                                    <Badge key={skill} className="flex items-center gap-1.5 bg-primary/10 text-primary hover:bg-primary/20 border-none px-2 py-0.5 text-xs font-semibold">
+                                                        {skill}
+                                                        <X
+                                                            className="h-3 w-3 cursor-pointer opacity-65 hover:opacity-100"
+                                                            onClick={() => setProfile({ ...profile, skills: (profile.skills || []).filter((s: string) => s !== skill) })}
+                                                        />
+                                                    </Badge>
+                                                ))}
+                                                <input
+                                                    id="skills"
+                                                    type="text"
+                                                    className="flex-1 bg-transparent outline-none min-w-[140px] text-sm text-foreground placeholder:text-muted-foreground/60"
+                                                    placeholder={(profile.skills || []).length ? 'Add another skill...' : 'React, Python, SQL...'}
+                                                    value={skillDraft}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        setSkillDraft(value);
+                                                        setIsSkillsOpen(true);
+                                                        if (value.endsWith(',')) {
+                                                            const newSkill = value.slice(0, -1).trim();
+                                                            if (newSkill && !(profile.skills || []).includes(newSkill)) {
+                                                                setProfile({ ...profile, skills: [...(profile.skills || []), newSkill] });
+                                                            }
+                                                            setSkillDraft('');
+                                                        }
+                                                    }}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
                                                             e.preventDefault();
                                                             const newSkill = skillDraft.trim();
                                                             if (newSkill && !(profile.skills || []).includes(newSkill)) {
@@ -710,71 +722,75 @@ export default function ProfilePage() {
                                                             }
                                                             setSkillDraft('');
                                                             setIsSkillsOpen(false);
-                                                        }}
-                                                    >
-                                                        Add custom: &quot;{skillDraft.trim()}&quot;
-                                                    </div>
-                                                )}
+                                                        } else if (e.key === 'Backspace' && !skillDraft && (profile.skills || []).length > 0) {
+                                                            setProfile({ ...profile, skills: (profile.skills || []).slice(0, -1) });
+                                                        }
+                                                    }}
+                                                    onFocus={() => setIsSkillsOpen(true)}
+                                                    onBlur={() => setTimeout(() => setIsSkillsOpen(false), 150)}
+                                                />
                                             </div>
-                                        )}
+ 
+                                            {isSkillsOpen && (
+                                                <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                                                    {COMMON_SKILLS
+                                                        .filter(s => s.toLowerCase().includes(skillDraft.toLowerCase()) && !(profile.skills || []).includes(s))
+                                                        .map((skill) => (
+                                                            <div
+                                                                key={skill}
+                                                                className="px-3 py-2 text-sm cursor-pointer hover:bg-muted text-popover-foreground font-medium"
+                                                                onMouseDown={(e) => {
+                                                                    e.preventDefault();
+                                                                    if (!(profile.skills || []).includes(skill)) {
+                                                                        setProfile({ ...profile, skills: [...(profile.skills || []), skill] });
+                                                                    }
+                                                                    setSkillDraft('');
+                                                                    setIsSkillsOpen(false);
+                                                                }}
+                                                            >
+                                                                {skill}
+                                                            </div>
+                                                        ))}
+                                                    {skillDraft && !COMMON_SKILLS.some(s => s.toLowerCase() === skillDraft.trim().toLowerCase()) && (
+                                                        <div
+                                                            className="px-3 py-2 text-sm cursor-pointer hover:bg-muted text-primary font-bold"
+                                                            onMouseDown={(e) => {
+                                                                e.preventDefault();
+                                                                const newSkill = skillDraft.trim();
+                                                                if (newSkill && !(profile.skills || []).includes(newSkill)) {
+                                                                    setProfile({ ...profile, skills: [...(profile.skills || []), newSkill] });
+                                                                }
+                                                                setSkillDraft('');
+                                                                setIsSkillsOpen(false);
+                                                            }}
+                                                        >
+                                                            Add custom: &quot;{skillDraft.trim()}&quot;
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground mt-1">Pick from dropdown or type and press Enter.</p>
                                     </div>
-                                    <p className="text-[10px] text-muted-foreground mt-1">Pick from dropdown or type and press Enter.</p>
-                                </div>
-                                <div className="grid gap-4 md:grid-cols-3">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="university">University / College</Label>
-                                        <Input
-                                            id="university"
-                                            placeholder="Stanford University"
-                                            value={profile.university || ''}
-                                            onChange={(e) => setProfile({ ...profile, university: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="expected_graduation">Graduation Year</Label>
-                                        <Input
-                                            id="expected_graduation"
-                                            type="number"
-                                            placeholder="2025"
-                                            value={profile.expected_graduation || ''}
-                                            onChange={(e) => setProfile({ ...profile, expected_graduation: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="gender">Gender</Label>
-                                        <select
-                                            id="gender"
-                                            className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
-                                            value={profile.gender || ''}
-                                            onChange={(e) => setProfile({ ...profile, gender: e.target.value })}
-                                        >
-                                            <option value="">Select gender</option>
-                                            <option value="female">Female</option>
-                                            <option value="male">Male</option>
-                                            <option value="non_binary">Non-binary</option>
-                                            <option value="prefer_not_to_say">Prefer not to say</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="preferred_roles">Preferred Roles (Comma separated)</Label>
-                                        <Input
-                                            id="preferred_roles"
-                                            placeholder="Frontend, ML, Data Science"
-                                            value={profile.preferred_roles || ''}
-                                            onChange={(e) => setProfile({ ...profile, preferred_roles: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-4">
-                                        <Label className="flex items-center gap-2">
-                                            <MapPin size={14} className="text-primary" /> Location
-                                        </Label>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                            <div className="space-y-1">
-                                                <span className="text-[10px] uppercase font-bold opacity-50">Country</span>
+ 
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="preferred_roles" className="text-xs font-semibold">Preferred Roles (Comma separated)</Label>
+                                            <Input
+                                                id="preferred_roles"
+                                                placeholder="Frontend, ML, Data Science"
+                                                value={profile.preferred_roles || ''}
+                                                onChange={(e) => setProfile({ ...profile, preferred_roles: e.target.value })}
+                                                className="bg-slate-50/30 dark:bg-slate-900/20 border-slate-200/60 dark:border-slate-800/40 rounded-xl"
+                                            />
+                                        </div>
+                                        <div className="space-y-2 flex flex-col justify-end">
+                                            <Label className="flex items-center gap-1 text-xs font-semibold mb-2">
+                                                <MapPin size={14} className="text-primary" /> Location Details
+                                            </Label>
+                                            <div className="grid grid-cols-3 gap-2">
                                                 <select
-                                                    className="w-full h-9 px-3 py-1 rounded-md border border-input bg-background/50 text-xs focus:ring-1 focus:ring-primary outline-none"
+                                                    className="h-10 px-2 rounded-xl border border-slate-200/60 dark:border-slate-800/40 bg-slate-50/30 dark:bg-slate-900/20 text-xs focus:ring-2 focus:ring-primary/20 outline-none font-medium appearance-none"
                                                     value={selectedCountry}
                                                     onChange={(e) => {
                                                         setSelectedCountry(e.target.value);
@@ -783,17 +799,13 @@ export default function ProfilePage() {
                                                     }}
                                                     required
                                                 >
-                                                    <option value="">Select Country</option>
+                                                    <option value="">Country</option>
                                                     {countries.map((c) => (
                                                         <option key={c.isoCode} value={c.isoCode}>{c.name}</option>
                                                     ))}
                                                 </select>
-                                            </div>
-
-                                            <div className="space-y-1">
-                                                <span className="text-[10px] uppercase font-bold opacity-50">State</span>
                                                 <select
-                                                    className="w-full h-9 px-3 py-1 rounded-md border border-input bg-background/50 text-xs focus:ring-1 focus:ring-primary outline-none disabled:opacity-50"
+                                                    className="h-10 px-2 rounded-xl border border-slate-200/60 dark:border-slate-800/40 bg-slate-50/30 dark:bg-slate-900/20 text-xs focus:ring-2 focus:ring-primary/20 outline-none disabled:opacity-50 font-medium appearance-none"
                                                     value={selectedState}
                                                     onChange={(e) => {
                                                         setSelectedState(e.target.value);
@@ -802,23 +814,19 @@ export default function ProfilePage() {
                                                     disabled={!selectedCountry}
                                                     required
                                                 >
-                                                    <option value="">Select State</option>
+                                                    <option value="">State</option>
                                                     {states.map((s) => (
                                                         <option key={s.isoCode} value={s.isoCode}>{s.name}</option>
                                                     ))}
                                                 </select>
-                                            </div>
-
-                                            <div className="space-y-1">
-                                                <span className="text-[10px] uppercase font-bold opacity-50">City</span>
                                                 <select
-                                                    className="w-full h-9 px-3 py-1 rounded-md border border-input bg-background/50 text-xs focus:ring-1 focus:ring-primary outline-none disabled:opacity-50"
+                                                    className="h-10 px-2 rounded-xl border border-slate-200/60 dark:border-slate-800/40 bg-slate-50/30 dark:bg-slate-900/20 text-xs focus:ring-2 focus:ring-primary/20 outline-none disabled:opacity-50 font-medium appearance-none"
                                                     value={selectedCity}
                                                     onChange={(e) => setSelectedCity(e.target.value)}
                                                     disabled={!selectedState}
                                                     required
                                                 >
-                                                    <option value="">Select City</option>
+                                                    <option value="">City</option>
                                                     {cities.map((c) => (
                                                         <option key={c.name} value={c.name}>{c.name}</option>
                                                     ))}
@@ -827,7 +835,7 @@ export default function ProfilePage() {
                                         </div>
                                     </div>
                                 </div>
-                                <Button type="submit" className="w-full mt-6" disabled={isSaving}>
+                                <Button type="submit" className="w-full h-10 font-bold rounded-xl" disabled={isSaving}>
                                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                     Save Master Profile
                                 </Button>
